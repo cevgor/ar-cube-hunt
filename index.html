@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zombie Shooter</title>
+    <title>Zombie Shooter RPG</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
@@ -38,8 +38,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(rgba(10,10,10,0.9), rgba(30,0,0,0.9)), 
-                        repeating-linear-gradient(45deg, transparent, transparent 10px, #300000 10px, #300000 20px);
+            background: linear-gradient(rgba(10,10,10,0.95), rgba(30,0,0,0.95));
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -52,13 +51,12 @@
         }
 
         .menu-title {
-            font-size: 3.5em;
+            font-size: 3em;
             margin-bottom: 10px;
             text-align: center;
             color: #ff4444;
-            text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000;
+            text-shadow: 0 0 20px #ff0000;
             font-weight: bold;
-            letter-spacing: 2px;
         }
 
         .menu-subtitle {
@@ -82,14 +80,11 @@
             width: 280px;
             box-shadow: 0 5px 15px rgba(255,0,0,0.3);
             border: 2px solid #ff6666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .menu-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 8px 25px rgba(255,0,0,0.5);
-            background: linear-gradient(45deg, #ff5555, #dd0000);
         }
 
         /* Игровой интерфейс */
@@ -107,28 +102,27 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .stat {
             background: rgba(0,0,0,0.7);
-            padding: 12px 20px;
-            border-radius: 25px;
+            padding: 10px 15px;
+            border-radius: 20px;
             border: 2px solid #ff4444;
-            font-size: 1.1em;
+            font-size: 1em;
             font-weight: bold;
-            min-width: 120px;
             text-align: center;
         }
 
-        .health-bar {
+        .health-bar, .exp-bar {
             width: 200px;
-            height: 20px;
+            height: 15px;
             background: #333;
-            border-radius: 10px;
+            border-radius: 8px;
             border: 2px solid #ff4444;
             overflow: hidden;
-            margin: 10px 0;
+            margin: 5px 0;
         }
 
         .health-fill {
@@ -138,25 +132,40 @@
             transition: width 0.3s;
         }
 
+        .exp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00cc00);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
         .wave-info {
-            font-size: 1.3em;
+            font-size: 1.2em;
             color: #ff4444;
             text-align: center;
             margin: 10px 0;
             text-shadow: 0 0 10px #ff0000;
         }
 
-        /* Джойстик */
-        #joystickContainer {
+        /* Джойстики */
+        .joystick-container {
             position: absolute;
-            bottom: 120px;
-            left: 40px;
             width: 120px;
             height: 120px;
             z-index: 200;
         }
 
-        #joystickBase {
+        #moveJoystick {
+            bottom: 120px;
+            left: 40px;
+        }
+
+        #shootJoystick {
+            bottom: 120px;
+            right: 40px;
+        }
+
+        .joystick-base {
             width: 100%;
             height: 100%;
             background: rgba(255,68,68,0.3);
@@ -165,7 +174,7 @@
             position: absolute;
         }
 
-        #joystickHandle {
+        .joystick-handle {
             width: 60px;
             height: 60px;
             background: radial-gradient(circle, #ff4444, #cc0000);
@@ -177,29 +186,14 @@
             box-shadow: 0 0 15px rgba(255,0,0,0.5);
         }
 
-        /* Кнопка стрельбы */
-        #shootBtn {
-            position: absolute;
-            bottom: 120px;
-            right: 40px;
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #4444ff, #0000cc);
-            border: 3px solid #8888ff;
-            color: white;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 5px 25px rgba(0,0,255,0.5);
-            z-index: 200;
-            transition: all 0.1s;
-            display: none;
+        #shootJoystick .joystick-base {
+            background: rgba(68,68,255,0.3);
+            border: 2px solid #4444ff;
         }
 
-        #shootBtn:active {
-            transform: scale(0.9);
-            background: radial-gradient(circle, #3333ee, #0000aa);
+        #shootJoystick .joystick-handle {
+            background: radial-gradient(circle, #4444ff, #0000cc);
+            border: 2px solid #8888ff;
         }
 
         /* Прицел */
@@ -220,6 +214,63 @@
             height: 100%;
         }
 
+        /* Окно выбора улучшений */
+        #upgradeMenu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .upgrade-title {
+            font-size: 2.5em;
+            color: #ffcc00;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #ffcc00;
+        }
+
+        .upgrade-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 600px;
+        }
+
+        .upgrade-option {
+            background: linear-gradient(45deg, #333, #555);
+            border: 3px solid #ffcc00;
+            border-radius: 15px;
+            padding: 20px;
+            width: 180px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upgrade-option:hover {
+            transform: scale(1.05);
+            background: linear-gradient(45deg, #444, #666);
+        }
+
+        .upgrade-name {
+            font-size: 1.3em;
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
+
+        .upgrade-desc {
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
         /* Результаты */
         #results {
             position: absolute;
@@ -232,7 +283,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 999;
+            z-index: 998;
         }
 
         .results-title {
@@ -256,38 +307,18 @@
             text-align: center;
         }
 
-        /* Уведомления */
-        .damage-notice {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 2em;
-            color: #ff0000;
-            text-shadow: 0 0 10px #ff0000;
-            animation: damageFlash 0.3s ease-out;
-            pointer-events: none;
-            z-index: 300;
-            display: none;
-        }
-
-        @keyframes damageFlash {
-            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
-        }
-
         /* Адаптация */
         @media (max-width: 768px) {
             .menu-title { font-size: 2.5em; }
             .menu-btn { width: 250px; padding: 18px 40px; }
-            #joystickContainer, #shootBtn { 
+            .joystick-container { 
                 width: 100px; 
                 height: 100px; 
                 bottom: 100px; 
             }
-            #joystickContainer { left: 30px; }
-            #shootBtn { right: 30px; }
-            .stat { font-size: 1em; padding: 10px 15px; min-width: 100px; }
+            #moveJoystick { left: 30px; }
+            #shootJoystick { right: 30px; }
+            .stat { font-size: 0.9em; padding: 8px 12px; }
         }
     </style>
 </head>
@@ -295,21 +326,22 @@
     <div id="app">
         <!-- Главное меню -->
         <div id="menu">
-            <h1 class="menu-title">🧟 ZOMBIE SHOOTER</h1>
-            <p class="menu-subtitle">Выживай как можно дольше в эпической битве с зомби!</p>
+            <h1 class="menu-title">🧟 ZOMBIE RPG</h1>
+            <p class="menu-subtitle">Прокачивайся и выживай в эпической битве с зомби!</p>
             <button class="menu-btn" onclick="startGame()">🎮 НАЧАТЬ ИГРУ</button>
             <button class="menu-btn" onclick="showInstructions()">📖 ИНСТРУКЦИЯ</button>
             
             <div style="margin-top: 40px; text-align: center; color: #888;">
-                <p>🎯 Управляй джойстиком для движения</p>
-                <p>🔫 Стреляй по зомби чтобы выжить</p>
-                <p>❤️  Выдержи как можно больше волн!</p>
+                <p>🎮 Два джойстика: движение и стрельба</p>
+                <p>💎 Собирай кристаллы опыта для прокачки</p>
+                <p>⚡ Выбирай улучшения и становись сильнее!</p>
             </div>
         </div>
 
         <!-- Игровой интерфейс -->
         <div id="gameUI" style="display: none;">
             <div class="stats-bar">
+                <div class="stat">УР: <span id="levelValue">1</span></div>
                 <div class="stat">ВОЛНА: <span id="waveValue">1</span></div>
                 <div class="stat">ЗОМБИ: <span id="zombiesValue">0</span></div>
                 <div class="stat">ОЧКИ: <span id="scoreValue">0</span></div>
@@ -324,17 +356,24 @@
                 <div class="health-bar">
                     <div class="health-fill" id="healthFill"></div>
                 </div>
+                <div style="color: #00ff00; font-weight: bold; margin-top: 5px;">ОПЫТ</div>
+                <div class="exp-bar">
+                    <div class="exp-fill" id="expFill"></div>
+                </div>
             </div>
         </div>
 
-        <!-- Джойстик -->
-        <div id="joystickContainer" style="display: none;">
-            <div id="joystickBase"></div>
-            <div id="joystickHandle"></div>
+        <!-- Джойстик движения -->
+        <div id="moveJoystick" class="joystick-container" style="display: none;">
+            <div class="joystick-base"></div>
+            <div class="joystick-handle"></div>
         </div>
 
-        <!-- Кнопка стрельбы -->
-        <button id="shootBtn">🔫<br>СТРЕЛЯТЬ</button>
+        <!-- Джойстик стрельбы -->
+        <div id="shootJoystick" class="joystick-container" style="display: none;">
+            <div class="joystick-base"></div>
+            <div class="joystick-handle"></div>
+        </div>
 
         <!-- Прицел -->
         <svg id="crosshair" viewBox="0 0 100 100" style="display: none;">
@@ -346,8 +385,13 @@
             <line x1="60" y1="50" x2="75" y2="50" stroke="#ff4444" stroke-width="4"/>
         </svg>
 
-        <!-- Уведомление об уроне -->
-        <div class="damage-notice" id="damageNotice">УРОН!</div>
+        <!-- Окно улучшений -->
+        <div id="upgradeMenu">
+            <h2 class="upgrade-title">🎯 ВЫБЕРИ УЛУЧШЕНИЕ!</h2>
+            <div class="upgrade-options" id="upgradeOptions">
+                <!-- Опции будут добавляться динамически -->
+            </div>
+        </div>
 
         <!-- Контейнер Three.js -->
         <div id="gameContainer"></div>
@@ -357,6 +401,9 @@
             <h2 class="results-title">ВЫ УМЕРЛИ!</h2>
             <div class="final-score" id="finalScore">0 ОЧКОВ</div>
             
+            <div class="game-stats">
+                Уровень: <span id="finalLevel">1</span>
+            </div>
             <div class="game-stats">
                 Уничтожено зомби: <span id="zombiesKilled">0</span>
             </div>
@@ -382,40 +429,107 @@
 
         // Игровые переменные
         let scene, camera, renderer;
-        let player, zombies = [], bullets = [];
+        let player, zombies = [], bullets = [], crystals = [];
         let score = 0;
         let playerHealth = 100;
+        let playerMaxHealth = 100;
+        let playerLevel = 1;
+        let playerExp = 0;
+        let expToNextLevel = 100;
         let currentWave = 1;
         let zombiesInWave = 5;
         let zombiesAlive = 0;
         let gameTime = 0;
         let gameTimer;
         let isGameRunning = false;
+        let isPaused = false;
         
+        // Характеристики игрока
+        let playerStats = {
+            damage: 10,
+            fireRate: 0.5, // выстрелов в секунду
+            moveSpeed: 0.1,
+            bulletSpeed: 0.8,
+            healthRegen: 0, // регенерация в секунду
+            critChance: 0.05, // 5% шанс крита
+            critMultiplier: 2.0
+        };
+
         // Управление
         let moveX = 0, moveY = 0;
-        let touchStartX = 0, touchStartY = 0;
-        let isTouching = false;
+        let shootX = 0, shootY = 0;
+        let lastShotTime = 0;
 
         // Элементы интерфейса
         const menu = document.getElementById('menu');
         const gameUI = document.getElementById('gameUI');
-        const joystickContainer = document.getElementById('joystickContainer');
-        const joystickHandle = document.getElementById('joystickHandle');
-        const shootBtn = document.getElementById('shootBtn');
+        const moveJoystick = document.getElementById('moveJoystick');
+        const shootJoystick = document.getElementById('shootJoystick');
         const crosshair = document.getElementById('crosshair');
+        const upgradeMenu = document.getElementById('upgradeMenu');
         const results = document.getElementById('results');
         const scoreValue = document.getElementById('scoreValue');
+        const levelValue = document.getElementById('levelValue');
         const waveValue = document.getElementById('waveValue');
         const zombiesValue = document.getElementById('zombiesValue');
         const healthFill = document.getElementById('healthFill');
+        const expFill = document.getElementById('expFill');
         const waveAlert = document.getElementById('waveAlert');
         const waveNumber = document.getElementById('waveNumber');
-        const damageNotice = document.getElementById('damageNotice');
+        const upgradeOptions = document.getElementById('upgradeOptions');
         const finalScore = document.getElementById('finalScore');
+        const finalLevel = document.getElementById('finalLevel');
         const zombiesKilled = document.getElementById('zombiesKilled');
         const wavesCompleted = document.getElementById('wavesCompleted');
         const survivalTime = document.getElementById('survivalTime');
+
+        // Возможные улучшения
+        const upgrades = [
+            {
+                name: "💥 Увеличение урона",
+                description: "+25% к урону от пуль",
+                apply: () => { playerStats.damage *= 1.25; }
+            },
+            {
+                name: "⚡ Скорость стрельбы",
+                description: "+20% к скорости стрельбы",
+                apply: () => { playerStats.fireRate *= 0.8; }
+            },
+            {
+                name: "🏃‍♂️ Скорость движения",
+                description: "+15% к скорости движения",
+                apply: () => { playerStats.moveSpeed *= 1.15; }
+            },
+            {
+                name: "❤️ Макс. здоровье",
+                description: "+25 к максимальному здоровью",
+                apply: () => { 
+                    playerMaxHealth += 25;
+                    playerHealth = playerMaxHealth;
+                    updateHealthBar();
+                }
+            },
+            {
+                name: "🔮 Регенерация",
+                description: "+2 здоровья в секунду",
+                apply: () => { playerStats.healthRegen += 2; }
+            },
+            {
+                name: "🎯 Крит. удар",
+                description: "+5% шанс крита",
+                apply: () => { playerStats.critChance += 0.05; }
+            },
+            {
+                name: "💫 Скорость пуль",
+                description: "+30% к скорости пуль",
+                apply: () => { playerStats.bulletSpeed *= 1.3; }
+            },
+            {
+                name: "✨ Усиление крита",
+                description: "+0.5 к множителю крита",
+                apply: () => { playerStats.critMultiplier += 0.5; }
+            }
+        ];
 
         // Инициализация Three.js
         function initThreeJS() {
@@ -462,27 +576,6 @@
             // Разметка пола
             const gridHelper = new THREE.GridHelper(50, 50, 0x444444, 0x222222);
             scene.add(gridHelper);
-
-            // Случайные препятствия
-            for (let i = 0; i < 10; i++) {
-                const obstacleGeometry = new THREE.BoxGeometry(
-                    2 + Math.random() * 3,
-                    2 + Math.random() * 3,
-                    2 + Math.random() * 3
-                );
-                const obstacleMaterial = new THREE.MeshPhongMaterial({ 
-                    color: 0x444444 
-                });
-                const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
-                
-                obstacle.position.set(
-                    (Math.random() - 0.5) * 40,
-                    1,
-                    (Math.random() - 0.5) * 40
-                );
-                
-                scene.add(obstacle);
-            }
         }
 
         // Создание игрока
@@ -513,10 +606,16 @@
                 Math.sin(angle) * distance
             );
             
+            // Здоровье зомби увеличивается с волной
+            const baseHealth = 2;
+            const waveMultiplier = 1 + (currentWave - 1) * 0.2;
+            const health = Math.floor(baseHealth * waveMultiplier);
+            
             zombie.userData = {
-                health: 2,
+                health: health,
+                maxHealth: health,
                 speed: 0.02 + Math.random() * 0.02,
-                damage: 10,
+                damage: 10 + (currentWave - 1) * 2,
                 lastAttack: 0
             };
             
@@ -526,10 +625,34 @@
             updateZombiesCount();
         }
 
+        // Создание кристалла опыта
+        function createExpCrystal(position) {
+            const crystalGeometry = new THREE.OctahedronGeometry(0.3);
+            const crystalMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x00ff00,
+                emissive: 0x00aa00,
+                emissiveIntensity: 0.5
+            });
+            const crystal = new THREE.Mesh(crystalGeometry, crystalMaterial);
+            crystal.position.copy(position);
+            crystal.position.y = 1;
+            
+            crystal.userData = {
+                value: 10 + Math.floor(Math.random() * 10),
+                lifeTime: 0
+            };
+            
+            scene.add(crystal);
+            crystals.push(crystal);
+        }
+
         // Обновление зомби
         function updateZombies() {
             zombies.forEach((zombie, index) => {
                 if (zombie.userData.health <= 0) {
+                    // Создаем кристалл опыта
+                    createExpCrystal(zombie.position);
+                    
                     scene.remove(zombie);
                     zombies.splice(index, 1);
                     zombiesAlive--;
@@ -556,16 +679,109 @@
             });
         }
 
+        // Обновление кристаллов
+        function updateCrystals() {
+            for (let i = crystals.length - 1; i >= 0; i--) {
+                const crystal = crystals[i];
+                crystal.userData.lifeTime++;
+                
+                // Кристаллы исчезают через 30 секунд
+                if (crystal.userData.lifeTime > 1800) {
+                    scene.remove(crystal);
+                    crystals.splice(i, 1);
+                    continue;
+                }
+                
+                // Движение к игроку, если близко
+                const distanceToPlayer = crystal.position.distanceTo(player.position);
+                if (distanceToPlayer < 5) {
+                    const direction = new THREE.Vector3();
+                    direction.subVectors(player.position, crystal.position).normalize();
+                    crystal.position.add(direction.multiplyScalar(0.1));
+                }
+                
+                // Вращение кристалла
+                crystal.rotation.y += 0.05;
+                crystal.rotation.x += 0.03;
+                
+                // Проверка сбора
+                if (distanceToPlayer < 1) {
+                    addExp(crystal.userData.value);
+                    scene.remove(crystal);
+                    crystals.splice(i, 1);
+                }
+            }
+        }
+
+        // Добавление опыта
+        function addExp(amount) {
+            playerExp += amount;
+            
+            // Проверка уровня
+            if (playerExp >= expToNextLevel) {
+                levelUp();
+            }
+            
+            updateExpBar();
+        }
+
+        // Повышение уровня
+        function levelUp() {
+            playerLevel++;
+            playerExp = playerExp - expToNextLevel;
+            expToNextLevel = Math.floor(expToNextLevel * 1.5);
+            
+            updateLevelDisplay();
+            updateExpBar();
+            
+            // Показываем меню улучшений
+            showUpgradeMenu();
+        }
+
+        // Показ меню улучшений
+        function showUpgradeMenu() {
+            isPaused = true;
+            upgradeMenu.style.display = 'flex';
+            
+            // Очищаем предыдущие опции
+            upgradeOptions.innerHTML = '';
+            
+            // Выбираем 3 случайных улучшения
+            const availableUpgrades = [...upgrades];
+            const selectedUpgrades = [];
+            
+            for (let i = 0; i < 3; i++) {
+                if (availableUpgrades.length === 0) break;
+                
+                const randomIndex = Math.floor(Math.random() * availableUpgrades.length);
+                selectedUpgrades.push(availableUpgrades[randomIndex]);
+                availableUpgrades.splice(randomIndex, 1);
+            }
+            
+            // Создаем кнопки улучшений
+            selectedUpgrades.forEach(upgrade => {
+                const option = document.createElement('div');
+                option.className = 'upgrade-option';
+                option.innerHTML = `
+                    <div class="upgrade-name">${upgrade.name}</div>
+                    <div class="upgrade-desc">${upgrade.description}</div>
+                `;
+                option.onclick = () => selectUpgrade(upgrade);
+                upgradeOptions.appendChild(option);
+            });
+        }
+
+        // Выбор улучшения
+        function selectUpgrade(upgrade) {
+            upgrade.apply();
+            upgradeMenu.style.display = 'none';
+            isPaused = false;
+        }
+
         // Получение урона
         function takeDamage(amount) {
             playerHealth -= amount;
             updateHealthBar();
-            
-            // Эффект получения урона
-            damageNotice.style.display = 'block';
-            setTimeout(() => {
-                damageNotice.style.display = 'none';
-            }, 300);
             
             if (navigator.vibrate) navigator.vibrate(200);
             
@@ -577,12 +793,26 @@
 
         // Выстрел
         function shoot() {
-            if (!isGameRunning) return;
+            if (!isGameRunning || isPaused) return;
+            
+            const currentTime = Date.now();
+            if (currentTime - lastShotTime < 1000 / playerStats.fireRate) return;
+            
+            lastShotTime = currentTime;
+            
+            // Проверяем, активирован ли джойстик стрельбы
+            if (Math.abs(shootX) < 0.1 && Math.abs(shootY) < 0.1) return;
             
             // Создаем пулю
             const bulletGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            
+            // Проверяем крит
+            const isCrit = Math.random() < playerStats.critChance;
+            const damage = isCrit ? playerStats.damage * playerStats.critMultiplier : playerStats.damage;
+            const bulletColor = isCrit ? 0xff00ff : 0xffff00;
+            
             const bulletMaterial = new THREE.MeshBasicMaterial({ 
-                color: 0xffff00 
+                color: bulletColor 
             });
             const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
             
@@ -590,10 +820,14 @@
             bullet.position.copy(player.position);
             bullet.position.y += 1;
             
-            // Направление пули - вперед от камеры
-            const direction = new THREE.Vector3(0, 0, -1);
-            bullet.userData.velocity = direction.multiplyScalar(0.8);
-            bullet.userData.lifeTime = 0;
+            // Направление пули - из джойстика стрельбы
+            const direction = new THREE.Vector3(shootX, 0, shootY).normalize();
+            bullet.userData = {
+                velocity: direction.multiplyScalar(playerStats.bulletSpeed),
+                lifeTime: 0,
+                damage: damage,
+                isCrit: isCrit
+            };
             
             scene.add(bullet);
             bullets.push(bullet);
@@ -620,7 +854,15 @@
                 for (let j = zombies.length - 1; j >= 0; j--) {
                     const zombie = zombies[j];
                     if (bullet.position.distanceTo(zombie.position) < 1) {
-                        zombie.userData.health--;
+                        zombie.userData.health -= bullet.userData.damage;
+                        
+                        // Эффект попадания
+                        if (bullet.userData.isCrit) {
+                            zombie.material.color.set(0xff00ff);
+                            setTimeout(() => {
+                                zombie.material.color.set(0x44ff44);
+                            }, 100);
+                        }
                         
                         // Удаляем пулю
                         scene.remove(bullet);
@@ -631,25 +873,34 @@
             }
         }
 
-        // Управление джойстиком
-        function setupJoystick() {
+        // Настройка джойстика движения
+        function setupMoveJoystick() {
+            setupJoystick(moveJoystick, (x, y) => {
+                moveX = x * playerStats.moveSpeed;
+                moveY = y * playerStats.moveSpeed;
+            });
+        }
+
+        // Настройка джойстика стрельбы
+        function setupShootJoystick() {
+            setupJoystick(shootJoystick, (x, y) => {
+                shootX = x;
+                shootY = y;
+            });
+        }
+
+        // Общая функция настройки джойстика
+        function setupJoystick(joystickElement, onMove) {
             let joystickActive = false;
-            const baseRect = joystickContainer.getBoundingClientRect();
+            const handle = joystickElement.querySelector('.joystick-handle');
+            const baseRect = joystickElement.getBoundingClientRect();
             const baseCenterX = baseRect.left + baseRect.width / 2;
             const baseCenterY = baseRect.top + baseRect.height / 2;
             const maxDistance = baseRect.width / 3;
 
-            joystickContainer.addEventListener('touchstart', (e) => {
-                joystickActive = true;
-                e.preventDefault();
-            });
-
-            document.addEventListener('touchmove', (e) => {
-                if (!joystickActive) return;
-                
-                const touch = e.touches[0];
-                const deltaX = touch.clientX - baseCenterX;
-                const deltaY = touch.clientY - baseCenterY;
+            const updateJoystick = (clientX, clientY) => {
+                const deltaX = clientX - baseCenterX;
+                const deltaY = clientY - baseCenterY;
                 const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
                 const limitedDistance = Math.min(distance, maxDistance);
                 
@@ -658,62 +909,54 @@
                 const moveY = Math.sin(angle) * limitedDistance;
                 
                 // Обновление позиции джойстика
-                joystickHandle.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                handle.style.transform = `translate(${moveX}px, ${moveY}px)`;
                 
-                // Обновление движения игрока
-                updatePlayerMovement(moveX / maxDistance, moveY / maxDistance);
+                // Нормализованные значения (-1 до 1)
+                const normalizedX = moveX / maxDistance;
+                const normalizedY = moveY / maxDistance;
                 
+                onMove(normalizedX, normalizedY);
+            };
+
+            const resetJoystick = () => {
+                joystickActive = false;
+                handle.style.transform = 'translate(0, 0)';
+                onMove(0, 0);
+            };
+
+            // Touch события
+            joystickElement.addEventListener('touchstart', (e) => {
+                joystickActive = true;
+                updateJoystick(e.touches[0].clientX, e.touches[0].clientY);
                 e.preventDefault();
             });
 
-            document.addEventListener('touchend', (e) => {
-                if (joystickActive) {
-                    joystickActive = false;
-                    joystickHandle.style.transform = 'translate(0, 0)';
-                    updatePlayerMovement(0, 0);
-                }
+            document.addEventListener('touchmove', (e) => {
+                if (!joystickActive) return;
+                updateJoystick(e.touches[0].clientX, e.touches[0].clientY);
+                e.preventDefault();
             });
 
-            // Поддержка мыши для тестирования
-            joystickContainer.addEventListener('mousedown', (e) => {
+            document.addEventListener('touchend', resetJoystick);
+
+            // Mouse события
+            joystickElement.addEventListener('mousedown', (e) => {
                 joystickActive = true;
+                updateJoystick(e.clientX, e.clientY);
                 e.preventDefault();
             });
 
             document.addEventListener('mousemove', (e) => {
                 if (!joystickActive) return;
-                
-                const deltaX = e.clientX - baseCenterX;
-                const deltaY = e.clientY - baseCenterY;
-                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                const limitedDistance = Math.min(distance, maxDistance);
-                
-                const angle = Math.atan2(deltaY, deltaX);
-                const moveX = Math.cos(angle) * limitedDistance;
-                const moveY = Math.sin(angle) * limitedDistance;
-                
-                joystickHandle.style.transform = `translate(${moveX}px, ${moveY}px)`;
-                updatePlayerMovement(moveX / maxDistance, moveY / maxDistance);
+                updateJoystick(e.clientX, e.clientY);
             });
 
-            document.addEventListener('mouseup', () => {
-                if (joystickActive) {
-                    joystickActive = false;
-                    joystickHandle.style.transform = 'translate(0, 0)';
-                    updatePlayerMovement(0, 0);
-                }
-            });
-        }
-
-        // Обновление движения игрока
-        function updatePlayerMovement(x, y) {
-            moveX = x * 0.1;
-            moveY = y * 0.1;
+            document.addEventListener('mouseup', resetJoystick);
         }
 
         // Движение игрока
         function updatePlayer() {
-            if (!isGameRunning) return;
+            if (!isGameRunning || isPaused) return;
             
             // Ограничение движения в пределах карты
             const newX = player.position.x + moveX;
@@ -730,7 +973,7 @@
 
         // Управление зомби волнами
         function manageWaves() {
-            if (zombiesAlive === 0) {
+            if (zombiesAlive === 0 && !isPaused) {
                 currentWave++;
                 zombiesInWave = 5 + currentWave * 2;
                 
@@ -750,9 +993,21 @@
             }
         }
 
+        // Регенерация здоровья
+        function updateRegeneration() {
+            if (!isGameRunning || isPaused) return;
+            
+            playerHealth = Math.min(playerMaxHealth, playerHealth + playerStats.healthRegen * 0.016);
+            updateHealthBar();
+        }
+
         // Обновление интерфейса
         function updateScore() {
             scoreValue.textContent = score;
+        }
+
+        function updateLevelDisplay() {
+            levelValue.textContent = playerLevel;
         }
 
         function updateWaveDisplay() {
@@ -764,7 +1019,7 @@
         }
 
         function updateHealthBar() {
-            const healthPercent = Math.max(0, playerHealth) / 100;
+            const healthPercent = Math.max(0, playerHealth) / playerMaxHealth;
             healthFill.style.width = (healthPercent * 100) + '%';
             
             // Изменение цвета в зависимости от здоровья
@@ -777,14 +1032,22 @@
             }
         }
 
+        function updateExpBar() {
+            const expPercent = playerExp / expToNextLevel;
+            expFill.style.width = (expPercent * 100) + '%';
+        }
+
         // Игровой цикл
         function gameLoop() {
             if (!isGameRunning) return;
             
             updatePlayer();
             updateZombies();
+            updateCrystals();
             updateBullets();
             manageWaves();
+            updateRegeneration();
+            shoot(); // Автоматическая стрельба при активном джойстике
             
             renderer.render(scene, camera);
             requestAnimationFrame(gameLoop);
@@ -794,7 +1057,7 @@
         function startGameTimer() {
             gameTime = 0;
             gameTimer = setInterval(() => {
-                gameTime++;
+                if (!isPaused) gameTime++;
             }, 1000);
         }
 
@@ -802,47 +1065,78 @@
         function startGame() {
             menu.style.display = 'none';
             gameUI.style.display = 'block';
-            joystickContainer.style.display = 'block';
-            shootBtn.style.display = 'block';
+            moveJoystick.style.display = 'block';
+            shootJoystick.style.display = 'block';
             crosshair.style.display = 'block';
             
             // Сброс игры
-            score = 0;
-            playerHealth = 100;
-            currentWave = 1;
-            zombiesInWave = 5;
-            zombiesAlive = 0;
-            moveX = 0;
-            moveY = 0;
-            
-            // Очистка сцены
-            if (scene) {
-                zombies.forEach(zombie => scene.remove(zombie));
-                bullets.forEach(bullet => scene.remove(bullet));
-                zombies = [];
-                bullets = [];
-            }
+            resetGame();
             
             initThreeJS();
-            setupJoystick();
+            setupMoveJoystick();
+            setupShootJoystick();
             
             // Создание первой волны зомби
             for (let i = 0; i < zombiesInWave; i++) {
                 setTimeout(() => createZombie(), i * 1000);
             }
             
-            updateScore();
-            updateWaveDisplay();
-            updateZombiesCount();
-            updateHealthBar();
+            updateAllDisplays();
             
             isGameRunning = true;
             startGameTimer();
             gameLoop();
         }
 
+        function resetGame() {
+            score = 0;
+            playerHealth = 100;
+            playerMaxHealth = 100;
+            playerLevel = 1;
+            playerExp = 0;
+            expToNextLevel = 100;
+            currentWave = 1;
+            zombiesInWave = 5;
+            zombiesAlive = 0;
+            moveX = 0;
+            moveY = 0;
+            shootX = 0;
+            shootY = 0;
+            isPaused = false;
+            
+            // Сброс характеристик
+            playerStats = {
+                damage: 10,
+                fireRate: 0.5,
+                moveSpeed: 0.1,
+                bulletSpeed: 0.8,
+                healthRegen: 0,
+                critChance: 0.05,
+                critMultiplier: 2.0
+            };
+            
+            // Очистка сцены
+            if (scene) {
+                zombies.forEach(zombie => scene.remove(zombie));
+                bullets.forEach(bullet => scene.remove(bullet));
+                crystals.forEach(crystal => scene.remove(crystal));
+                zombies = [];
+                bullets = [];
+                crystals = [];
+            }
+        }
+
+        function updateAllDisplays() {
+            updateScore();
+            updateLevelDisplay();
+            updateWaveDisplay();
+            updateZombiesCount();
+            updateHealthBar();
+            updateExpBar();
+        }
+
         function showInstructions() {
-            alert(`🎮 ZOMBIE SHOOTER - ИНСТРУКЦИЯ\n\n🔫 УПРАВЛЕНИЕ:\n• Левая панель - джойстик для движения\n• Правая кнопка - стрельба\n• Зомби автоматически идут на вас\n\n🎯 ЦЕЛЬ:\n• Выживайте как можно дольше\n• Уничтожайте зомби для получения очков\n• Избегайте столкновений с зомби\n\n⚡ ОСОБЕННОСТИ:\n• Волны становятся сложнее\n• Здоровье восстанавливается между волнами (1% в секунду)\n• Каждый зомби = 100 очков\n\nУдачи! 🧟`);
+            alert(`🎮 ZOMBIE RPG - ИНСТРУКЦИЯ\n\n🎯 УПРАВЛЕНИЕ:\n• Левый джойстик - движение\n• Правый джойстик - стрельба\n• Автоматическая стрельба при активации джойстика\n\n💎 ПРОКАЧКА:\n• Убивайте зомби для получения опыта\n• Собирайте зеленые кристаллы\n• При повышении уровня выбирайте улучшения\n\n⚡ УЛУЧШЕНИЯ:\n• Увеличение урона, скорости, здоровья\n• Регенерация, критические удары\n• Становитесь сильнее с каждым уровнем!\n\nУдачи! 🧟`);
         }
 
         function endGame() {
@@ -850,12 +1144,13 @@
             clearInterval(gameTimer);
             
             gameUI.style.display = 'none';
-            joystickContainer.style.display = 'none';
-            shootBtn.style.display = 'none';
+            moveJoystick.style.display = 'none';
+            shootJoystick.style.display = 'none';
             crosshair.style.display = 'none';
             results.style.display = 'flex';
             
             finalScore.textContent = `${score} ОЧКОВ`;
+            finalLevel.textContent = playerLevel;
             zombiesKilled.textContent = Math.floor(score / 100);
             wavesCompleted.textContent = currentWave - 1;
             survivalTime.textContent = gameTime;
@@ -865,6 +1160,7 @@
                 tg.sendData(JSON.stringify({
                     action: 'game_complete',
                     score: score,
+                    level: playerLevel,
                     waves: currentWave - 1,
                     time: gameTime,
                     zombies: Math.floor(score / 100)
@@ -880,20 +1176,12 @@
         function restartGame() {
             results.style.display = 'none';
             gameUI.style.display = 'block';
-            joystickContainer.style.display = 'block';
-            shootBtn.style.display = 'block';
+            moveJoystick.style.display = 'block';
+            shootJoystick.style.display = 'block';
             crosshair.style.display = 'block';
             
             startGame();
         }
-
-        // Восстановление здоровья со временем
-        setInterval(() => {
-            if (isGameRunning && playerHealth < 100) {
-                playerHealth = Math.min(100, playerHealth + 1);
-                updateHealthBar();
-            }
-        }, 1000);
 
         // Обработка изменения размера
         window.addEventListener('resize', () => {
@@ -906,12 +1194,7 @@
 
         // Загрузка страницы
         window.addEventListener('load', () => {
-            console.log("Zombie Shooter загружен!");
-            shootBtn.addEventListener('click', shoot);
-            shootBtn.addEventListener('touchstart', (e) => {
-                shoot();
-                e.preventDefault();
-            });
+            console.log("Zombie Shooter RPG загружен!");
         });
     </script>
 </body>
