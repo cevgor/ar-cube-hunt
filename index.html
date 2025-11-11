@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Cube Hunt</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            color: white;
+        }
+
+        #app {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Меню */
+        #menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .menu-hidden {
+            display: none;
+        }
+
+        .menu-title {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 0 0 10px #00ff88;
+        }
+
+        .menu-btn {
+            background: linear-gradient(45deg, #00ff88, #00ccff);
+            border: none;
+            padding: 15px 40px;
+            margin: 10px;
+            border-radius: 25px;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: transform 0.3s;
+            width: 200px;
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Игровой интерфейс */
+        #gameUI {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            z-index: 100;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .score {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .timer {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .crosshair-circle {
+            fill: none;
+            stroke: #00ff88;
+            stroke-width: 2;
+            stroke-dasharray: 10 5;
+        }
+
+        #gameContainer {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Результаты */
+        #results {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .results-title {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #00ff88;
+        }
+
+        .final-score {
+            font-size: 3em;
+            margin: 20px 0;
+            color: #00ccff;
+        }
+
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px;
+            text-align: center;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Главное меню -->
+        <div id="menu">
+            <h1 class="menu-title">🎮 AR Cube Hunt</h1>
+            <button class="menu-btn" onclick="startGame()">Начать игру</button>
+            <button class="menu-btn" onclick="showInstructions()">Инструкция</button>
+            
+            <div class="instructions">
+                <h3>Как играть:</h3>
+                <p>Двигайте телефоном для поиска кубов. Наводите прицел для сбора!</p>
+            </div>
+        </div>
+
+        <!-- Игровой интерфейс -->
+        <div id="gameUI" style="display: none;">
+            <div class="score">Очки: <span id="scoreValue">0</span></div>
+            <div class="timer">Время: <span id="timerValue">60</span>с</div>
+        </div>
+
+        <!-- Прицел -->
+        <svg id="crosshair" viewBox="0 0 100 100" style="display: none;">
+            <circle class="crosshair-circle" cx="50" cy="50" r="40"/>
+            <circle cx="50" cy="50" r="2" fill="#00ff88"/>
+        </svg>
+
+        <!-- Контейнер Three.js -->
+        <div id="gameContainer"></div>
+
+        <!-- Результаты -->
+        <div id="results">
+            <h2 class="results-title">Игра завершена!</h2>
+            <div class="final-score" id="finalScore">0 очков</div>
+            <button class="menu-btn" onclick="showMenu()">В меню</button>
+            <button class="menu-btn" onclick="restartGame()">Играть снова</button>
+        </div>
+    </div>
+
+    <script>
+        // Telegram Web App
+        let tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.expand();
+            tg.ready();
+        }
+
+        // Игровые переменные
+        let scene, camera, renderer;
+        let cubes = [];
+        let score = 0;
+        let gameTime = 60;
+        let timerInterval;
+        let isGameRunning = false;
+
+        // Элементы интерфейса
+        const menu = document.getElementById('menu');
+        const gameUI = document.getElementById('gameUI');
+        const crosshair = document.getElementById('crosshair');
+        const results = document.getElementById('results');
+        const scoreValue = document.getElementById('scoreValue');
+        const timerValue = document.getElementById('timerValue');
+        const finalScore = document.getElementById('finalScore');
+
+        // Инициализация Three.js
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            document.getElementById('gameContainer').appendChild(renderer.domElement);
+
+            // Освещение
+            const ambientLight = new THREE.AmbientLight(0x404040, 2);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+        }
+
+        // Создание кубов
+        function createCubes() {
+            cubes.forEach(cube => scene.remove(cube));
+            cubes = [];
+
+            for (let i = 0; i < 6; i++) {
+                const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: new THREE.Color().setHSL(Math.random(), 0.8, 0.6)
+                });
+                
+                const cube = new THREE.Mesh(geometry, material);
+                
+                // Расположение кубов вокруг игрока
+                const phi = Math.acos(-1 + (2 * i) / 6);
+                const theta = Math.sqrt(6 * Math.PI) * phi;
+                
+                cube.position.x = 4 * Math.sin(phi) * Math.cos(theta);
+                cube.position.y = 4 * Math.sin(phi) * Math.sin(theta);
+                cube.position.z = 4 * Math.cos(phi);
+                
+                cube.userData = {
+                    collected: false,
+                    pulseSpeed: Math.random() * 0.02 + 0.01
+                };
+                
+                scene.add(cube);
+                cubes.push(cube);
+            }
+        }
+
+        // Проверка наведения
+        function checkCubeIntersection() {
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+
+            const intersects = raycaster.intersectObjects(cubes.filter(cube => !cube.userData.collected));
+
+            if (intersects.length > 0) {
+                const cube = intersects[0].object;
+                
+                if (!cube.userData.collectionStarted) {
+                    cube.userData.collectionStarted = true;
+                    cube.userData.collectionProgress = 0;
+                }
+                
+                cube.userData.collectionProgress += 0.03;
+                
+                // Анимация наведения
+                const scale = 1 + Math.sin(Date.now() * 0.01) * 0.3;
+                cube.scale.set(scale, scale, scale);
+                
+                if (cube.userData.collectionProgress >= 1) {
+                    collectCube(cube);
+                }
+            }
+        }
+
+        // Сбор куба
+        function collectCube(cube) {
+            cube.userData.collected = true;
+            
+            // Анимация сбора
+            const startScale = { value: 1 };
+            const scaleAnimation = setInterval(() => {
+                startScale.value -= 0.1;
+                cube.scale.set(startScale.value, startScale.value, startScale.value);
+                
+                if (startScale.value <= 0) {
+                    clearInterval(scaleAnimation);
+                    scene.remove(cube);
+                }
+            }, 50);
+
+            // Очки
+            score += 100;
+            scoreValue.textContent = score;
+            
+            // Вибрация
+            if (navigator.vibrate) navigator.vibrate(100);
+            
+            // Новый куб
+            setTimeout(createNewCube, 1000);
+        }
+
+        // Создание нового куба
+        function createNewCube() {
+            if (!isGameRunning) return;
+            
+            const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: new THREE.Color().setHSL(Math.random(), 0.8, 0.6)
+            });
+            
+            const cube = new THREE.Mesh(geometry, material);
+            
+            const phi = Math.acos(Math.random() * 2 - 1);
+            const theta = Math.random() * Math.PI * 2;
+            const radius = 3 + Math.random() * 2;
+            
+            cube.position.x = radius * Math.sin(phi) * Math.cos(theta);
+            cube.position.y = radius * Math.sin(phi) * Math.sin(theta);
+            cube.position.z = radius * Math.cos(phi);
+            
+            cube.userData = {
+                collected: false,
+                pulseSpeed: Math.random() * 0.02 + 0.01
+            };
+            
+            scene.add(cube);
+            cubes.push(cube);
+        }
+
+        // Управление гироскопом
+        function setupDeviceOrientation() {
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', (event) => {
+                    if (!isGameRunning) return;
+                    
+                    const beta = event.beta || 0;
+                    const gamma = event.gamma || 0;
+                    const alpha = event.alpha || 0;
+                    
+                    // Преобразуем в радианы
+                    camera.rotation.x = (beta - 90) * (Math.PI / 180);
+                    camera.rotation.y = alpha * (Math.PI / 180);
+                    camera.rotation.z = gamma * (Math.PI / 180);
+                    
+                }, true);
+            } else {
+                console.log("Гироскоп не поддерживается");
+            }
+        }
+
+        // Игровой цикл
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (isGameRunning) {
+                // Анимация кубов
+                cubes.forEach(cube => {
+                    if (!cube.userData.collected) {
+                        cube.rotation.x += cube.userData.pulseSpeed;
+                        cube.rotation.y += cube.userData.pulseSpeed;
+                    }
+                });
+                
+                // Проверка столкновений
+                checkCubeIntersection();
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Таймер
+        function startTimer() {
+            gameTime = 60;
+            timerValue.textContent = gameTime;
+            
+            timerInterval = setInterval(() => {
+                gameTime--;
+                timerValue.textContent = gameTime;
+                
+                if (gameTime <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // Функции меню
+        function startGame() {
+            menu.classList.add('menu-hidden');
+            gameUI.style.display = 'block';
+            crosshair.style.display = 'block';
+            
+            initThreeJS();
+            createCubes();
+            setupDeviceOrientation();
+            
+            score = 0;
+            scoreValue.textContent = score;
+            isGameRunning = true;
+            
+            startTimer();
+            animate();
+        }
+
+        function showInstructions() {
+            alert(`🎯 ИНСТРУКЦИЯ:\n\n1. Двигайте телефоном для поиска кубов\n2. Наведите прицел на куб для сбора\n3. Собирайте кубы за 60 секунд\n4. Каждый куб = 100 очков\n\nУдачи! 🚀`);
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            clearInterval(timerInterval);
+            
+            gameUI.style.display = 'none';
+            crosshair.style.display = 'none';
+            results.style.display = 'flex';
+            
+            finalScore.textContent = `${score} очков`;
+            
+            // Отправка результатов в Telegram
+            if (tg && tg.sendData) {
+                tg.sendData(JSON.stringify({
+                    action: 'game_complete',
+                    score: score
+                }));
+            }
+        }
+
+        function showMenu() {
+            results.style.display = 'none';
+            menu.classList.remove('menu-hidden');
+            
+            // Очистка сцены
+            if (scene) {
+                cubes.forEach(cube => scene.remove(cube));
+                cubes = [];
+            }
+        }
+
+        function restartGame() {
+            results.style.display = 'none';
+            gameUI.style.display = 'block';
+            crosshair.style.display = 'block';
+            
+            score = 0;
+            scoreValue.textContent = score;
+            isGameRunning = true;
+            
+            createCubes();
+            startTimer();
+        }
+
+        // Обработка изменения размера
+        window.addEventListener('resize', () => {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        });
+
+        // Загрузка страницы
+        window.addEventListener('load', () => {
+            console.log("AR Cube Hunt загружен!");
+        });
+    </script>
+</body>
+</html>
