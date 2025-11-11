@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Хроники падающих звёзд | Хардкор</title>
+    <title>Хроники падающих звёзд | Мобильная версия</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            touch-action: none;
         }
         
         body {
@@ -16,7 +23,9 @@
             color: #0ff;
             font-family: 'Courier New', monospace;
             overflow: hidden;
-            user-select: none;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
         }
         
         #gameContainer {
@@ -25,6 +34,7 @@
             left: 0;
             width: 100%;
             height: 100%;
+            z-index: 1;
         }
         
         #ui {
@@ -39,35 +49,85 @@
         
         .hud {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 1.2rem;
+            top: 10px;
+            left: 10px;
+            font-size: 14px;
             text-shadow: 0 0 5px #0ff;
             background: rgba(0, 0, 0, 0.7);
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #0ff;
+            border-radius: 5px;
         }
         
         .resources {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 1.2rem;
+            top: 10px;
+            right: 10px;
+            font-size: 14px;
             text-shadow: 0 0 5px #0ff;
-            text-align: right;
             background: rgba(0, 0, 0, 0.7);
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #0ff;
+            border-radius: 5px;
+            text-align: right;
         }
         
-        .controls-info {
+        /* Сенсорное управление */
+        .touch-controls {
             position: absolute;
             bottom: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px;
-            border: 1px solid #0ff;
-            font-size: 0.9rem;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            pointer-events: auto;
+        }
+        
+        .left-controls, .right-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.3);
+            border: 2px solid #0ff;
+            color: #0ff;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 0 15px #0ff;
+            touch-action: manipulation;
+        }
+        
+        .control-btn:active {
+            background: rgba(0, 255, 255, 0.6);
+            transform: scale(0.95);
+        }
+        
+        .movement-pad {
+            width: 180px;
+            height: 180px;
+            position: relative;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            border: 2px solid #0ff;
+        }
+        
+        .movement-stick {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 255, 255, 0.7);
+            border-radius: 50%;
+            position: absolute;
+            top: 60px;
+            left: 60px;
+            transition: transform 0.1s;
         }
         
         .game-over {
@@ -80,21 +140,26 @@
             border: 2px solid #f00;
             text-align: center;
             display: none;
+            z-index: 20;
+            pointer-events: auto;
+            border-radius: 10px;
         }
         
         .btn {
             background: transparent;
             color: #0ff;
             border: 2px solid #0ff;
-            padding: 10px 20px;
+            padding: 12px 25px;
             margin: 10px;
             font-family: 'Courier New', monospace;
+            font-size: 16px;
             cursor: pointer;
             pointer-events: auto;
             transition: all 0.3s;
+            border-radius: 5px;
         }
         
-        .btn:hover {
+        .btn:active {
             background: rgba(0, 255, 255, 0.2);
         }
         
@@ -112,6 +177,33 @@
             );
             background-size: 100% 4px;
             pointer-events: none;
+            z-index: 5;
+        }
+        
+        /* Адаптация для очень маленьких экранов */
+        @media (max-height: 600px) {
+            .hud, .resources {
+                font-size: 12px;
+                padding: 5px;
+            }
+            
+            .control-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 20px;
+            }
+            
+            .movement-pad {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .movement-stick {
+                width: 50px;
+                height: 50px;
+                top: 50px;
+                left: 50px;
+            }
         }
     </style>
 </head>
@@ -121,26 +213,36 @@
         <div class="scanlines"></div>
         
         <div class="hud">
-            <div>ЗДОРОВЬЕ: <span id="healthValue">100</span>%</div>
-            <div>ЭНЕРГИЯ: <span id="energyValue">100</span>%</div>
-            <div>СКОРОСТЬ: <span id="speedValue">0</span></div>
-            <div>ЩИТ: <span id="shieldValue">100</span>%</div>
+            <div>❤️: <span id="healthValue">100</span>%</div>
+            <div>⚡: <span id="energyValue">100</span>%</div>
+            <div>🚀: <span id="speedValue">0</span></div>
+            <div>🛡️: <span id="shieldValue">100</span>%</div>
         </div>
         
         <div class="resources">
-            <div>ЗВЁЗДЫ: <span id="starsValue">0</span></div>
-            <div>ОБЛОМКИ: <span id="fragmentsValue">0</span></div>
-            <div>ОЧКИ: <span id="scoreValue">0</span></div>
+            <div>⭐: <span id="starsValue">0</span></div>
+            <div>🔧: <span id="fragmentsValue">0</span></div>
+            <div>🏆: <span id="scoreValue">0</span></div>
         </div>
         
-        <div class="controls-info">
-            УПРАВЛЕНИЕ: WASD/СТРЕЛКИ - движение, ПРОБЕЛ - щит
+        <div class="touch-controls">
+            <div class="left-controls">
+                <div class="movement-pad" id="movementPad">
+                    <div class="movement-stick" id="movementStick"></div>
+                </div>
+            </div>
+            
+            <div class="right-controls">
+                <div class="control-btn" id="upBtn">↑</div>
+                <div class="control-btn" id="shieldBtn">🛡️</div>
+                <div class="control-btn" id="downBtn">↓</div>
+            </div>
         </div>
         
         <div id="gameOver" class="game-over">
             <h2>КОРАБЛЬ УНИЧТОЖЕН</h2>
-            <p style="margin: 20px 0; font-size: 1.2rem;">Счёт: <span id="finalScore">0</span></p>
-            <button class="btn" onclick="restartGame()">НОВАЯ ИГРА</button>
+            <p style="margin: 20px 0; font-size: 18px;">Счёт: <span id="finalScore">0</span></p>
+            <button class="btn" id="restartBtn">НОВАЯ ИГРА</button>
         </div>
     </div>
 
@@ -221,7 +323,12 @@
             isShieldActive: false,
             shieldEnergy: 100,
             gameActive: true,
-            keys: {}
+            touchControls: {
+                left: false,
+                right: false,
+                up: false,
+                down: false
+            }
         };
         
         // Процедурная генерация астероидов
@@ -341,19 +448,19 @@
         function updateGameState() {
             if (!gameState.gameActive) return;
             
-            // Управление кораблем
-            if (gameState.keys['ArrowUp'] || gameState.keys['w']) {
+            // Управление кораблем через сенсорные кнопки
+            if (gameState.touchControls.up) {
                 gameState.speed = Math.min(gameState.speed + gameState.acceleration, gameState.maxSpeed);
-            } else if (gameState.keys['ArrowDown'] || gameState.keys['s']) {
+            } else if (gameState.touchControls.down) {
                 gameState.speed = Math.max(gameState.speed - gameState.acceleration * 2, 0);
             } else {
                 gameState.speed = Math.max(gameState.speed - gameState.acceleration * 0.5, 0);
             }
             
-            if (gameState.keys['ArrowLeft'] || gameState.keys['a']) {
+            if (gameState.touchControls.left) {
                 ship.rotation.z += gameState.rotationSpeed;
             }
-            if (gameState.keys['ArrowRight'] || gameState.keys['d']) {
+            if (gameState.touchControls.right) {
                 ship.rotation.z -= gameState.rotationSpeed;
             }
             
@@ -595,20 +702,97 @@
             updateUI();
         }
         
-        // Обработчики событий
-        function setupEventListeners() {
-            document.addEventListener('keydown', (e) => {
-                gameState.keys[e.key] = true;
+        // Настройка сенсорного управления
+        function setupTouchControls() {
+            const movementPad = document.getElementById('movementPad');
+            const movementStick = document.getElementById('movementStick');
+            const upBtn = document.getElementById('upBtn');
+            const downBtn = document.getElementById('downBtn');
+            const shieldBtn = document.getElementById('shieldBtn');
+            const restartBtn = document.getElementById('restartBtn');
+            
+            let isDragging = false;
+            
+            // Движение джойстика
+            movementPad.addEventListener('touchstart', startDrag);
+            movementPad.addEventListener('touchmove', drag);
+            movementPad.addEventListener('touchend', endDrag);
+            
+            // Кнопки
+            upBtn.addEventListener('touchstart', () => gameState.touchControls.up = true);
+            upBtn.addEventListener('touchend', () => gameState.touchControls.up = false);
+            
+            downBtn.addEventListener('touchstart', () => gameState.touchControls.down = true);
+            downBtn.addEventListener('touchend', () => gameState.touchControls.down = false);
+            
+            shieldBtn.addEventListener('touchstart', activateShield);
+            
+            restartBtn.addEventListener('touchstart', restartGame);
+            
+            function startDrag(e) {
+                e.preventDefault();
+                isDragging = true;
+                updateStickPosition(e);
+            }
+            
+            function drag(e) {
+                e.preventDefault();
+                if (isDragging) {
+                    updateStickPosition(e);
+                }
+            }
+            
+            function endDrag(e) {
+                e.preventDefault();
+                isDragging = false;
+                // Возвращаем стик в центр
+                movementStick.style.transform = 'translate(0, 0)';
+                gameState.touchControls.left = false;
+                gameState.touchControls.right = false;
+            }
+            
+            function updateStickPosition(e) {
+                const touch = e.touches[0];
+                const rect = movementPad.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
                 
-                if (e.key === ' ' && gameState.gameActive) {
-                    activateShield();
+                const deltaX = touch.clientX - centerX;
+                const deltaY = touch.clientY - centerY;
+                
+                // Ограничиваем движение стика в пределах пада
+                const maxDistance = rect.width / 3;
+                const distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), maxDistance);
+                
+                const angle = Math.atan2(deltaY, deltaX);
+                const stickX = Math.cos(angle) * distance;
+                const stickY = Math.sin(angle) * distance;
+                
+                movementStick.style.transform = `translate(${stickX}px, ${stickY}px)`;
+                
+                // Определяем направление
+                gameState.touchControls.left = deltaX < -20;
+                gameState.touchControls.right = deltaX > 20;
+            }
+            
+            // Предотвращаем стандартное поведение браузера для касаний
+            document.addEventListener('touchstart', (e) => {
+                if (e.target.classList.contains('control-btn') || 
+                    e.target.classList.contains('movement-pad') ||
+                    e.target.classList.contains('btn')) {
+                    e.preventDefault();
                 }
             });
             
-            document.addEventListener('keyup', (e) => {
-                gameState.keys[e.key] = false;
+            document.addEventListener('touchmove', (e) => {
+                if (e.target.classList.contains('movement-pad')) {
+                    e.preventDefault();
+                }
             });
-            
+        }
+        
+        // Обработчики событий
+        function setupEventListeners() {
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
@@ -626,6 +810,7 @@
         // Инициализация игры
         function init() {
             setupEventListeners();
+            setupTouchControls();
             
             // Генерация начальных объектов
             generateAsteroids(15);
