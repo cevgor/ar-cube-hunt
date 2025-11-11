@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Хроники падающих звёзд | Космические приключения</title>
+    <title>Хроники падающих звёзд | Бесконечное путешествие</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * {
@@ -88,21 +88,15 @@
             text-align: right;
         }
         
-        /* Управление */
-        .controls {
+        /* Простое управление - 3 кнопки */
+        .simple-controls {
             position: absolute;
             bottom: 20px;
             width: 100%;
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 30px;
             pointer-events: auto;
-        }
-        
-        .control-column {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
         }
         
         .control-btn {
@@ -125,11 +119,6 @@
         .control-btn:active {
             background: rgba(0, 255, 255, 0.6);
             transform: scale(0.95);
-        }
-        
-        .control-btn.active {
-            background: rgba(0, 255, 255, 0.8);
-            box-shadow: 0 0 30px #0ff;
         }
         
         .btn {
@@ -209,6 +198,7 @@
             background: rgba(0, 30, 60, 0.7);
             cursor: pointer;
             text-align: center;
+            pointer-events: auto;
         }
         
         .trader-option:active {
@@ -239,16 +229,14 @@
         <!-- Главное меню -->
         <div id="menuScreen" class="screen">
             <h1>ХРОНИКИ ПАДАЮЩИХ ЗВЁЗД</h1>
-            <p style="margin-bottom: 30px; text-align: center;">Космические приключения</p>
+            <p style="margin-bottom: 30px; text-align: center;">Бесконечное космическое путешествие</p>
             <button class="btn" id="startBtn">НАЧАТЬ ИГРУ</button>
-            <button class="btn" id="continueBtn">ПРОДОЛЖИТЬ</button>
         </div>
         
         <!-- Игровой экран -->
         <div id="gameScreen" class="screen hidden">
             <div class="hud">
                 <div>❤️: <span id="healthValue">100</span>%</div>
-                <div>⚡: <span id="energyValue">100</span>%</div>
                 <div>🚀: <span id="speedValue">0</span></div>
                 <div>🛡️: <span id="shieldValue">100</span>%</div>
             </div>
@@ -259,18 +247,10 @@
                 <div>🏆: <span id="scoreValue">0</span></div>
             </div>
             
-            <div class="controls">
-                <div class="control-column">
-                    <div class="control-btn" id="leftBtn">←</div>
-                    <div class="control-btn" id="backBtn">↓</div>
-                </div>
-                <div class="control-column">
-                    <div class="control-btn" id="rightBtn">→</div>
-                    <div class="control-btn" id="shieldBtn">🛡️</div>
-                </div>
-                <div class="control-column">
-                    <div class="control-btn" id="autoPilotBtn">🔑</div>
-                </div>
+            <div class="simple-controls">
+                <div class="control-btn" id="leftBtn">←</div>
+                <div class="control-btn" id="forwardBtn">↑</div>
+                <div class="control-btn" id="rightBtn">→</div>
             </div>
         </div>
         
@@ -327,25 +307,20 @@
         // Игровые переменные
         let gameState = {
             health: 100,
-            energy: 100,
             stars: 0,
             fragments: 0,
             score: 0,
-            speed: 0,
-            maxSpeed: 0.8,
-            acceleration: 0.02,
+            speed: 0.5, // Постоянная скорость вперед
             rotationSpeed: 0.05,
             isShieldActive: false,
             shieldEnergy: 100,
             gameActive: false,
-            autoPilot: false,
             touchControls: {
                 left: false,
                 right: false,
-                back: false
+                forward: false
             },
-            currentPlanet: null,
-            savedProgress: null
+            currentPlanet: null
         };
 
         // Планеты и их описания
@@ -475,8 +450,7 @@
                         x: (Math.random() - 0.5) * 0.02,
                         y: (Math.random() - 0.5) * 0.02,
                         z: (Math.random() - 0.5) * 0.02
-                    },
-                    speed: 0.3 + Math.random() * 0.3
+                    }
                 };
                 
                 scene.add(asteroid);
@@ -501,7 +475,6 @@
                 enemyShip.position.z = -200 - Math.random() * 400;
                 
                 enemyShip.userData = {
-                    speed: 0.2 + Math.random() * 0.3,
                     health: 30
                 };
                 
@@ -585,7 +558,6 @@
                 planet.position.z = -400 - Math.random() * 800;
                 
                 planet.userData = {
-                    speed: 0.1 + Math.random() * 0.2,
                     size: size,
                     planetData: planetData[Math.floor(Math.random() * planetData.length)]
                 };
@@ -599,20 +571,10 @@
         function updateGameState() {
             if (!gameState.gameActive || !ship) return;
             
-            // Автопилот - корабль летит вперед автоматически
-            if (gameState.autoPilot) {
-                gameState.speed = Math.min(gameState.speed + gameState.acceleration, gameState.maxSpeed);
-            } else {
-                // Без автопилота постепенно замедляемся
-                gameState.speed = Math.max(gameState.speed - gameState.acceleration * 0.5, 0);
-            }
+            // Движение корабля вперед (постоянное)
+            ship.position.z += gameState.speed;
             
-            // Движение назад
-            if (gameState.touchControls.back) {
-                gameState.speed = Math.max(gameState.speed - gameState.acceleration * 2, -gameState.maxSpeed * 0.5);
-            }
-            
-            // Поворот корабля
+            // Поворот корабля влево/вправо
             if (gameState.touchControls.left) {
                 ship.rotation.z += gameState.rotationSpeed;
             }
@@ -620,8 +582,9 @@
                 ship.rotation.z -= gameState.rotationSpeed;
             }
             
-            // Движение корабля вперед/назад - теперь по Z!
-            ship.position.z += gameState.speed;
+            // Движение корабля в стороны в зависимости от поворота
+            ship.position.x -= Math.sin(ship.rotation.z) * gameState.speed;
+            ship.position.y += Math.cos(ship.rotation.z) * gameState.speed;
             
             // Обновление позиции камеры
             camera.position.x = ship.position.x;
@@ -629,9 +592,8 @@
             camera.position.z = ship.position.z + 20;
             camera.lookAt(ship.position.x, ship.position.y, ship.position.z - 10);
             
-            // Обновление астероидов
+            // Обновление астероидов (они стоят на месте, а корабль движется)
             asteroids.forEach((asteroid, index) => {
-                asteroid.position.z += asteroid.userData.speed;
                 asteroid.rotation.x += asteroid.userData.rotationSpeed.x;
                 asteroid.rotation.y += asteroid.userData.rotationSpeed.y;
                 asteroid.rotation.z += asteroid.userData.rotationSpeed.z;
@@ -655,38 +617,43 @@
                     generateAsteroids(1);
                 }
                 
-                // Если астероид ушел далеко вперед, удаляем и создаем новый сзади
+                // Если астероид остался позади, удаляем и создаем новый впереди
                 if (asteroid.position.z > ship.position.z + 100) {
                     scene.remove(asteroid);
                     asteroids.splice(index, 1);
-                    generateAsteroids(1);
+                    
+                    // Создаем новый астероид впереди
+                    const newAsteroid = createAsteroid();
+                    newAsteroid.position.z = ship.position.z - 500 - Math.random() * 300;
+                    asteroids.push(newAsteroid);
                 }
             });
             
             // Обновление вражеских кораблей
             enemyShips.forEach((enemy, index) => {
-                enemy.position.z += enemy.userData.speed;
+                // Враги движутся к кораблю
+                const dx = ship.position.x - enemy.position.x;
+                const dy = ship.position.y - enemy.position.y;
+                const dz = ship.position.z - enemy.position.z;
                 
-                // Простое преследование игрока
-                if (enemy.position.x < ship.position.x) {
-                    enemy.position.x += 0.1;
-                } else {
-                    enemy.position.x -= 0.1;
+                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                
+                if (distance < 100) {
+                    // Если близко, преследуем игрока
+                    enemy.position.x += dx * 0.01;
+                    enemy.position.y += dy * 0.01;
                 }
                 
-                if (enemy.position.y < ship.position.y) {
-                    enemy.position.y += 0.1;
-                } else {
-                    enemy.position.y -= 0.1;
-                }
+                // Враги всегда летят вперед с той же скоростью, что и корабль
+                enemy.position.z += gameState.speed;
                 
-                const distance = Math.sqrt(
+                const collisionDistance = Math.sqrt(
                     Math.pow(enemy.position.x - ship.position.x, 2) +
                     Math.pow(enemy.position.y - ship.position.y, 2) +
                     Math.pow(enemy.position.z - ship.position.z, 2)
                 );
                 
-                if (distance < 8) {
+                if (collisionDistance < 8) {
                     if (gameState.isShieldActive) {
                         gameState.shieldEnergy -= 15;
                     } else {
@@ -699,6 +666,7 @@
                     generateEnemyShips(1);
                 }
                 
+                // Если враг остался позади, удаляем и создаем нового впереди
                 if (enemy.position.z > ship.position.z + 100) {
                     scene.remove(enemy);
                     enemyShips.splice(index, 1);
@@ -730,6 +698,7 @@
                     }, 300);
                 }
                 
+                // Если звезда осталась позади, удаляем и создаем новую впереди
                 if (star.position.z > ship.position.z + 100) {
                     scene.remove(star);
                     starFields.splice(index, 1);
@@ -761,6 +730,7 @@
                     }, 300);
                 }
                 
+                // Если кристалл остался позади, удаляем и создаем новый впереди
                 if (crystal.position.z > ship.position.z + 100) {
                     scene.remove(crystal);
                     crystals.splice(index, 1);
@@ -770,7 +740,8 @@
             
             // Обновление планет и проверка посадки
             planets.forEach((planet, index) => {
-                planet.position.z += planet.userData.speed;
+                // Планеты движутся вместе с кораблем
+                planet.position.z += gameState.speed;
                 planet.rotation.y += 0.005;
                 
                 const distance = Math.sqrt(
@@ -784,6 +755,7 @@
                     landOnPlanet(planet);
                 }
                 
+                // Если планета осталась позади, удаляем и создаем новую впереди
                 if (planet.position.z > ship.position.z + 100) {
                     scene.remove(planet);
                     planets.splice(index, 1);
@@ -805,26 +777,47 @@
             }
             
             // Увеличение счёта со временем
-            gameState.score += Math.abs(gameState.speed) * 0.1;
+            gameState.score += gameState.speed * 0.1;
+        }
+        
+        // Создание отдельного астероида
+        function createAsteroid() {
+            const size = Math.random() * 5 + 1;
+            const geometry = new THREE.IcosahedronGeometry(size, 0);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x888888,
+                shininess: 30
+            });
+            
+            const asteroid = new THREE.Mesh(geometry, material);
+            
+            asteroid.position.x = (Math.random() - 0.5) * 200;
+            asteroid.position.y = (Math.random() - 0.5) * 200;
+            asteroid.position.z = ship.position.z - 500 - Math.random() * 300;
+            
+            asteroid.rotation.x = Math.random() * Math.PI;
+            asteroid.rotation.y = Math.random() * Math.PI;
+            
+            asteroid.userData = {
+                rotationSpeed: {
+                    x: (Math.random() - 0.5) * 0.02,
+                    y: (Math.random() - 0.5) * 0.02,
+                    z: (Math.random() - 0.5) * 0.02
+                }
+            };
+            
+            scene.add(asteroid);
+            return asteroid;
         }
         
         // Обновление интерфейса
         function updateUI() {
             document.getElementById('healthValue').textContent = Math.max(0, Math.round(gameState.health));
-            document.getElementById('energyValue').textContent = Math.round(gameState.energy);
             document.getElementById('speedValue').textContent = Math.round(gameState.speed * 100);
             document.getElementById('shieldValue').textContent = Math.round(gameState.shieldEnergy);
             document.getElementById('starsValue').textContent = gameState.stars;
             document.getElementById('fragmentsValue').textContent = gameState.fragments;
             document.getElementById('scoreValue').textContent = Math.round(gameState.score);
-            
-            // Подсветка кнопки автопилота
-            const autoPilotBtn = document.getElementById('autoPilotBtn');
-            if (gameState.autoPilot) {
-                autoPilotBtn.classList.add('active');
-            } else {
-                autoPilotBtn.classList.remove('active');
-            }
         }
         
         // Активация щита
@@ -850,12 +843,6 @@
                     gameState.isShieldActive = false;
                 }, 3000);
             }
-        }
-        
-        // Переключение автопилота
-        function toggleAutoPilot() {
-            gameState.autoPilot = !gameState.autoPilot;
-            updateUI();
         }
         
         // Посадка на планету
@@ -916,9 +903,9 @@
                     break;
                 case 'upgrade':
                     if (gameState.stars >= 5) {
-                        gameState.maxSpeed += 0.2;
+                        gameState.speed += 0.1;
                         gameState.stars -= 5;
-                        dialogue.textContent = 'Двигатель улучшен! Максимальная скорость увеличена.';
+                        dialogue.textContent = 'Двигатель улучшен! Скорость увеличена.';
                     } else {
                         dialogue.textContent = 'У вас недостаточно звёзд для улучшения (нужно 5⭐).';
                     }
@@ -975,7 +962,6 @@
         // Конец игры
         function gameOver() {
             gameState.gameActive = false;
-            gameState.autoPilot = false;
             document.getElementById('finalScore').textContent = Math.round(gameState.score);
             showScreen('gameOver');
         }
@@ -983,15 +969,13 @@
         // Новая игра
         function startGame() {
             gameState.health = 100;
-            gameState.energy = 100;
             gameState.stars = 0;
             gameState.fragments = 0;
             gameState.score = 0;
-            gameState.speed = 0;
+            gameState.speed = 0.5;
             gameState.isShieldActive = false;
             gameState.shieldEnergy = 100;
             gameState.gameActive = true;
-            gameState.autoPilot = false;
             
             if (ship) {
                 ship.position.x = 0;
@@ -1039,12 +1023,9 @@
         function setupTouchControls() {
             const leftBtn = document.getElementById('leftBtn');
             const rightBtn = document.getElementById('rightBtn');
-            const backBtn = document.getElementById('backBtn');
-            const shieldBtn = document.getElementById('shieldBtn');
-            const autoPilotBtn = document.getElementById('autoPilotBtn');
+            const forwardBtn = document.getElementById('forwardBtn');
             const restartBtn = document.getElementById('restartBtn');
             const startBtn = document.getElementById('startBtn');
-            const continueBtn = document.getElementById('continueBtn');
             const menuBtn = document.getElementById('menuBtn');
             
             // Обработчики для кнопок направления
@@ -1077,31 +1058,20 @@
             
             addButtonHandler(leftBtn, 'left');
             addButtonHandler(rightBtn, 'right');
-            addButtonHandler(backBtn, 'back');
             
-            // Обработчики для специальных кнопок
-            shieldBtn.addEventListener('touchstart', (e) => {
+            // Кнопка "вперед" активирует щит
+            forwardBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 activateShield();
-                shieldBtn.classList.add('active');
-                setTimeout(() => shieldBtn.classList.remove('active'), 300);
+                forwardBtn.classList.add('active');
+                setTimeout(() => forwardBtn.classList.remove('active'), 300);
             });
             
-            shieldBtn.addEventListener('mousedown', (e) => {
+            forwardBtn.addEventListener('mousedown', (e) => {
                 e.preventDefault();
                 activateShield();
-                shieldBtn.classList.add('active');
-                setTimeout(() => shieldBtn.classList.remove('active'), 300);
-            });
-            
-            autoPilotBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                toggleAutoPilot();
-            });
-            
-            autoPilotBtn.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                toggleAutoPilot();
+                forwardBtn.classList.add('active');
+                setTimeout(() => forwardBtn.classList.remove('active'), 300);
             });
             
             // Кнопки меню
@@ -1109,30 +1079,11 @@
                 startGame();
             });
             
-            continueBtn.addEventListener('click', () => {
-                if (gameState.savedProgress) {
-                    // Загружаем сохраненную игру
-                    gameState = {...gameState, ...gameState.savedProgress};
-                    showScreen('gameScreen');
-                    gameState.gameActive = true;
-                    updateUI();
-                } else {
-                    startGame();
-                }
-            });
-            
             restartBtn.addEventListener('click', () => {
                 startGame();
             });
             
             menuBtn.addEventListener('click', () => {
-                // Сохраняем прогресс перед выходом в меню
-                gameState.savedProgress = {
-                    health: gameState.health,
-                    stars: gameState.stars,
-                    fragments: gameState.fragments,
-                    score: gameState.score
-                };
                 gameState.gameActive = false;
                 showScreen('menuScreen');
             });
