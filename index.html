@@ -150,38 +150,44 @@
             cursor: pointer;
             z-index: 200;
             display: none;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
         }
 
-        /* Панель управления движением */
-        #movementPanel {
+        /* Виртуальный джойстик */
+        #joystickContainer {
             position: absolute;
             bottom: 40px;
             left: 40px;
-            width: 200px;
-            height: 200px;
+            width: 150px;
+            height: 150px;
             z-index: 200;
             display: none;
+            touch-action: none;
         }
 
-        .movement-btn {
+        #joystickBase {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 68, 68, 0.2);
+            border: 3px solid #ff4444;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+        }
+
+        #joystickHandle {
             position: absolute;
             width: 60px;
             height: 60px;
-            background: rgba(255,68,68,0.3);
-            border: 2px solid #ff4444;
+            background: radial-gradient(circle, #ff4444, #cc0000);
+            border: 2px solid white;
             border-radius: 50%;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5em;
-            cursor: pointer;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
         }
-
-        #btnForward { top: 0; left: 70px; }
-        #btnBackward { bottom: 0; left: 70px; }
-        #btnLeft { top: 70px; left: 0; }
-        #btnRight { top: 70px; right: 0; }
 
         /* Окно улучшений */
         #upgradeMenu {
@@ -268,22 +274,18 @@
                 height: 100px; 
                 bottom: 30px; 
                 right: 30px; 
+                font-size: 1em;
             }
-            #movementPanel {
-                width: 180px;
-                height: 180px;
+            #joystickContainer {
+                width: 130px;
+                height: 130px;
                 bottom: 30px;
                 left: 30px;
             }
-            .movement-btn {
+            #joystickHandle {
                 width: 50px;
                 height: 50px;
-                font-size: 1.3em;
             }
-            #btnForward { top: 0; left: 65px; }
-            #btnBackward { bottom: 0; left: 65px; }
-            #btnLeft { top: 65px; left: 0; }
-            #btnRight { top: 65px; right: 0; }
         }
     </style>
 </head>
@@ -327,12 +329,10 @@
             <line x1="60" y1="50" x2="75" y2="50" stroke="#ff4444" stroke-width="4"/>
         </svg>
 
-        <!-- Панель движения -->
-        <div id="movementPanel">
-            <div class="movement-btn" id="btnForward">↑</div>
-            <div class="movement-btn" id="btnBackward">↓</div>
-            <div class="movement-btn" id="btnLeft">←</div>
-            <div class="movement-btn" id="btnRight">→</div>
+        <!-- Виртуальный джойстик -->
+        <div id="joystickContainer">
+            <div id="joystickBase"></div>
+            <div id="joystickHandle"></div>
         </div>
 
         <!-- Кнопка стрельбы -->
@@ -403,11 +403,20 @@
             right: false
         };
         
+        // Джойстик переменные
+        let joystickActive = false;
+        let joystickDirection = new THREE.Vector2(0, 0);
+        let joystickBase = document.getElementById('joystickBase');
+        let joystickHandle = document.getElementById('joystickHandle');
+        let joystickContainer = document.getElementById('joystickContainer');
+        let joystickBaseRect;
+        let joystickRadius = 60; // Радиус джойстика
+        
         // Характеристики игрока
         let playerStats = {
             damage: 10,
             fireRate: 2,
-            moveSpeed: 0.08, // Уменьшена скорость для лучшего контроля
+            moveSpeed: 0.08,
             bulletSpeed: 0.5,
             healthRegen: 0,
             critChance: 0.05,
@@ -427,7 +436,6 @@
         const menu = document.getElementById('menu');
         const gameUI = document.getElementById('gameUI');
         const crosshair = document.getElementById('crosshair');
-        const movementPanel = document.getElementById('movementPanel');
         const shootBtn = document.getElementById('shootBtn');
         const upgradeMenu = document.getElementById('upgradeMenu');
         const results = document.getElementById('results');
@@ -442,12 +450,6 @@
         const finalLevel = document.getElementById('finalLevel');
         const zombiesKilled = document.getElementById('zombiesKilled');
         const wavesCompleted = document.getElementById('wavesCompleted');
-
-        // Кнопки движения
-        const btnForward = document.getElementById('btnForward');
-        const btnBackward = document.getElementById('btnBackward');
-        const btnLeft = document.getElementById('btnLeft');
-        const btnRight = document.getElementById('btnRight');
 
         // Возможные улучшения
         const upgrades = [
@@ -937,24 +939,23 @@
             }, 50);
         }
 
-        // Движение игрока
+        // Движение игрока с джойстиком
         function updatePlayer() {
             if (!isGameRunning || isPaused) return;
             
-            // Вычисляем направление движения на основе поворота камеры
+            // Вычисляем направление движения на основе джойстика
             const moveVector = new THREE.Vector3(0, 0, 0);
             
-            if (moveDirection.forward) {
-                moveVector.z -= 1;
-            }
-            if (moveDirection.backward) {
-                moveVector.z += 1;
-            }
-            if (moveDirection.left) {
-                moveVector.x -= 1;
-            }
-            if (moveDirection.right) {
-                moveVector.x += 1;
+            if (joystickActive) {
+                // Используем направление от джойстика
+                moveVector.x = joystickDirection.x;
+                moveVector.z = -joystickDirection.y; // Инвертируем Y для правильного направления
+            } else {
+                // Резервное управление с клавиатуры
+                if (moveDirection.forward) moveVector.z -= 1;
+                if (moveDirection.backward) moveVector.z += 1;
+                if (moveDirection.left) moveVector.x -= 1;
+                if (moveDirection.right) moveVector.x += 1;
             }
             
             // Нормализуем и применяем скорость
@@ -1008,39 +1009,111 @@
             updateHealthBar();
         }
 
-        // Настройка управления
-        function setupControls() {
-            // Управление движением
-            const setupMovementButton = (button, direction) => {
-                button.addEventListener('touchstart', (e) => {
-                    moveDirection[direction] = true;
-                    e.preventDefault();
-                });
+        // Настройка джойстика
+        function setupJoystick() {
+            let touchId = null;
+            
+            const updateJoystickPosition = (clientX, clientY) => {
+                if (!joystickBaseRect) {
+                    joystickBaseRect = joystickBase.getBoundingClientRect();
+                }
                 
-                button.addEventListener('touchend', (e) => {
-                    moveDirection[direction] = false;
-                    e.preventDefault();
-                });
+                const baseCenterX = joystickBaseRect.left + joystickBaseRect.width / 2;
+                const baseCenterY = joystickBaseRect.top + joystickBaseRect.height / 2;
                 
-                button.addEventListener('mousedown', (e) => {
-                    moveDirection[direction] = true;
-                    e.preventDefault();
-                });
+                const deltaX = clientX - baseCenterX;
+                const deltaY = clientY - baseCenterY;
                 
-                button.addEventListener('mouseup', (e) => {
-                    moveDirection[direction] = false;
-                    e.preventDefault();
-                });
+                // Ограничиваем движение ручки радиусом джойстика
+                const distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), joystickRadius);
+                const angle = Math.atan2(deltaY, deltaX);
                 
-                button.addEventListener('mouseleave', (e) => {
-                    moveDirection[direction] = false;
-                });
+                const limitedX = Math.cos(angle) * distance;
+                const limitedY = Math.sin(angle) * distance;
+                
+                // Обновляем позицию ручки
+                joystickHandle.style.transform = `translate(calc(-50% + ${limitedX}px), calc(-50% + ${limitedY}px))`;
+                
+                // Нормализуем направление для движения
+                joystickDirection.x = limitedX / joystickRadius;
+                joystickDirection.y = limitedY / joystickRadius;
             };
             
-            setupMovementButton(btnForward, 'forward');
-            setupMovementButton(btnBackward, 'backward');
-            setupMovementButton(btnLeft, 'left');
-            setupMovementButton(btnRight, 'right');
+            const resetJoystick = () => {
+                joystickActive = false;
+                joystickHandle.style.transform = 'translate(-50%, -50%)';
+                joystickDirection.x = 0;
+                joystickDirection.y = 0;
+                touchId = null;
+            };
+            
+            // Обработчики для касаний
+            joystickContainer.addEventListener('touchstart', (e) => {
+                if (!joystickActive) {
+                    e.preventDefault();
+                    joystickActive = true;
+                    touchId = e.changedTouches[0].identifier;
+                    joystickBaseRect = joystickBase.getBoundingClientRect();
+                    updateJoystickPosition(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                }
+            });
+            
+            joystickContainer.addEventListener('touchmove', (e) => {
+                if (joystickActive) {
+                    e.preventDefault();
+                    for (let touch of e.changedTouches) {
+                        if (touch.identifier === touchId) {
+                            updateJoystickPosition(touch.clientX, touch.clientY);
+                            break;
+                        }
+                    }
+                }
+            });
+            
+            joystickContainer.addEventListener('touchend', (e) => {
+                for (let touch of e.changedTouches) {
+                    if (touch.identifier === touchId) {
+                        resetJoystick();
+                        break;
+                    }
+                }
+            });
+            
+            joystickContainer.addEventListener('touchcancel', (e) => {
+                for (let touch of e.changedTouches) {
+                    if (touch.identifier === touchId) {
+                        resetJoystick();
+                        break;
+                    }
+                }
+            });
+            
+            // Обработчики для мыши (для тестирования)
+            joystickContainer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                joystickActive = true;
+                joystickBaseRect = joystickBase.getBoundingClientRect();
+                updateJoystickPosition(e.clientX, e.clientY);
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (joystickActive) {
+                    e.preventDefault();
+                    updateJoystickPosition(e.clientX, e.clientY);
+                }
+            });
+            
+            document.addEventListener('mouseup', (e) => {
+                if (joystickActive) {
+                    e.preventDefault();
+                    resetJoystick();
+                }
+            });
+        }
+
+        // Настройка управления
+        function setupControls() {
+            setupJoystick();
             
             // Управление камерой (поворот)
             const gameContainer = document.getElementById('gameContainer');
@@ -1177,6 +1250,8 @@
             moveDirection.backward = false;
             moveDirection.left = false;
             moveDirection.right = false;
+            joystickActive = false;
+            joystickDirection.set(0, 0);
             
             playerVelocity.set(0, 0, 0);
             playerPosition.set(0, 1.6, 0);
@@ -1202,7 +1277,7 @@
             menu.style.display = 'none';
             gameUI.style.display = 'block';
             crosshair.style.display = 'block';
-            movementPanel.style.display = 'block';
+            joystickContainer.style.display = 'block';
             shootBtn.style.display = 'block';
             upgradeMenu.style.display = 'none';
             results.style.display = 'none';
@@ -1251,7 +1326,7 @@
         }
 
         function showInstructions() {
-            alert(`🎮 ZOMBIE FPS - ИНСТРУКЦИЯ\n\n🎯 УПРАВЛЕНИЕ:\n• Панель слева - движение (вперед, назад, влево, вправо)\n• Кнопка справа - стрельба\n• Двигайте пальцем по экрану для поворота камеры\n\n💎 ПРОКАЧКА:\n• Убивайте зомби для получения опыта\n• Собирайте зеленые кристаллы\n• При повышении уровня выбирайте улучшения\n\n⚡ УЛУЧШЕНИЯ:\n• Увеличение урона, скорости, здоровья\n• Регенерация, критические удары\n\nУдачи! 🧟`);
+            alert(`🎮 ZOMBIE FPS - ИНСТРУКЦИЯ\n\n🎯 УПРАВЛЕНИЕ:\n• Джойстик слева - движение\n• Кнопка справа - стрельба\n• Двигайте пальцем по экрану для поворота камеры\n\n💎 ПРОКАЧКА:\n• Убивайте зомби для получения опыта\n• Собирайте зеленые кристаллы\n• При повышении уровня выбирайте улучшения\n\n⚡ УЛУЧШЕНИЯ:\n• Увеличение урона, скорости, здоровья\n• Регенерация, критические удары\n\nУдачи! 🧟`);
         }
 
         function endGame() {
@@ -1259,7 +1334,7 @@
             
             gameUI.style.display = 'none';
             crosshair.style.display = 'none';
-            movementPanel.style.display = 'none';
+            joystickContainer.style.display = 'none';
             shootBtn.style.display = 'none';
             results.style.display = 'flex';
             
