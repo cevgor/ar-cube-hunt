@@ -145,30 +145,6 @@
             box-shadow: 0 0 30px rgba(255, 0, 170, 0.5);
         }
 
-        .menu-button.disabled {
-            background: linear-gradient(45deg, #1a1a1a, #252525);
-            border-color: #666;
-            color: #666;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .menu-button.disabled:hover {
-            transform: none;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            background: #ff4444;
-            color: white;
-            border-radius: 12px;
-            font-size: 0.8em;
-            margin-left: 10px;
-            box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
-        }
-
         /* Модальные окна */
         .modal {
             display: none;
@@ -564,7 +540,6 @@
                 <p class="menu-subtitle">LAST BREACH</p>
                 <div class="menu-buttons">
                     <button class="menu-button" id="startButton">🎮 НАЧАТЬ МИССИЮ</button>
-                    <button class="menu-button" id="multiplayerButton">🌐 МУЛЬТИПЛЕЕР <span class="status-badge">СКОРО</span></button>
                     <button class="menu-button" id="settingsButton">⚙️ НАСТРОЙКИ</button>
                     <button class="menu-button secondary" id="helpButton">📖 ОБУЧЕНИЕ</button>
                 </div>
@@ -598,28 +573,6 @@
                 </div>
                 
                 <button class="menu-button" style="margin-top: 20px; width: 100%;" id="applySettingsButton">💾 СОХРАНИТЬ</button>
-            </div>
-        </div>
-
-        <!-- Модальное окно мультиплеера -->
-        <div id="multiplayerModal" class="modal">
-            <div class="modal-content">
-                <button class="close-button" id="closeMultiplayerButton">×</button>
-                <h2 class="modal-title">🌐 МУЛЬТИПЛЕЕР</h2>
-                <p style="margin: 20px 0; font-size: 1.2em; color: #ff4444;">
-                    ❌ Режим в разработке<br>
-                    <span style="color: #cccccc; font-size: 0.9em;">Следите за обновлениями!</span>
-                </p>
-                <div style="margin: 25px 0; padding: 20px; background: rgba(255, 68, 68, 0.15); border-radius: 10px; border: 1px solid #ff4444;">
-                    <h3 style="color: #ffaa00; margin-bottom: 10px;">🚧 Скоро будет доступно:</h3>
-                    <ul style="text-align: left; color: #cccccc; line-height: 1.6; padding-left: 20px;">
-                        <li>⚔️ Кооператив до 4 игроков</li>
-                        <li>🏆 Командные рейтинги</li>
-                        <li>🎯 PvP режимы</li>
-                        <li>🔗 Приглашение друзей</li>
-                    </ul>
-                </div>
-                <button class="menu-button" style="width: 100%;" id="closeMultiplayerBtn">ПОНЯТНО</button>
             </div>
         </div>
 
@@ -736,6 +689,7 @@
 
         // Функция для анимации нажатия кнопки
         function animateButtonPress(button) {
+            console.log("🔄 Анимация нажатия кнопки");
             button.classList.add('pressed');
             setTimeout(() => {
                 button.classList.remove('pressed');
@@ -747,63 +701,75 @@
             console.log("🔄 Инициализация обработчиков событий...");
 
             // Главное меню
-            document.getElementById('startButton').addEventListener('click', function() {
+            document.getElementById('startButton').addEventListener('click', function(e) {
+                console.log("🎮 Кнопка START нажата");
+                e.preventDefault();
+                e.stopPropagation();
                 animateButtonPress(this);
                 startGame();
             });
 
-            document.getElementById('multiplayerButton').addEventListener('click', function() {
-                animateButtonPress(this);
-                showMultiplayerModal();
-            });
-
-            document.getElementById('settingsButton').addEventListener('click', function() {
+            document.getElementById('settingsButton').addEventListener('click', function(e) {
+                console.log("⚙️ Кнопка SETTINGS нажата");
+                e.preventDefault();
+                e.stopPropagation();
                 animateButtonPress(this);
                 showSettingsModal();
             });
 
-            document.getElementById('helpButton').addEventListener('click', function() {
+            document.getElementById('helpButton').addEventListener('click', function(e) {
+                console.log("📖 Кнопка HELP нажата");
+                e.preventDefault();
+                e.stopPropagation();
                 animateButtonPress(this);
                 showInstructions();
             });
 
             // Модальные окна
-            document.getElementById('closeSettingsButton').addEventListener('click', function() {
+            document.getElementById('closeSettingsButton').addEventListener('click', function(e) {
+                console.log("❌ Кнопка CLOSE SETTINGS нажата");
+                e.preventDefault();
+                e.stopPropagation();
                 animateButtonPress(this);
                 closeSettingsModal();
             });
 
-            document.getElementById('closeMultiplayerButton').addEventListener('click', function() {
-                animateButtonPress(this);
-                closeMultiplayerModal();
-            });
-
-            document.getElementById('closeMultiplayerBtn').addEventListener('click', function() {
-                animateButtonPress(this);
-                closeMultiplayerModal();
-            });
-
-            document.getElementById('applySettingsButton').addEventListener('click', function() {
+            document.getElementById('applySettingsButton').addEventListener('click', function(e) {
+                console.log("💾 Кнопка APPLY SETTINGS нажата");
+                e.preventDefault();
+                e.stopPropagation();
                 animateButtonPress(this);
                 applySettings();
             });
 
             // Игровые кнопки
-            document.getElementById('restartButton').addEventListener('click', function() {
+            document.getElementById('restartButton').addEventListener('click', function(e) {
+                console.log("🔄 Кнопка RESTART нажата");
+                e.preventDefault();
+                e.stopPropagation();
                 animateButtonPress(this);
                 restartGame();
             });
 
-            document.getElementById('menuButton').addEventListener('click', function() {
+            document.getElementById('menuButton').addEventListener('click', function(e) {
+                console.log("📋 Кнопка MENU нажата");
+                e.preventDefault();
+                e.stopPropagation();
                 animateButtonPress(this);
                 showMenu();
             });
 
-            document.getElementById('shootBtn').addEventListener('click', function() {
+            document.getElementById('shootBtn').addEventListener('click', function(e) {
+                console.log("🔫 Кнопка SHOOT нажата");
+                e.preventDefault();
+                e.stopPropagation();
                 shoot();
             });
 
-            document.getElementById('skillBtn').addEventListener('click', function() {
+            document.getElementById('skillBtn').addEventListener('click', function(e) {
+                console.log("❄️ Кнопка SKILL нажата");
+                e.preventDefault();
+                e.stopPropagation();
                 useSkill();
             });
 
@@ -839,16 +805,6 @@
             animationFrameId = requestAnimationFrame(gameLoop);
             
             console.log("✅ Игра запущена");
-        }
-
-        function showMultiplayerModal() {
-            console.log("🌐 Открытие модального окна мультиплеера");
-            document.getElementById('multiplayerModal').style.display = 'flex';
-        }
-
-        function closeMultiplayerModal() {
-            console.log("❌ Закрытие модального окна мультиплеера");
-            document.getElementById('multiplayerModal').style.display = 'none';
         }
 
         function showSettingsModal() {
@@ -1156,6 +1112,19 @@
             
             document.getElementById('gameUI').style.display = 'none';
             document.getElementById('results').style.display = 'flex';
+
+            // Отправка результатов в бота
+            if (window.Telegram && Telegram.WebApp) {
+                const gameData = {
+                    score: score,
+                    waves: currentWave - 1,
+                    time: gameTime,
+                    enemies: totalEnemiesKilled,
+                    level: playerLevel
+                };
+                
+                Telegram.WebApp.sendData(JSON.stringify(gameData));
+            }
         }
 
         function cleanupGame() {
@@ -1392,13 +1361,9 @@
         // Закрытие модальных окон по клику вне области
         window.addEventListener('click', function(event) {
             const settingsModal = document.getElementById('settingsModal');
-            const multiplayerModal = document.getElementById('multiplayerModal');
             
             if (event.target === settingsModal) {
                 closeSettingsModal();
-            }
-            if (event.target === multiplayerModal) {
-                closeMultiplayerModal();
             }
         });
     </script>
