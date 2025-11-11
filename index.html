@@ -368,9 +368,16 @@
     </div>
 
     <script>
+        // Инициализация Telegram WebApp
+        if (window.Telegram && Telegram.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            console.log("Telegram WebApp initialized");
+        }
+
         // Игровые переменные
         let scene, camera, renderer;
-        let zombies = [], bullets = [], crystals = [];
+        let zombies = [], bullets = [], crystals = [], obstacles = [];
         let score = 0;
         let playerHealth = 100;
         let playerMaxHealth = 100;
@@ -400,7 +407,7 @@
         let playerStats = {
             damage: 10,
             fireRate: 2,
-            moveSpeed: 0.1,
+            moveSpeed: 0.08, // Уменьшена скорость для лучшего контроля
             bulletSpeed: 0.5,
             healthRegen: 0,
             critChance: 0.05,
@@ -509,54 +516,98 @@
 
         // Создание игровой карты
         function createGameMap() {
-            // Пол
-            const floorGeometry = new THREE.PlaneGeometry(50, 50);
+            // Красивый пол с текстурой
+            const floorGeometry = new THREE.PlaneGeometry(100, 100);
             const floorMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0x2a2a2a,
+                color: 0x2a5a2a,
                 transparent: true,
                 opacity: 0.9
             });
             const floor = new THREE.Mesh(floorGeometry, floorMaterial);
             floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
             scene.add(floor);
 
             // Разметка пола
-            const gridHelper = new THREE.GridHelper(50, 50, 0x444444, 0x222222);
+            const gridHelper = new THREE.GridHelper(100, 20, 0x444444, 0x222222);
             scene.add(gridHelper);
 
             // Стены по периметру
             const wallMaterial = new THREE.MeshPhongMaterial({ color: 0x555555 });
             
             const wallPositions = [
-                [0, 2.5, -25], [0, 2.5, 25],
-                [-25, 2.5, 0], [25, 2.5, 0]
+                [0, 2.5, -50], [0, 2.5, 50],
+                [-50, 2.5, 0], [50, 2.5, 0]
             ];
             
             wallPositions.forEach(pos => {
-                const wallGeometry = new THREE.BoxGeometry(50, 5, 1);
+                const wallGeometry = new THREE.BoxGeometry(100, 5, 1);
                 const wall = new THREE.Mesh(wallGeometry, wallMaterial);
                 wall.position.set(pos[0], pos[1], pos[2]);
+                obstacles.push(wall);
                 scene.add(wall);
             });
 
-            // Случайные препятствия
-            const obstacleMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
-            for (let i = 0; i < 15; i++) {
-                const obstacleGeometry = new THREE.BoxGeometry(
-                    2 + Math.random() * 3,
-                    3 + Math.random() * 2,
-                    2 + Math.random() * 3
-                );
-                const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
+            // Случайные препятствия (здания)
+            const buildingMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
+            for (let i = 0; i < 20; i++) {
+                const width = 4 + Math.random() * 6;
+                const height = 4 + Math.random() * 8;
+                const depth = 4 + Math.random() * 6;
                 
-                obstacle.position.set(
-                    (Math.random() - 0.5) * 40,
-                    1.5,
-                    (Math.random() - 0.5) * 40
+                const buildingGeometry = new THREE.BoxGeometry(width, height, depth);
+                const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                
+                building.position.set(
+                    (Math.random() - 0.5) * 80,
+                    height / 2,
+                    (Math.random() - 0.5) * 80
                 );
                 
-                scene.add(obstacle);
+                obstacles.push(building);
+                scene.add(building);
             }
+
+            // Добавляем небо
+            createSky();
+        }
+
+        // Создание неба
+        function createSky() {
+            const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
+            const skyMaterial = new THREE.MeshBasicMaterial({
+                color: 0x87CEEB,
+                side: THREE.BackSide
+            });
+            const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+            scene.add(sky);
+        }
+
+        // Проверка коллизий
+        function checkCollision(position, radius = 0.5) {
+            for (let obstacle of obstacles) {
+                const obstacleBox = new THREE.Box3().setFromObject(obstacle);
+                const playerBox = new THREE.Box3().setFromCenterAndSize(
+                    position, 
+                    new THREE.Vector3(radius * 2, 2, radius * 2)
+                );
+                
+                if (obstacleBox.intersectsBox(playerBox)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Проверка коллизий с зомби
+        function checkZombieCollision(position, radius = 0.8) {
+            for (let zombie of zombies) {
+                const distance = position.distanceTo(zombie.position);
+                if (distance < radius + 0.8) { // 0.8 - радиус зомби
+                    return true;
+                }
+            }
+            return false;
         }
 
         // Создание зомби
@@ -577,14 +628,35 @@
             head.position.y = 1.9;
             zombie.add(head);
             
+            // Руки зомби
+            const armGeometry = new THREE.CylinderGeometry(0.2, 0.2, 1.2, 6);
+            const armMaterial = new THREE.MeshPhongMaterial({ color: 0x44aa44 });
+            
+            const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+            leftArm.position.set(-0.7, 0.9, 0);
+            leftArm.rotation.z = Math.PI / 6;
+            zombie.add(leftArm);
+            
+            const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+            rightArm.position.set(0.7, 0.9, 0);
+            rightArm.rotation.z = -Math.PI / 6;
+            zombie.add(rightArm);
+            
             // Случайная позиция на краю карты
-            const angle = Math.random() * Math.PI * 2;
-            const distance = 20 + Math.random() * 5;
-            zombie.position.set(
-                Math.cos(angle) * distance,
-                0,
-                Math.sin(angle) * distance
-            );
+            let position;
+            let attempts = 0;
+            do {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 20 + Math.random() * 10;
+                position = new THREE.Vector3(
+                    Math.cos(angle) * distance,
+                    0,
+                    Math.sin(angle) * distance
+                );
+                attempts++;
+            } while (checkCollision(position, 1) && attempts < 10);
+            
+            zombie.position.copy(position);
             
             // Характеристики зомби
             const baseHealth = 2;
@@ -594,7 +666,7 @@
             zombie.userData = {
                 health: health,
                 maxHealth: health,
-                speed: 0.02 + Math.random() * 0.01,
+                speed: 0.015 + Math.random() * 0.01, // Уменьшенная скорость
                 damage: 10 + (currentWave - 1) * 2,
                 lastAttack: 0
             };
@@ -647,13 +719,23 @@
                 // Движение к игроку
                 const direction = new THREE.Vector3();
                 direction.subVectors(playerPosition, zombie.position).normalize();
-                zombie.position.add(direction.multiplyScalar(zombie.userData.speed));
+                direction.y = 0; // Убеждаемся, что зомби не летают
+                
+                const newPosition = zombie.position.clone().add(direction.multiplyScalar(zombie.userData.speed));
+                
+                // Проверяем коллизии с препятствиями и другими зомби
+                if (!checkCollision(newPosition, 0.8) && !checkZombieCollision(newPosition, 0.8)) {
+                    zombie.position.copy(newPosition);
+                }
                 
                 // Поворот к игроку
                 zombie.lookAt(playerPosition.x, zombie.position.y, playerPosition.z);
                 
                 // Анимация ходьбы
-                zombie.children[0].position.y = 0.9 + Math.sin(Date.now() * 0.01) * 0.1;
+                const walkOffset = Math.sin(Date.now() * 0.01) * 0.1;
+                zombie.children[0].position.y = 0.9 + walkOffset;
+                if (zombie.children[3]) zombie.children[3].rotation.z = Math.PI / 6 + walkOffset;
+                if (zombie.children[4]) zombie.children[4].rotation.z = -Math.PI / 6 - walkOffset;
                 
                 // Проверка атаки игрока
                 const distance = zombie.position.distanceTo(playerPosition);
@@ -769,14 +851,16 @@
             playerHealth -= amount;
             updateHealthBar();
             
-            if (navigator.vibrate) navigator.vibrate(200);
+            if (navigator.vibrate && typeof navigator.vibrate === 'function') {
+                navigator.vibrate(200);
+            }
             
             if (playerHealth <= 0) {
                 endGame();
             }
         }
 
-        // Выстрел (реальный рейкастинг)
+        // Выстрел (исправленный рейкастинг)
         let lastShotTime = 0;
         function shoot() {
             if (!isGameRunning || isPaused) return;
@@ -790,36 +874,44 @@
             const raycaster = new THREE.Raycaster();
             raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
             
-            // Проверяем пересечения с зомби
-            const intersects = raycaster.intersectObjects(zombies);
+            // Проверяем пересечения с зомби (включая детей)
+            const intersects = raycaster.intersectObjects(zombies, true);
             
             if (intersects.length > 0) {
-                const zombie = intersects[0].object;
+                // Находим родительский объект зомби
+                let zombie = intersects[0].object;
+                while (zombie.parent && !zombies.includes(zombie)) {
+                    zombie = zombie.parent;
+                }
                 
-                // Проверяем крит
-                const isCrit = Math.random() < playerStats.critChance;
-                const damage = isCrit ? playerStats.damage * playerStats.critMultiplier : playerStats.damage;
-                
-                zombie.userData.health -= damage;
-                
-                // Эффект попадания
-                if (isCrit) {
-                    zombie.children.forEach(child => {
-                        if (child.material) {
-                            const originalColor = child.material.color.clone();
-                            child.material.color.set(0xff00ff);
-                            setTimeout(() => {
-                                child.material.color.copy(originalColor);
-                            }, 100);
-                        }
-                    });
+                if (zombies.includes(zombie)) {
+                    // Проверяем крит
+                    const isCrit = Math.random() < playerStats.critChance;
+                    const damage = isCrit ? playerStats.damage * playerStats.critMultiplier : playerStats.damage;
+                    
+                    zombie.userData.health -= damage;
+                    
+                    // Эффект попадания
+                    if (isCrit) {
+                        zombie.children.forEach(child => {
+                            if (child.material) {
+                                const originalColor = child.material.color.clone();
+                                child.material.color.set(0xff00ff);
+                                setTimeout(() => {
+                                    child.material.color.copy(originalColor);
+                                }, 100);
+                            }
+                        });
+                    }
                 }
             }
             
             // Визуальный эффект выстрела
             createMuzzleFlash();
             
-            if (navigator.vibrate) navigator.vibrate(50);
+            if (navigator.vibrate && typeof navigator.vibrate === 'function') {
+                navigator.vibrate(50);
+            }
         }
 
         // Создание вспышки выстрела
@@ -878,11 +970,12 @@
                 playerVelocity.set(0, 0, 0);
             }
             
-            // Применяем движение
+            // Применяем движение с проверкой коллизий
             const newPosition = playerPosition.clone().add(playerVelocity);
             
-            // Проверяем столкновения со стенами
-            if (Math.abs(newPosition.x) < 22 && Math.abs(newPosition.z) < 22) {
+            // Проверяем столкновения со стенами и препятствиями
+            if (Math.abs(newPosition.x) < 45 && Math.abs(newPosition.z) < 45 && 
+                !checkCollision(newPosition) && !checkZombieCollision(newPosition)) {
                 playerPosition.copy(newPosition);
             }
             
@@ -1078,6 +1171,7 @@
             zombies = [];
             bullets = [];
             crystals = [];
+            obstacles = [];
             
             moveDirection.forward = false;
             moveDirection.backward = false;
@@ -1126,7 +1220,7 @@
             playerStats = {
                 damage: 10,
                 fireRate: 2,
-                moveSpeed: 0.1,
+                moveSpeed: 0.08,
                 bulletSpeed: 0.5,
                 healthRegen: 0,
                 critChance: 0.05,
@@ -1173,6 +1267,17 @@
             finalLevel.textContent = playerLevel;
             zombiesKilled.textContent = Math.floor(score / 100);
             wavesCompleted.textContent = currentWave - 1;
+            
+            // ОТПРАВКА РЕЗУЛЬТАТОВ В TELEGRAM
+            if (window.Telegram && Telegram.WebApp) {
+                const gameData = {
+                    score: score,
+                    waves: currentWave - 1,
+                    time: gameTime,
+                    zombies: Math.floor(score / 100)
+                };
+                Telegram.WebApp.sendData(JSON.stringify(gameData));
+            }
         }
 
         function showMenu() {
@@ -1198,6 +1303,18 @@
         // Загрузка страницы
         window.addEventListener('load', () => {
             console.log("Zombie FPS загружен!");
+            
+            // Проверка загрузки Three.js
+            if (typeof THREE === 'undefined') {
+                alert('Ошибка: Three.js не загрузился. Проверьте интернет соединение.');
+                return;
+            }
+            
+            // Проверка WebGL
+            if (!window.WebGLRenderingContext) {
+                alert('Ваш браузер не поддерживает WebGL. Игра не может быть запущена.');
+                return;
+            }
         });
     </script>
 </body>
