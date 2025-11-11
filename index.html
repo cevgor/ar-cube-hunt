@@ -30,220 +30,8 @@
             position: relative;
         }
 
-        /* Главное меню */
-        #menu {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: 
-                linear-gradient(135deg, rgba(10, 10, 20, 0.9), rgba(5, 5, 15, 0.9)),
-                url('zero_background.jpg') center/cover no-repeat;
-            color: #00ffea;
-            text-align: center;
-        }
-
-        .menu-overlay {
-            background: rgba(0, 0, 0, 0.85);
-            padding: 40px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            border: 2px solid #00ffea;
-            box-shadow: 0 0 40px rgba(0, 255, 234, 0.3);
-        }
-
-        .menu-title {
-            font-size: 3.5em;
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px #00ffea;
-            background: linear-gradient(45deg, #00ffea, #0099ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: bold;
-            letter-spacing: 3px;
-        }
-
-        .menu-subtitle {
-            font-size: 1.3em;
-            margin-bottom: 40px;
-            color: #88ffff;
-            text-shadow: 0 0 10px rgba(0, 255, 234, 0.5);
-        }
-
-        .menu-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 100%;
-            max-width: 320px;
-        }
-
-        .menu-button {
-            padding: 18px 30px;
-            font-size: 1.3em;
-            background: linear-gradient(45deg, #1a1a2e, #16213e);
-            color: #00ffea;
-            border: 2px solid #00ffea;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-shadow: 0 0 5px #00ffea;
-            box-shadow: 0 0 20px rgba(0, 255, 234, 0.3);
-            font-weight: bold;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .menu-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 255, 234, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .menu-button:hover::before {
-            left: 100%;
-        }
-
-        .menu-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 30px rgba(0, 255, 234, 0.5);
-            background: linear-gradient(45deg, #252545, #1a2a4a);
-        }
-
-        .menu-button:active {
-            transform: translateY(1px) scale(0.98);
-            box-shadow: 0 0 15px rgba(0, 255, 234, 0.2);
-            transition: all 0.1s ease;
-        }
-
-        .menu-button.pressed {
-            animation: buttonPress 0.3s ease;
-        }
-
-        @keyframes buttonPress {
-            0% { transform: scale(1); }
-            50% { transform: scale(0.95); }
-            100% { transform: scale(1); }
-        }
-
-        .menu-button.secondary {
-            background: linear-gradient(45deg, #2a1a2e, #261225);
-            border-color: #ff00aa;
-            color: #ff00aa;
-            text-shadow: 0 0 5px #ff00aa;
-            box-shadow: 0 0 20px rgba(255, 0, 170, 0.3);
-        }
-
-        .menu-button.secondary:hover {
-            background: linear-gradient(45deg, #3a1a3e, #361235);
-            box-shadow: 0 0 30px rgba(255, 0, 170, 0.5);
-        }
-
-        /* Модальные окна */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, #0a0a15, #151525);
-            padding: 30px;
-            border-radius: 15px;
-            border: 2px solid #00ffea;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            box-shadow: 0 0 50px rgba(0, 255, 234, 0.4);
-            position: relative;
-        }
-
-        .modal-title {
-            font-size: 2em;
-            margin-bottom: 20px;
-            color: #00ffea;
-            text-shadow: 0 0 10px #00ffea;
-        }
-
-        .close-button {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 35px;
-            height: 35px;
-            cursor: pointer;
-            font-size: 1.3em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
-            transition: all 0.2s ease;
-        }
-
-        .close-button:hover {
-            background: #ff5555;
-            transform: scale(1.1);
-        }
-
-        .close-button:active {
-            transform: scale(0.95);
-        }
-
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 20px 0;
-            padding: 15px;
-            background: rgba(0, 255, 234, 0.1);
-            border-radius: 10px;
-            border: 1px solid rgba(0, 255, 234, 0.3);
-        }
-
-        .slider {
-            width: 150px;
-            height: 8px;
-            background: #1a1a2e;
-            border-radius: 4px;
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 22px;
-            height: 22px;
-            background: #00ffea;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 10px #00ffea;
-            transition: all 0.2s ease;
-        }
-
-        .slider::-webkit-slider-thumb:active {
-            transform: scale(0.9);
-        }
-
         /* Игровой интерфейс */
         #gameUI {
-            display: none;
             position: absolute;
             top: 0;
             left: 0;
@@ -310,7 +98,6 @@
             bottom: 120px;
             left: 80px;
             pointer-events: auto;
-            display: none;
         }
 
         #joystickBase {
@@ -344,7 +131,7 @@
             color: white;
             pointer-events: auto;
             font-size: 1.5em;
-            display: none;
+            display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
@@ -392,12 +179,10 @@
             border: 2px solid #00ffea;
             font-weight: bold;
             box-shadow: 0 0 20px rgba(0, 255, 234, 0.3);
-            display: none;
         }
 
         /* Прицел */
         #crosshair {
-            display: none;
             position: absolute;
             top: 50%;
             left: 50%;
@@ -426,60 +211,6 @@
             top: 50%;
             transform: translateY(-50%);
             box-shadow: 0 0 8px #00ffea;
-        }
-
-        /* Меню улучшений */
-        #upgradeMenu {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.97);
-            color: #00ffea;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .upgrade-option {
-            background: linear-gradient(135deg, rgba(0, 255, 234, 0.15), rgba(0, 153, 255, 0.1));
-            padding: 25px;
-            margin: 15px;
-            border-radius: 12px;
-            cursor: pointer;
-            text-align: center;
-            min-width: 300px;
-            transition: all 0.3s;
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(0, 255, 234, 0.4);
-            box-shadow: 0 0 20px rgba(0, 255, 234, 0.2);
-        }
-
-        .upgrade-option:hover {
-            background: linear-gradient(135deg, rgba(0, 255, 234, 0.25), rgba(0, 153, 255, 0.2));
-            transform: scale(1.05);
-            border-color: #00ffea;
-            box-shadow: 0 0 30px rgba(0, 255, 234, 0.4);
-        }
-
-        .upgrade-option:active {
-            transform: scale(0.95);
-        }
-
-        .upgrade-name {
-            font-size: 1.3em;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #00ffea;
-            text-shadow: 0 0 5px #00ffea;
-        }
-
-        .upgrade-desc {
-            font-size: 1em;
-            opacity: 0.9;
         }
 
         /* Результаты игры */
@@ -529,53 +260,33 @@
             width: 100%;
             height: 100%;
         }
+
+        .menu-button {
+            padding: 18px 30px;
+            font-size: 1.3em;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            color: #00ffea;
+            border: 2px solid #00ffea;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px #00ffea;
+            box-shadow: 0 0 20px rgba(0, 255, 234, 0.3);
+            font-weight: bold;
+        }
+
+        .menu-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(0, 255, 234, 0.5);
+        }
+
+        .menu-button:active {
+            transform: translateY(1px) scale(0.98);
+        }
     </style>
 </head>
 <body>
     <div id="app">
-        <!-- Главное меню -->
-        <div id="menu">
-            <div class="menu-overlay">
-                <h1 class="menu-title">Z.E.R.O.</h1>
-                <p class="menu-subtitle">LAST BREACH</p>
-                <div class="menu-buttons">
-                    <button class="menu-button" id="startButton">🎮 НАЧАТЬ МИССИЮ</button>
-                    <button class="menu-button" id="settingsButton">⚙️ НАСТРОЙКИ</button>
-                    <button class="menu-button secondary" id="helpButton">📖 ОБУЧЕНИЕ</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Модальное окно настроек -->
-        <div id="settingsModal" class="modal">
-            <div class="modal-content">
-                <button class="close-button" id="closeSettingsButton">×</button>
-                <h2 class="modal-title">⚙️ НАСТРОЙКИ</h2>
-                
-                <div class="setting-item">
-                    <span>🔊 Громкость звуков</span>
-                    <input type="range" class="slider" id="soundVolume" min="0" max="100" value="80">
-                </div>
-                
-                <div class="setting-item">
-                    <span>🎵 Громкость музыки</span>
-                    <input type="range" class="slider" id="musicVolume" min="0" max="100" value="60">
-                </div>
-                
-                <div class="setting-item">
-                    <span>🎮 Чувствительность</span>
-                    <input type="range" class="slider" id="sensitivity" min="1" max="10" value="5">
-                </div>
-                
-                <div class="setting-item">
-                    <span>⚡ Качество графики</span>
-                    <input type="range" class="slider" id="graphicsQuality" min="1" max="3" value="2">
-                </div>
-                
-                <button class="menu-button" style="margin-top: 20px; width: 100%;" id="applySettingsButton">💾 СОХРАНИТЬ</button>
-            </div>
-        </div>
-
         <!-- Игровой интерфейс -->
         <div id="gameUI">
             <!-- Статистика -->
@@ -590,11 +301,11 @@
             <div class="health-panel">
                 <div style="margin-bottom: 5px;">❤️ Здоровье</div>
                 <div class="bar-container">
-                    <div id="healthFill" class="health-bar"></div>
+                    <div id="healthFill" class="health-bar" style="width: 100%"></div>
                 </div>
                 <div style="margin-top: 10px;">⚡ Опыт</div>
                 <div class="bar-container">
-                    <div id="expFill" class="exp-bar"></div>
+                    <div id="expFill" class="exp-bar" style="width: 0%"></div>
                 </div>
             </div>
             
@@ -618,18 +329,10 @@
             <div class="crosshair-horizontal"></div>
         </div>
 
-        <!-- Меню улучшений -->
-        <div id="upgradeMenu">
-            <div class="modal-content">
-                <h2 class="modal-title">🎯 ВЫБЕРИТЕ УЛУЧШЕНИЕ</h2>
-                <div id="upgradeOptions"></div>
-            </div>
-        </div>
-
         <!-- Результаты игры -->
         <div id="results">
             <div class="results-content">
-                <h2 class="modal-title">🎮 МИССИЯ ЗАВЕРШЕНА</h2>
+                <h2 style="font-size: 2em; margin-bottom: 20px; color: #00ffea; text-shadow: 0 0 10px #00ffea;">🎮 МИССИЯ ЗАВЕРШЕНА</h2>
                 <div class="results-stats">
                     <div>⭐ Очки: <span id="finalScore">0</span></div>
                     <div>🎯 Уровень: <span id="finalLevel">1</span></div>
@@ -638,7 +341,7 @@
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 25px;">
                     <button class="menu-button" id="restartButton">🔄 НОВАЯ МИССИЯ</button>
-                    <button class="menu-button secondary" id="menuButton">📋 ГЛАВНОЕ МЕНЮ</button>
+                    <button class="menu-button" id="menuButton" style="background: linear-gradient(45deg, #2a1a2e, #261225); border-color: #ff00aa; color: #ff00aa;">📋 ВЫХОД</button>
                 </div>
             </div>
         </div>
@@ -685,110 +388,28 @@
         let previousMouseY = 0;
         let cameraTouchId = null;
 
-        // === ОБРАБОТЧИКИ КНОПОК ===
-
-        // Функция для анимации нажатия кнопки
-        function animateButtonPress(button) {
-            console.log("🔄 Анимация нажатия кнопки");
-            button.classList.add('pressed');
-            setTimeout(() => {
-                button.classList.remove('pressed');
-            }, 300);
-        }
-
-        // Инициализация обработчиков событий
-        function initializeEventHandlers() {
-            console.log("🔄 Инициализация обработчиков событий...");
-
-            // Главное меню
-            document.getElementById('startButton').addEventListener('click', function(e) {
-                console.log("🎮 Кнопка START нажата");
-                e.preventDefault();
-                e.stopPropagation();
-                animateButtonPress(this);
-                startGame();
-            });
-
-            document.getElementById('settingsButton').addEventListener('click', function(e) {
-                console.log("⚙️ Кнопка SETTINGS нажата");
-                e.preventDefault();
-                e.stopPropagation();
-                animateButtonPress(this);
-                showSettingsModal();
-            });
-
-            document.getElementById('helpButton').addEventListener('click', function(e) {
-                console.log("📖 Кнопка HELP нажата");
-                e.preventDefault();
-                e.stopPropagation();
-                animateButtonPress(this);
-                showInstructions();
-            });
-
-            // Модальные окна
-            document.getElementById('closeSettingsButton').addEventListener('click', function(e) {
-                console.log("❌ Кнопка CLOSE SETTINGS нажата");
-                e.preventDefault();
-                e.stopPropagation();
-                animateButtonPress(this);
-                closeSettingsModal();
-            });
-
-            document.getElementById('applySettingsButton').addEventListener('click', function(e) {
-                console.log("💾 Кнопка APPLY SETTINGS нажата");
-                e.preventDefault();
-                e.stopPropagation();
-                animateButtonPress(this);
-                applySettings();
-            });
-
-            // Игровые кнопки
-            document.getElementById('restartButton').addEventListener('click', function(e) {
-                console.log("🔄 Кнопка RESTART нажата");
-                e.preventDefault();
-                e.stopPropagation();
-                animateButtonPress(this);
-                restartGame();
-            });
-
-            document.getElementById('menuButton').addEventListener('click', function(e) {
-                console.log("📋 Кнопка MENU нажата");
-                e.preventDefault();
-                e.stopPropagation();
-                animateButtonPress(this);
-                showMenu();
-            });
-
-            document.getElementById('shootBtn').addEventListener('click', function(e) {
-                console.log("🔫 Кнопка SHOOT нажата");
-                e.preventDefault();
-                e.stopPropagation();
-                shoot();
-            });
-
-            document.getElementById('skillBtn').addEventListener('click', function(e) {
-                console.log("❄️ Кнопка SKILL нажата");
-                e.preventDefault();
-                e.stopPropagation();
-                useSkill();
-            });
-
-            console.log("✅ Обработчики событий инициализированы");
-        }
-
-        // === ФУНКЦИИ МЕНЮ ===
+        // === ЗАГРУЗКА СТРАНИЦЫ ===
+        window.addEventListener('load', function() {
+            console.log("🚀 Z.E.R.O.: Last Breach загружен!");
+            
+            if (typeof THREE === 'undefined') {
+                alert('❌ Ошибка: Three.js не загрузился');
+                return;
+            }
+            
+            if (!window.WebGLRenderingContext) {
+                alert('❌ Ваш браузер не поддерживает WebGL');
+                return;
+            }
+            
+            // Сразу запускаем игру
+            startGame();
+            
+            console.log("✅ Все системы готовы к работе");
+        });
 
         function startGame() {
             console.log("🎮 Запуск игры...");
-            
-            // Скрываем меню, показываем игровой интерфейс
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('gameUI').style.display = 'block';
-            document.getElementById('crosshair').style.display = 'block';
-            document.getElementById('joystickContainer').style.display = 'block';
-            document.getElementById('shootBtn').style.display = 'flex';
-            document.getElementById('skillBtn').style.display = 'flex';
-            document.getElementById('weaponDisplay').style.display = 'block';
             
             // Сброс игрового состояния
             resetGameState();
@@ -805,51 +426,6 @@
             animationFrameId = requestAnimationFrame(gameLoop);
             
             console.log("✅ Игра запущена");
-        }
-
-        function showSettingsModal() {
-            console.log("⚙️ Открытие модального окна настроек");
-            document.getElementById('settingsModal').style.display = 'flex';
-        }
-
-        function closeSettingsModal() {
-            console.log("❌ Закрытие модального окна настроек");
-            document.getElementById('settingsModal').style.display = 'none';
-        }
-
-        function applySettings() {
-            console.log("💾 Применение настроек");
-            // Здесь будет логика применения настроек
-            closeSettingsModal();
-            alert('✅ Настройки сохранены!');
-        }
-
-        function showInstructions() {
-            console.log("📖 Показ инструкций");
-            alert(`🎮 Z.E.R.O.: LAST BREACH - УПРАВЛЕНИЕ
-
-• Джойстик слева - движение
-• Кнопка 🔫 - стрельба  
-• Кнопка ❄️ - криогенная стазис
-• Правая часть экрана - поворот камеры
-
-⚡ ТАКТИЧЕСКИЕ СОВЕТЫ:
-• Используйте укрытия для перезарядки
-• Собирайте энергоядра для улучшений
-• Меняйте оружие в зависимости от ситуации`);
-        }
-
-        function showMenu() {
-            console.log("📋 Возврат в главное меню");
-            cleanupGame();
-            document.getElementById('results').style.display = 'none';
-            document.getElementById('menu').style.display = 'flex';
-        }
-
-        function restartGame() {
-            console.log("🔄 Перезапуск игры");
-            showMenu();
-            setTimeout(startGame, 500);
         }
 
         // === ИГРОВАЯ ЛОГИКА ===
@@ -1051,6 +627,8 @@
         function shoot() {
             if (!isGameRunning || isPaused) return;
             
+            console.log("🔫 Выстрел!");
+            
             // Простая система стрельбы - начисляем очки
             score += 10;
             updateScore();
@@ -1073,6 +651,8 @@
 
         function useSkill() {
             if (!isGameRunning || isPaused) return;
+            
+            console.log("❄️ Использование умения!");
             
             // Простой навык - замедление врагов
             enemies.forEach(enemy => {
@@ -1201,6 +781,31 @@
         // === СИСТЕМА УПРАВЛЕНИЯ ===
 
         function setupControls() {
+            // Инициализация кнопок
+            document.getElementById('shootBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                shoot();
+            });
+
+            document.getElementById('skillBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                useSkill();
+            });
+
+            document.getElementById('restartButton').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                restartGame();
+            });
+
+            document.getElementById('menuButton').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showMenu();
+            });
+
             setupJoystick();
             
             // Управление камерой (правая часть экрана)
@@ -1328,26 +933,23 @@
             });
         }
 
-        // === ЗАГРУЗКА СТРАНИЦЫ ===
+        function restartGame() {
+            console.log("🔄 Перезапуск игры");
+            cleanupGame();
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('gameUI').style.display = 'block';
+            setTimeout(startGame, 500);
+        }
 
-        window.addEventListener('load', function() {
-            console.log("🚀 Z.E.R.O.: Last Breach загружен!");
-            
-            if (typeof THREE === 'undefined') {
-                alert('❌ Ошибка: Three.js не загрузился');
-                return;
-            }
-            
-            if (!window.WebGLRenderingContext) {
-                alert('❌ Ваш браузер не поддерживает WebGL');
-                return;
-            }
-            
-            // Инициализируем обработчики событий
-            initializeEventHandlers();
-            
-            console.log("✅ Все системы готовы к работе");
-        });
+        function showMenu() {
+            console.log("📋 Выход в меню");
+            cleanupGame();
+            alert("Возврат в главное меню - для полноценной версии добавьте меню обратно");
+            // Для полноценной версии здесь будет переход в главное меню
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('gameUI').style.display = 'block';
+            startGame();
+        }
 
         // Обработка изменения размера окна
         window.addEventListener('resize', function() {
@@ -1355,15 +957,6 @@
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
-            }
-        });
-
-        // Закрытие модальных окон по клику вне области
-        window.addEventListener('click', function(event) {
-            const settingsModal = document.getElementById('settingsModal');
-            
-            if (event.target === settingsModal) {
-                closeSettingsModal();
             }
         });
     </script>
