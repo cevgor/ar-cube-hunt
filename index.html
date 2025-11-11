@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zombie FPS - Low Poly</title>
+    <title>Z.E.R.O.: Last Breach</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
@@ -30,52 +30,163 @@
             position: relative;
         }
 
-        /* Меню */
+        /* Главное меню с фоновым изображением */
         #menu {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            background: 
+                linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(22, 33, 62, 0.8)),
+                url('zero_background.jpg') center/cover no-repeat;
             color: white;
             text-align: center;
+            position: relative;
+        }
+
+        .menu-overlay {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
         }
 
         .menu-title {
-            font-size: 3em;
+            font-size: 3.5em;
             margin-bottom: 20px;
-            text-shadow: 0 0 10px #ff0000;
+            text-shadow: 0 0 20px #00ffff, 0 0 30px #0088ff;
+            background: linear-gradient(45deg, #00ffff, #0088ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            letter-spacing: 2px;
         }
 
         .menu-subtitle {
-            font-size: 1.2em;
-            margin-bottom: 30px;
+            font-size: 1.3em;
+            margin-bottom: 40px;
+            color: #cccccc;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
         }
 
         .menu-button {
-            padding: 15px 30px;
-            font-size: 1.2em;
-            background: #e74c3c;
+            padding: 18px 30px;
+            font-size: 1.3em;
+            background: linear-gradient(45deg, #00aaff, #0088ff);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
-            margin: 10px;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0, 136, 255, 0.3);
+            font-weight: bold;
         }
 
         .menu-button:hover {
-            background: #c0392b;
-            transform: scale(1.05);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 136, 255, 0.5);
+            background: linear-gradient(45deg, #00bbff, #0099ff);
+        }
+
+        .menu-button:active {
+            transform: translateY(1px);
         }
 
         .menu-button.secondary {
-            background: #3498db;
+            background: linear-gradient(45deg, #666666, #888888);
         }
 
         .menu-button.secondary:hover {
-            background: #2980b9;
+            background: linear-gradient(45deg, #777777, #999999);
+        }
+
+        .menu-button.disabled {
+            background: linear-gradient(45deg, #444444, #666666);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .menu-button.disabled:hover {
+            transform: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid #00aaff;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 170, 255, 0.3);
+        }
+
+        .modal-title {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .slider {
+            width: 150px;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            outline: none;
         }
 
         /* Игровой интерфейс */
@@ -94,42 +205,45 @@
             position: absolute;
             top: 10px;
             left: 10px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 5px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
             color: white;
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 170, 255, 0.3);
         }
 
         .health-panel {
             position: absolute;
             top: 10px;
             right: 10px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 5px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
             color: white;
-            width: 200px;
+            width: 220px;
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 170, 255, 0.3);
         }
 
         .bar-container {
             background: #333;
             border-radius: 10px;
             overflow: hidden;
-            margin: 5px 0;
+            margin: 8px 0;
+            border: 1px solid #444;
         }
 
         .health-bar {
-            background: linear-gradient(90deg, #e74c3c, #f39c12);
+            background: linear-gradient(90deg, #ff4444, #ffaa00);
             height: 20px;
             width: 100%;
             transition: width 0.3s;
         }
 
         .exp-bar {
-            background: linear-gradient(90deg, #00ff00, #00cc00);
-            height: 10px;
+            background: linear-gradient(90deg, #00ff00, #00aa00);
+            height: 12px;
             width: 0%;
             transition: width 0.3s;
         }
@@ -145,22 +259,22 @@
         #joystickBase {
             width: 120px;
             height: 120px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(0, 170, 255, 0.2);
             border-radius: 50%;
             position: relative;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 2px solid rgba(0, 170, 255, 0.5);
         }
 
         #joystickHandle {
             width: 60px;
             height: 60px;
-            background: rgba(255,255,255,0.5);
+            background: rgba(0, 170, 255, 0.6);
             border-radius: 50%;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            border: 2px solid rgba(255,255,255,0.8);
+            border: 2px solid rgba(255, 255, 255, 0.8);
         }
 
         /* Кнопки действия */
@@ -175,6 +289,7 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
 
         .action-button:active {
@@ -186,7 +301,7 @@
             right: 80px;
             width: 80px;
             height: 80px;
-            background: rgba(231, 76, 60, 0.7);
+            background: linear-gradient(45deg, #ff4444, #ff0000);
         }
 
         #skillBtn {
@@ -194,7 +309,7 @@
             right: 80px;
             width: 60px;
             height: 60px;
-            background: rgba(52, 152, 219, 0.7);
+            background: linear-gradient(45deg, #00aaff, #0088ff);
             font-size: 1.2em;
         }
 
@@ -203,12 +318,14 @@
             bottom: 50px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.7);
-            padding: 10px 20px;
-            border-radius: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 12px 25px;
+            border-radius: 25px;
             color: white;
             pointer-events: auto;
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 170, 255, 0.3);
+            font-weight: bold;
         }
 
         /* Прицел */
@@ -218,8 +335,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             pointer-events: none;
             z-index: 20;
         }
@@ -227,19 +344,21 @@
         .crosshair-vertical {
             position: absolute;
             width: 2px;
-            height: 20px;
-            background: #fff;
+            height: 24px;
+            background: #00ffff;
             left: 50%;
             transform: translateX(-50%);
+            box-shadow: 0 0 5px #00ffff;
         }
 
         .crosshair-horizontal {
             position: absolute;
-            width: 20px;
+            width: 24px;
             height: 2px;
-            background: #fff;
+            background: #00ffff;
             top: 50%;
             transform: translateY(-50%);
+            box-shadow: 0 0 5px #00ffff;
         }
 
         /* Меню улучшений */
@@ -250,7 +369,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             color: white;
             flex-direction: column;
             align-items: center;
@@ -259,31 +378,34 @@
         }
 
         .upgrade-option {
-            background: rgba(255,255,255,0.1);
-            padding: 20px;
-            margin: 10px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(0, 170, 255, 0.2), rgba(0, 136, 255, 0.1));
+            padding: 25px;
+            margin: 15px;
+            border-radius: 15px;
             cursor: pointer;
             text-align: center;
-            min-width: 300px;
+            min-width: 320px;
             transition: all 0.3s;
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 170, 255, 0.3);
         }
 
         .upgrade-option:hover {
-            background: rgba(255,255,255,0.2);
+            background: linear-gradient(135deg, rgba(0, 170, 255, 0.3), rgba(0, 136, 255, 0.2));
             transform: scale(1.05);
+            border-color: #00aaff;
         }
 
         .upgrade-name {
-            font-size: 1.2em;
+            font-size: 1.3em;
             font-weight: bold;
             margin-bottom: 10px;
+            color: #00ffff;
         }
 
         .upgrade-desc {
-            font-size: 0.9em;
-            opacity: 0.8;
+            font-size: 1em;
+            opacity: 0.9;
         }
 
         /* Результаты игры */
@@ -294,7 +416,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             color: white;
             flex-direction: column;
             align-items: center;
@@ -302,14 +424,26 @@
             z-index: 1000;
         }
 
+        .results-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #00aaff;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 170, 255, 0.3);
+        }
+
         .results-stats {
-            font-size: 1.2em;
-            margin: 20px 0;
+            font-size: 1.3em;
+            margin: 25px 0;
             text-align: center;
         }
 
         .results-stats div {
-            margin: 10px 0;
+            margin: 12px 0;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
         }
 
         /* Контейнер игры */
@@ -320,16 +454,84 @@
             width: 100%;
             height: 100%;
         }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #ff4444;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
     <div id="app">
         <!-- Главное меню -->
         <div id="menu">
-            <h1 class="menu-title">🧟 ZOMBIE SHOOTER</h1>
-            <p class="menu-subtitle">Выживай любой ценой!</p>
-            <button class="menu-button" onclick="startGame()">🎮 НАЧАТЬ ИГРУ</button>
-            <button class="menu-button secondary" onclick="showInstructions()">📖 ОБУЧЕНИЕ</button>
+            <div class="menu-overlay">
+                <h1 class="menu-title">Z.E.R.O.: LAST BREACH</h1>
+                <p class="menu-subtitle">Защити последний рубеж любой ценой</p>
+                <div class="menu-buttons">
+                    <button class="menu-button" onclick="startGame()">🎮 НАЧАТЬ МИССИЮ</button>
+                    <button class="menu-button" onclick="showMultiplayerModal()">🌐 МУЛЬТИПЛЕЕР <span class="status-badge">СКОРО</span></button>
+                    <button class="menu-button" onclick="showSettingsModal()">⚙️ НАСТРОЙКИ</button>
+                    <button class="menu-button secondary" onclick="showInstructions()">📖 ОБУЧЕНИЕ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно настроек -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <button class="close-button" onclick="closeSettingsModal()">×</button>
+                <h2 class="modal-title">⚙️ НАСТРОЙКИ</h2>
+                
+                <div class="setting-item">
+                    <span>🔊 Громкость звуков</span>
+                    <input type="range" class="slider" id="soundVolume" min="0" max="100" value="80">
+                </div>
+                
+                <div class="setting-item">
+                    <span>🎵 Громкость музыки</span>
+                    <input type="range" class="slider" id="musicVolume" min="0" max="100" value="60">
+                </div>
+                
+                <div class="setting-item">
+                    <span>🎮 Чувствительность</span>
+                    <input type="range" class="slider" id="sensitivity" min="1" max="10" value="5">
+                </div>
+                
+                <div class="setting-item">
+                    <span>⚡ Качество графики</span>
+                    <input type="range" class="slider" id="graphicsQuality" min="1" max="3" value="2">
+                </div>
+                
+                <button class="menu-button" style="margin-top: 20px; width: 100%;" onclick="applySettings()">💾 СОХРАНИТЬ</button>
+            </div>
+        </div>
+
+        <!-- Модальное окно мультиплеера -->
+        <div id="multiplayerModal" class="modal">
+            <div class="modal-content">
+                <button class="close-button" onclick="closeMultiplayerModal()">×</button>
+                <h2 class="modal-title">🌐 МУЛЬТИПЛЕЕР</h2>
+                <p style="margin: 20px 0; font-size: 1.1em; color: #ff4444;">
+                    ❌ Режим в разработке<br>
+                    <span style="color: #cccccc; font-size: 0.9em;">Следите за обновлениями!</span>
+                </p>
+                <div style="margin: 25px 0; padding: 20px; background: rgba(255, 68, 68, 0.1); border-radius: 10px; border: 1px solid #ff4444;">
+                    <h3 style="color: #ffaa00; margin-bottom: 10px;">🚧 Скоро будет доступно:</h3>
+                    <ul style="text-align: left; color: #cccccc; line-height: 1.6;">
+                        <li>⚔️ Кооператив до 4 игроков</li>
+                        <li>🏆 Командные рейтинги</li>
+                        <li>🎯 PvP режимы</li>
+                        <li>🔗 Приглашение друзей</li>
+                    </ul>
+                </div>
+                <button class="menu-button" style="width: 100%;" onclick="closeMultiplayerModal()">ПОНЯТНО</button>
+            </div>
         </div>
 
         <!-- Игровой интерфейс -->
@@ -339,7 +541,7 @@
                 <div>⭐ Очки: <span id="scoreValue">0</span></div>
                 <div>🎯 Уровень: <span id="levelValue">1</span></div>
                 <div>🌊 Волна: <span id="waveValue">1</span></div>
-                <div>🧟 Зомби: <span id="zombiesValue">0</span></div>
+                <div>🎯 Уничтожено: <span id="zombiesValue">0</span></div>
             </div>
             
             <!-- Здоровье и опыт -->
@@ -365,7 +567,7 @@
             <button id="skillBtn" class="action-button">❄️</button>
             
             <!-- Отображение оружия -->
-            <div id="weaponDisplay">🔫 Пистолет</div>
+            <div id="weaponDisplay">🔫 Тактический пистолет</div>
         </div>
 
         <!-- Прицел -->
@@ -376,21 +578,27 @@
 
         <!-- Меню улучшений -->
         <div id="upgradeMenu">
-            <h2>🎯 ВЫБЕРИТЕ УЛУЧШЕНИЕ</h2>
-            <div id="upgradeOptions"></div>
+            <div class="modal-content">
+                <h2 class="modal-title">🎯 ВЫБЕРИТЕ УЛУЧШЕНИЕ</h2>
+                <div id="upgradeOptions"></div>
+            </div>
         </div>
 
         <!-- Результаты игры -->
         <div id="results">
-            <h2>🎮 ИГРА ЗАВЕРШЕНА</h2>
-            <div class="results-stats">
-                <div>⭐ Очки: <span id="finalScore">0</span></div>
-                <div>🎯 Уровень: <span id="finalLevel">1</span></div>
-                <div>🧟 Убито зомби: <span id="zombiesKilled">0</span></div>
-                <div>🌊 Волн пройдено: <span id="wavesCompleted">1</span></div>
+            <div class="results-content">
+                <h2 class="modal-title">🎮 МИССИЯ ЗАВЕРШЕНА</h2>
+                <div class="results-stats">
+                    <div>⭐ Очки: <span id="finalScore">0</span></div>
+                    <div>🎯 Уровень: <span id="finalLevel">1</span></div>
+                    <div>🎯 Уничтожено: <span id="zombiesKilled">0</span></div>
+                    <div>🌊 Волн пройдено: <span id="wavesCompleted">1</span></div>
+                </div>
+                <div class="menu-buttons">
+                    <button class="menu-button" onclick="restartGame()">🔄 НОВАЯ МИССИЯ</button>
+                    <button class="menu-button secondary" onclick="showMenu()">📋 ГЛАВНОЕ МЕНЮ</button>
+                </div>
             </div>
-            <button class="menu-button" onclick="restartGame()">🔄 ИГРАТЬ СНОВА</button>
-            <button class="menu-button secondary" onclick="showMenu()">📋 ГЛАВНОЕ МЕНЮ</button>
         </div>
 
         <!-- Контейнер для Three.js -->
@@ -402,8 +610,16 @@
         if (window.Telegram && Telegram.WebApp) {
             Telegram.WebApp.ready();
             Telegram.WebApp.expand();
-            console.log("Telegram WebApp initialized");
+            console.log("Z.E.R.O.: Last Breach - Telegram WebApp initialized");
         }
+
+        // Настройки игры
+        let gameSettings = {
+            soundVolume: 80,
+            musicVolume: 60,
+            sensitivity: 5,
+            graphicsQuality: 2
+        };
 
         // Игровые переменные
         let scene, camera, renderer;
@@ -430,12 +646,12 @@
             dirt: new THREE.MeshLambertMaterial({ color: 0x8B7355 }),
             wood: new THREE.MeshLambertMaterial({ color: 0xDEB887 }),
             stone: new THREE.MeshLambertMaterial({ color: 0x9E9E9E }),
-            zombieNormal: new THREE.MeshLambertMaterial({ color: 0x6B8E23 }),
-            zombieFast: new THREE.MeshLambertMaterial({ color: 0x4169E1 }),
-            zombieTank: new THREE.MeshLambertMaterial({ color: 0xDC143C }),
+            enemyNormal: new THREE.MeshLambertMaterial({ color: 0x6B8E23 }),
+            enemyFast: new THREE.MeshLambertMaterial({ color: 0x4169E1 }),
+            enemyTank: new THREE.MeshLambertMaterial({ color: 0xDC143C }),
             playerSkin: new THREE.MeshLambertMaterial({ color: 0xFFE0BD }),
             weapon: new THREE.MeshLambertMaterial({ color: 0x2F4F4F }),
-            house: new THREE.MeshLambertMaterial({ color: 0xD2691E }),
+            structure: new THREE.MeshLambertMaterial({ color: 0xD2691E }),
             roof: new THREE.MeshLambertMaterial({ color: 0x8B4513 }),
             window: new THREE.MeshLambertMaterial({ color: 0x87CEEB })
         };
@@ -465,24 +681,24 @@
 
         // Система оружия
         const weapons = {
-            pistol: { damage: 20, fireRate: 2, name: "🔫 Пистолет", color: 0xFFFF00 },
-            shotgun: { damage: 40, fireRate: 0.8, name: "🔫 Дробовик", color: 0xFF4444 },
-            rifle: { damage: 15, fireRate: 4, name: "🔫 Автомат", color: 0x4444FF }
+            pistol: { damage: 20, fireRate: 2, name: "🔫 Тактический пистолет", color: 0xFFFF00 },
+            shotgun: { damage: 40, fireRate: 0.8, name: "🔫 Штурмовой дробовик", color: 0xFF4444 },
+            rifle: { damage: 15, fireRate: 4, name: "🔫 Штурмовая винтовка", color: 0x4444FF }
         };
         let currentWeapon = 'pistol';
         let weaponUnlocks = { pistol: true, shotgun: false, rifle: false };
 
-        // Типы зомби
-        const zombieTypes = {
-            normal: { health: 2, speed: 0.008, material: materials.zombieNormal, score: 100 },
-            fast: { health: 1, speed: 0.015, material: materials.zombieFast, score: 150 },
-            tank: { health: 5, speed: 0.005, material: materials.zombieTank, score: 200 }
+        // Типы врагов
+        const enemyTypes = {
+            normal: { health: 2, speed: 0.008, material: materials.enemyNormal, score: 100 },
+            fast: { health: 1, speed: 0.015, material: materials.enemyFast, score: 150 },
+            tank: { health: 5, speed: 0.005, material: materials.enemyTank, score: 200 }
         };
 
         // Система умений
         const skills = {
             freeze: {
-                name: "❄️ ЗАМОРОЗКА",
+                name: "❄️ КРИОГЕННАЯ СТАЗИС",
                 cooldown: 30000,
                 currentCooldown: 0,
                 effect: () => {
@@ -504,10 +720,10 @@
                                 if (zombie.userData.isFrozen) {
                                     zombie.userData.speed = zombie.userData.originalSpeed;
                                     zombie.userData.isFrozen = false;
-                                    const zombieType = zombie.userData.type || 'normal';
+                                    const enemyType = zombie.userData.type || 'normal';
                                     zombie.children.forEach(child => {
                                         if (child.isMesh) {
-                                            child.material.color.copy(zombieTypes[zombieType].material.color);
+                                            child.material.color.copy(enemyTypes[enemyType].material.color);
                                         }
                                     });
                                 }
@@ -519,6 +735,45 @@
             }
         };
 
+        // Функции для модальных окон
+        function showSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'flex';
+            // Загружаем текущие настройки в слайдеры
+            document.getElementById('soundVolume').value = gameSettings.soundVolume;
+            document.getElementById('musicVolume').value = gameSettings.musicVolume;
+            document.getElementById('sensitivity').value = gameSettings.sensitivity;
+            document.getElementById('graphicsQuality').value = gameSettings.graphicsQuality;
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function showMultiplayerModal() {
+            document.getElementById('multiplayerModal').style.display = 'flex';
+        }
+
+        function closeMultiplayerModal() {
+            document.getElementById('multiplayerModal').style.display = 'none';
+        }
+
+        function applySettings() {
+            gameSettings.soundVolume = parseInt(document.getElementById('soundVolume').value);
+            gameSettings.musicVolume = parseInt(document.getElementById('musicVolume').value);
+            gameSettings.sensitivity = parseInt(document.getElementById('sensitivity').value);
+            gameSettings.graphicsQuality = parseInt(document.getElementById('graphicsQuality').value);
+            
+            // Применяем настройки чувствительности
+            cameraSensitivity = 0.01 + (gameSettings.sensitivity * 0.005);
+            
+            closeSettingsModal();
+            
+            // Показываем подтверждение
+            alert('✅ Настройки сохранены!');
+        }
+
+        // Остальной код игры (LowPolyHands, LowPolyEnemy, LowPolyEnvironment, инициализация Three.js, игровая логика)
+        // ... [Здесь должен быть весь остальной код из предыдущей версии, но с обновленными названиями]
         // Low-poly руки игрока
         class LowPolyHands {
             constructor() {
@@ -642,18 +897,18 @@
             }
         }
 
-        // Low-poly зомби
-        class LowPolyZombie {
+        // Low-poly враги
+        class LowPolyEnemy {
             constructor(type, position) {
                 this.mesh = new THREE.Group();
                 this.type = type;
                 this.animationTime = Math.random() * Math.PI * 2;
-                this.createZombie();
+                this.createEnemy();
                 this.mesh.position.copy(position);
             }
             
-            createZombie() {
-                const stats = zombieTypes[this.type];
+            createEnemy() {
+                const stats = enemyTypes[this.type];
                 
                 // Тело (усеченная пирамида для low-poly стиля)
                 const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.4, 0.8, 5);
@@ -777,21 +1032,21 @@
                 return new THREE.Mesh(skyGeometry, skyMaterial);
             }
             
-            createHouse(x, z) {
-                const house = new THREE.Group();
+            createStructure(x, z) {
+                const structure = new THREE.Group();
                 
-                // Основание дома (low-poly куб)
+                // Основание (low-poly куб)
                 const baseGeometry = new THREE.BoxGeometry(6, 4, 6);
-                const base = new THREE.Mesh(baseGeometry, materials.house);
+                const base = new THREE.Mesh(baseGeometry, materials.structure);
                 base.position.y = 2;
-                house.add(base);
+                structure.add(base);
                 
                 // Low-poly крыша (пирамида)
                 const roofGeometry = new THREE.ConeGeometry(4, 3, 4);
                 const roof = new THREE.Mesh(roofGeometry, materials.roof);
                 roof.position.y = 5.5;
                 roof.rotation.y = Math.PI / 4;
-                house.add(roof);
+                structure.add(roof);
                 
                 // Окна
                 const windowGeometry = new THREE.PlaneGeometry(1, 1);
@@ -802,7 +1057,7 @@
                     const zPos = i < 2 ? 1.5 : -1.5;
                     window.position.set(xPos, 2.5, zPos);
                     window.rotation.y = i % 2 === 0 ? -Math.PI / 2 : Math.PI / 2;
-                    house.add(window);
+                    structure.add(window);
                 }
                 
                 // Дверь
@@ -810,10 +1065,10 @@
                 const doorMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
                 const door = new THREE.Mesh(doorGeometry, doorMaterial);
                 door.position.set(0, 1.25, 3.1);
-                house.add(door);
+                structure.add(door);
                 
-                house.position.set(x, 0, z);
-                return house;
+                structure.position.set(x, 0, z);
+                return structure;
             }
             
             createTree(x, z) {
@@ -836,7 +1091,7 @@
                 return tree;
             }
             
-            createStreetLight(x, z) {
+            createLightSource(x, z) {
                 const light = new THREE.Group();
                 
                 // Столб
@@ -874,16 +1129,16 @@
                 environment.add(sky);
                 this.objects.push(sky);
                 
-                // Дома
-                const housePositions = [
+                // Структуры
+                const structurePositions = [
                     [-35, -35], [35, -35], [-35, 35], [35, 35],
                     [-60, -10], [60, -10], [-10, -60], [-10, 60]
                 ];
                 
-                housePositions.forEach(pos => {
-                    const house = this.createHouse(pos[0], pos[1]);
-                    environment.add(house);
-                    this.objects.push(house);
+                structurePositions.forEach(pos => {
+                    const structure = this.createStructure(pos[0], pos[1]);
+                    environment.add(structure);
+                    this.objects.push(structure);
                 });
                 
                 // Деревья
@@ -898,11 +1153,11 @@
                     this.objects.push(tree);
                 }
                 
-                // Фонари
+                // Источники света
                 for (let i = -40; i <= 40; i += 20) {
                     for (let j = -40; j <= 40; j += 20) {
                         if (Math.abs(i) === 40 || Math.abs(j) === 40) {
-                            const light = this.createStreetLight(i, j);
+                            const light = this.createLightSource(i, j);
                             environment.add(light);
                             this.objects.push(light);
                         }
@@ -918,6 +1173,7 @@
             x: 0,
             y: 0
         };
+        let cameraSensitivity = 0.035;
         let isDragging = false;
         let previousMouseX = 0;
         let previousMouseY = 0;
@@ -996,8 +1252,8 @@
             }
             
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB); // Голубое небо
-            scene.fog = new THREE.Fog(0x87CEEB, 50, 150);
+            scene.background = new THREE.Color(0x1a1a2e); // Темно-синее небо
+            scene.fog = new THREE.Fog(0x1a1a2e, 50, 150);
             
             // Камера от первого лица
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -1005,7 +1261,7 @@
             
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setClearColor(0x87CEEB);
+            renderer.setClearColor(0x1a1a2e);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.BasicShadowMap;
             document.getElementById('gameContainer').appendChild(renderer.domElement);
@@ -1031,8 +1287,8 @@
             camera.add(playerHands.hands);
         }
 
-        // Создание low-poly зомби
-        function createZombie() {
+        // Создание low-poly врага
+        function createEnemy() {
             const angle = Math.random() * Math.PI * 2;
             const distance = 20 + Math.random() * 10;
             const position = new THREE.Vector3(
@@ -1041,41 +1297,41 @@
                 Math.sin(angle) * distance
             );
             
-            let zombieType = 'normal';
+            let enemyType = 'normal';
             const rand = Math.random();
-            if (currentWave >= 3 && rand < 0.3) zombieType = 'fast';
-            if (currentWave >= 5 && rand < 0.2) zombieType = 'tank';
+            if (currentWave >= 3 && rand < 0.3) enemyType = 'fast';
+            if (currentWave >= 5 && rand < 0.2) enemyType = 'tank';
             
-            const lowPolyZombie = new LowPolyZombie(zombieType, position);
-            const zombie = lowPolyZombie.mesh;
+            const lowPolyEnemy = new LowPolyEnemy(enemyType, position);
+            const enemy = lowPolyEnemy.mesh;
             
-            // Характеристики зомби
-            const stats = zombieTypes[zombieType];
+            // Характеристики врага
+            const stats = enemyTypes[enemyType];
             const baseHealth = stats.health;
             const waveMultiplier = 1 + (currentWave - 1) * 0.3;
             const health = Math.floor(baseHealth * waveMultiplier);
             
-            zombie.userData = {
+            enemy.userData = {
                 health: health,
                 maxHealth: health,
                 speed: stats.speed,
                 damage: 10 + (currentWave - 1) * 2,
                 lastAttack: 0,
-                type: zombieType,
+                type: enemyType,
                 score: stats.score,
-                lowPolyController: lowPolyZombie
+                lowPolyController: lowPolyEnemy
             };
             
             // Включение теней
-            zombie.traverse((child) => {
+            enemy.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
                     child.receiveShadow = true;
                 }
             });
             
-            scene.add(zombie);
-            zombies.push(zombie);
+            scene.add(enemy);
+            zombies.push(enemy);
             zombiesAlive++;
             updateZombiesCount();
         }
@@ -1130,43 +1386,43 @@
             }
         }
 
-        // Обновление зомби
+        // Обновление врагов
         function updateZombies(deltaTime) {
-            zombies.forEach((zombie, index) => {
-                if (zombie.userData.health <= 0) {
-                    createExpCrystal(zombie.position);
-                    createParticleEffect(zombie.position, 0xFF0000, 8);
-                    scene.remove(zombie);
+            zombies.forEach((enemy, index) => {
+                if (enemy.userData.health <= 0) {
+                    createExpCrystal(enemy.position);
+                    createParticleEffect(enemy.position, 0xFF0000, 8);
+                    scene.remove(enemy);
                     zombies.splice(index, 1);
                     zombiesAlive--;
-                    score += zombie.userData.score;
+                    score += enemy.userData.score;
                     totalZombiesKilled++;
                     updateScore();
                     updateZombiesCount();
                     return;
                 }
 
-                // Обновление анимации low-poly зомби
-                if (zombie.userData.lowPolyController) {
-                    zombie.userData.lowPolyController.update(deltaTime);
+                // Обновление анимации low-poly врага
+                if (enemy.userData.lowPolyController) {
+                    enemy.userData.lowPolyController.update(deltaTime);
                 }
 
                 // Движение к игроку
                 const direction = new THREE.Vector3();
-                direction.subVectors(playerPosition, zombie.position).normalize();
+                direction.subVectors(playerPosition, enemy.position).normalize();
                 direction.y = 0;
                 
-                zombie.position.add(direction.multiplyScalar(zombie.userData.speed));
+                enemy.position.add(direction.multiplyScalar(enemy.userData.speed));
                 
                 // Поворот к игроку
-                zombie.lookAt(playerPosition.x, zombie.position.y, playerPosition.z);
+                enemy.lookAt(playerPosition.x, enemy.position.y, playerPosition.z);
                 
                 // Проверка атаки игрока
-                const distance = zombie.position.distanceTo(playerPosition);
+                const distance = enemy.position.distanceTo(playerPosition);
                 if (distance < 2.0) {
-                    if (Date.now() - zombie.userData.lastAttack > 1000) {
-                        takeDamage(zombie.userData.damage);
-                        zombie.userData.lastAttack = Date.now();
+                    if (Date.now() - enemy.userData.lastAttack > 1000) {
+                        takeDamage(enemy.userData.damage);
+                        enemy.userData.lastAttack = Date.now();
                     }
                 }
             });
@@ -1254,11 +1510,9 @@
             // Разблокировка оружия при определенных уровнях
             if (playerLevel >= 3 && !weaponUnlocks.shotgun) {
                 weaponUnlocks.shotgun = true;
-                // Можно добавить визуальное уведомление
             }
             if (playerLevel >= 6 && !weaponUnlocks.rifle) {
                 weaponUnlocks.rifle = true;
-                // Можно добавить визуальное уведомление
             }
             
             showUpgradeMenu();
@@ -1367,22 +1621,22 @@
             const raycaster = new THREE.Raycaster();
             raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
             
-            // Проверяем пересечения с зомби
+            // Проверяем пересечения с врагами
             const intersects = raycaster.intersectObjects(zombies, true);
             
             if (intersects.length > 0) {
-                // Находим родительский объект зомби
-                let zombie = intersects[0].object;
-                while (zombie.parent && !zombies.includes(zombie)) {
-                    zombie = zombie.parent;
+                // Находим родительский объект врага
+                let enemy = intersects[0].object;
+                while (enemy.parent && !zombies.includes(enemy)) {
+                    enemy = enemy.parent;
                 }
                 
-                if (zombies.includes(zombie)) {
+                if (zombies.includes(enemy)) {
                     // Проверяем крит
                     const isCrit = Math.random() < playerStats.critChance;
                     const damage = isCrit ? weapon.damage * playerStats.critMultiplier : weapon.damage;
                     
-                    zombie.userData.health -= damage;
+                    enemy.userData.health -= damage;
                     
                     // Эффект попадания
                     createParticleEffect(intersects[0].point, 0xFFFF00, 3);
@@ -1471,14 +1725,14 @@
             camera.rotation.set(cameraRotation.x, cameraRotation.y, 0, 'YXZ');
         }
 
-        // Управление зомби волнами
+        // Управление волнами врагов
         function manageWaves() {
             if (zombiesAlive === 0 && !isPaused) {
                 currentWave++;
                 zombiesInWave = 2 + currentWave * 1;
                 
                 for (let i = 0; i < zombiesInWave; i++) {
-                    setTimeout(() => createZombie(), i * 1500);
+                    setTimeout(() => createEnemy(), i * 1500);
                 }
                 
                 updateWaveDisplay();
@@ -1615,8 +1869,8 @@
                             const deltaX = touch.clientX - previousMouseX;
                             const deltaY = touch.clientY - previousMouseY;
                             
-                            cameraRotation.y -= deltaX * 0.01;
-                            cameraRotation.x -= deltaY * 0.01;
+                            cameraRotation.y -= deltaX * cameraSensitivity;
+                            cameraRotation.x -= deltaY * cameraSensitivity;
                             
                             cameraRotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraRotation.x));
                             
@@ -1745,7 +1999,7 @@
         function gameLoop(currentTime) {
             if (!isGameRunning) return;
             
-            const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.1); // Ограничиваем deltaTime
+            const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.1);
             lastTime = currentTime;
             
             updatePlayer();
@@ -1861,7 +2115,7 @@
             setupControls();
             
             for (let i = 0; i < zombiesInWave; i++) {
-                setTimeout(() => createZombie(), i * 1500);
+                setTimeout(() => createEnemy(), i * 1500);
             }
             
             updateAllDisplays();
@@ -1881,7 +2135,7 @@
         }
 
         function showInstructions() {
-            alert("🎮 УПРАВЛЕНИЕ:\n• Джойстик слева - движение\n• Кнопка справа - стрельба\n• Правая часть экрана - поворот камеры\n• Двойной тап - смена оружия\n• Кнопка ❄️ - умение 'Заморозка'");
+            alert("🎮 УПРАВЛЕНИЕ Z.E.R.O.: LAST BREACH\n\n• Джойстик слева - движение\n• Кнопка справа - стрельба\n• Правая часть экрана - поворот камеры\n• Двойной тап - смена оружия\n• Кнопка ❄️ - криогенная стазис\n\n⚡ ТАКТИЧЕСКИЕ СОВЕТЫ:\n• Используйте укрытия для перезарядки\n• Собирайте энергоядра для улучшений\n• Меняйте оружие в зависимости от ситуации\n• Умения имеют перезарядку - используйте их с умом!");
         }
 
         function endGame() {
@@ -1940,7 +2194,7 @@
 
         // Загрузка страницы
         window.addEventListener('load', () => {
-            console.log("Zombie FPS Low-Poly загружен!");
+            console.log("Z.E.R.O.: Last Breach загружен!");
             
             if (typeof THREE === 'undefined') {
                 alert('Ошибка: Three.js не загрузился.');
@@ -1958,6 +2212,22 @@
                 useSkill();
                 e.preventDefault();
             });
+
+            // Загружаем настройки по умолчанию
+            cameraSensitivity = 0.01 + (gameSettings.sensitivity * 0.005);
+        });
+
+        // Закрытие модальных окон по клику вне области
+        window.addEventListener('click', function(event) {
+            const settingsModal = document.getElementById('settingsModal');
+            const multiplayerModal = document.getElementById('multiplayerModal');
+            
+            if (event.target === settingsModal) {
+                closeSettingsModal();
+            }
+            if (event.target === multiplayerModal) {
+                closeMultiplayerModal();
+            }
         });
     </script>
 </body>
