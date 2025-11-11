@@ -234,6 +234,36 @@
             margin-bottom: 10px;
         }
 
+        /* Новые элементы интерфейса */
+        .weapon-display {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 2px solid #ff4444;
+            font-weight: bold;
+            display: none;
+        }
+
+        .skill-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ffcc00, #ff9900);
+            border: 2px solid white;
+            color: white;
+            font-size: 0.8em;
+            cursor: pointer;
+            display: none;
+            z-index: 200;
+        }
+
         /* Результаты */
         #results {
             position: absolute;
@@ -302,6 +332,11 @@
                 font-size: 1.2em;
                 width: 250px;
             }
+            .skill-button {
+                width: 50px;
+                height: 50px;
+                font-size: 0.7em;
+            }
         }
     </style>
 </head>
@@ -354,6 +389,12 @@
         <!-- Кнопка стрельбы -->
         <button id="shootBtn">🔫<br>СТРЕЛЯТЬ</button>
 
+        <!-- Кнопка умения -->
+        <button id="skillBtn" class="skill-button" onclick="useSkill()">❄️<br>ЗАМОРОЗКА</button>
+
+        <!-- Дисплей оружия -->
+        <div class="weapon-display" id="weaponDisplay">🔫 Пистолет</div>
+
         <!-- Окно улучшений -->
         <div id="upgradeMenu">
             <h2 class="upgrade-title">🎯 ВЫБЕРИ УЛУЧШЕНИЕ!</h2>
@@ -395,7 +436,7 @@
 
         // Игровые переменные
         let scene, camera, renderer;
-        let zombies = [], crystals = [];
+        let zombies = [], crystals = [], particles = [];
         let score = 0;
         let playerHealth = 100;
         let playerMaxHealth = 100;
@@ -403,7 +444,7 @@
         let playerExp = 0;
         let expToNextLevel = 100;
         let currentWave = 1;
-        let zombiesInWave = 2; // Уменьшил количество зомби
+        let zombiesInWave = 2;
         let zombiesAlive = 0;
         let gameTime = 0;
         let gameTimer;
@@ -434,7 +475,79 @@
             critMultiplier: 2.0
         };
 
-        // Управление камерой
+        // Система оружия
+        const weapons = {
+            pistol: { damage: 20, fireRate: 2, name: "🔫 Пистолет", color: 0xffff00 },
+            shotgun: { damage: 40, fireRate: 0.8, name: "🔫 Дробовик", color: 0xff4444 },
+            rifle: { damage: 15, fireRate: 4, name: "🔫 Автомат", color: 0x4444ff }
+        };
+        let currentWeapon = 'pistol';
+        let weaponUnlocks = { pistol: true, shotgun: false, rifle: false };
+
+        // Типы зомби
+        const zombieTypes = {
+            normal: { health: 2, speed: 0.008, color: 0x44aa44, score: 100 },
+            fast: { health: 1, speed: 0.015, color: 0x4444ff, score: 150 },
+            tank: { health: 5, speed: 0.005, color: 0xff4444, score: 200 }
+        };
+
+        // Система умений
+        const skills = {
+            freeze: {
+                name: "❄️ ЗАМОРОЗКА",
+                cooldown: 30000,
+                currentCooldown: 0,
+                effect: () => {
+                    zombies.forEach(zombie => {
+                        const distance = zombie.position.distanceTo(playerPosition);
+                        if (distance < 15) {
+                            zombie.userData.originalSpeed = zombie.userData.speed;
+                            zombie.userData.speed *= 0.3;
+                            zombie.children.forEach(child => {
+                                if (child.material) {
+                                    child.material.color.set(0x88ccff);
+                                }
+                            });
+                            
+                            setTimeout(() => {
+                                if (zombie.userData.originalSpeed) {
+                                    zombie.userData.speed = zombie.userData.originalSpeed;
+                                    zombie.children.forEach(child => {
+                                        if (child.material) {
+                                            const zombieType = zombie.userData.type || 'normal';
+                                            child.material.color.set(zombieTypes[zombieType].color);
+                                        }
+                                    });
+                                }
+                            }, 5000);
+                        }
+                    });
+                    createParticleEffect(playerPosition, 0x88ccff, 30);
+                }
+            }
+        };
+
+        // Временные бонусы
+        const powerUps = {
+            doubleDamage: { 
+                duration: 10000, 
+                color: 0xff0000, 
+                effect: () => {
+                    playerStats.damage *= 2;
+                    setTimeout(() => playerStats.damage /= 2, 10000);
+                } 
+            },
+            speedBoost: { 
+                duration: 8000, 
+                color: 0x00ff00, 
+                effect: () => {
+                    playerStats.moveSpeed *= 1.5;
+                    setTimeout(() => playerStats.moveSpeed /= 1.5, 8000);
+                }
+            }
+        };
+
+        // Управление камерой - ИСПРАВЛЕНО ДЛЯ ОДНОВРЕМЕННОГО УПРАВЛЕНИЯ
         let cameraRotation = {
             x: 0,
             y: 0
@@ -442,12 +555,15 @@
         let isDragging = false;
         let previousMouseX = 0;
         let previousMouseY = 0;
+        let cameraTouchId = null;
 
         // Элементы интерфейса
         const menu = document.getElementById('menu');
         const gameUI = document.getElementById('gameUI');
         const crosshair = document.getElementById('crosshair');
         const shootBtn = document.getElementById('shootBtn');
+        const skillBtn = document.getElementById('skillBtn');
+        const weaponDisplay = document.getElementById('weaponDisplay');
         const upgradeMenu = document.getElementById('upgradeMenu');
         const results = document.getElementById('results');
         const scoreValue = document.getElementById('scoreValue');
@@ -492,6 +608,11 @@
                 name: "🔮 Регенерация",
                 description: "+2 здоровья в секунду",
                 apply: () => { playerStats.healthRegen += 2; }
+            },
+            {
+                name: "🎯 Крит. удар",
+                description: "+10% к шансу крита",
+                apply: () => { playerStats.critChance += 0.1; }
             }
         ];
 
@@ -523,15 +644,20 @@
             directionalLight.position.set(10, 20, 10);
             scene.add(directionalLight);
 
+            // Динамическое освещение для эффектов
+            const pointLight = new THREE.PointLight(0xff4444, 1, 100);
+            pointLight.position.set(0, 10, 0);
+            scene.add(pointLight);
+
             // Создание игровой карты
             createGameMap();
         }
 
-        // Создание игровой карты
+        // Создание игровой карты с улучшенной графикой
         function createGameMap() {
-            // Красивый пол с текстурой
+            // Текстурированный пол
             const floorGeometry = new THREE.PlaneGeometry(100, 100);
-            const floorMaterial = new THREE.MeshPhongMaterial({ 
+            const floorMaterial = new THREE.MeshLambertMaterial({ 
                 color: 0x2a5a2a,
                 transparent: true,
                 opacity: 0.9
@@ -561,7 +687,7 @@
 
             // Случайные препятствия (здания)
             const buildingMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
-            for (let i = 0; i < 8; i++) { // Уменьшил количество зданий
+            for (let i = 0; i < 8; i++) {
                 const width = 4 + Math.random() * 6;
                 const height = 4 + Math.random() * 8;
                 const depth = 4 + Math.random() * 6;
@@ -593,20 +719,31 @@
             scene.add(sky);
         }
 
-        // Создание зомби
+        // Создание зомби с разными типами
         function createZombie() {
             const zombie = new THREE.Group();
             
+            // Выбираем случайный тип зомби (шанс появления разных типов увеличивается с волнами)
+            let zombieType = 'normal';
+            const rand = Math.random();
+            if (currentWave >= 3 && rand < 0.3) {
+                zombieType = 'fast';
+            } else if (currentWave >= 5 && rand < 0.2) {
+                zombieType = 'tank';
+            }
+            
+            const stats = zombieTypes[zombieType];
+            
             // Тело зомби
             const bodyGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1.8, 8);
-            const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0x44aa44 });
+            const bodyMaterial = new THREE.MeshPhongMaterial({ color: stats.color });
             const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
             body.position.y = 0.9;
             zombie.add(body);
             
             // Голова зомби
             const headGeometry = new THREE.SphereGeometry(0.4, 8, 8);
-            const headMaterial = new THREE.MeshPhongMaterial({ color: 0x88cc88 });
+            const headMaterial = new THREE.MeshPhongMaterial({ color: stats.color });
             const head = new THREE.Mesh(headGeometry, headMaterial);
             head.position.y = 1.9;
             zombie.add(head);
@@ -621,16 +758,18 @@
             );
             
             // Характеристики зомби
-            const baseHealth = 2;
+            const baseHealth = stats.health;
             const waveMultiplier = 1 + (currentWave - 1) * 0.3;
             const health = Math.floor(baseHealth * waveMultiplier);
             
             zombie.userData = {
                 health: health,
                 maxHealth: health,
-                speed: 0.008 + Math.random() * 0.005, // Уменьшил скорость зомби
+                speed: stats.speed,
                 damage: 10 + (currentWave - 1) * 2,
-                lastAttack: 0
+                lastAttack: 0,
+                type: zombieType,
+                score: stats.score
             };
             
             scene.add(zombie);
@@ -664,15 +803,39 @@
             crystals.push(crystal);
         }
 
+        // Создание эффекта частиц
+        function createParticleEffect(position, color, count) {
+            for (let i = 0; i < count; i++) {
+                const particleGeometry = new THREE.SphereGeometry(0.1, 4, 4);
+                const particleMaterial = new THREE.MeshBasicMaterial({ color: color });
+                const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+                
+                particle.position.copy(position);
+                particle.userData = {
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.1,
+                        Math.random() * 0.1,
+                        (Math.random() - 0.5) * 0.1
+                    ),
+                    lifeTime: 0,
+                    maxLife: 60
+                };
+                
+                scene.add(particle);
+                particles.push(particle);
+            }
+        }
+
         // Обновление зомби
         function updateZombies() {
             zombies.forEach((zombie, index) => {
                 if (zombie.userData.health <= 0) {
                     createExpCrystal(zombie.position);
+                    createParticleEffect(zombie.position, 0xff0000, 10); // Кровь
                     scene.remove(zombie);
                     zombies.splice(index, 1);
                     zombiesAlive--;
-                    score += 100;
+                    score += zombie.userData.score;
                     updateScore();
                     updateZombiesCount();
                     return;
@@ -683,7 +846,7 @@
                 direction.subVectors(playerPosition, zombie.position).normalize();
                 direction.y = 0;
                 
-                // ПРОСТОЕ ДВИЖЕНИЕ БЕЗ КОЛЛИЗИЙ
+                // Движение зомби
                 zombie.position.add(direction.multiplyScalar(zombie.userData.speed));
                 
                 // Поворот к игроку
@@ -738,6 +901,24 @@
             }
         }
 
+        // Обновление частиц
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+                particle.userData.lifeTime++;
+                
+                // Движение частиц
+                particle.position.add(particle.userData.velocity);
+                particle.userData.velocity.y -= 0.005; // Гравитация
+                
+                // Исчезновение частиц
+                if (particle.userData.lifeTime > particle.userData.maxLife) {
+                    scene.remove(particle);
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
         // Добавление опыта
         function addExp(amount) {
             playerExp += amount;
@@ -761,7 +942,39 @@
             updateLevelDisplay();
             updateExpBar();
             
+            // Разблокировка оружия при определенных уровнях
+            if (playerLevel >= 3 && !weaponUnlocks.shotgun) {
+                weaponUnlocks.shotgun = true;
+                alert('🔫 Разблокирован Дробовик!');
+            }
+            if (playerLevel >= 6 && !weaponUnlocks.rifle) {
+                weaponUnlocks.rifle = true;
+                alert('🔫 Разблокирован Автомат!');
+            }
+            
             showUpgradeMenu();
+        }
+
+        // Использование умения
+        function useSkill() {
+            if (skills.freeze.currentCooldown > 0) return;
+            
+            skills.freeze.effect();
+            skills.freeze.currentCooldown = skills.freeze.cooldown;
+            
+            // Визуализация перезарядки
+            skillBtn.style.opacity = '0.5';
+            skillBtn.disabled = true;
+            
+            const cooldownInterval = setInterval(() => {
+                skills.freeze.currentCooldown -= 100;
+                if (skills.freeze.currentCooldown <= 0) {
+                    skills.freeze.currentCooldown = 0;
+                    skillBtn.style.opacity = '1';
+                    skillBtn.disabled = false;
+                    clearInterval(cooldownInterval);
+                }
+            }, 100);
         }
 
         // Показ меню улучшений
@@ -806,6 +1019,9 @@
             playerHealth -= amount;
             updateHealthBar();
             
+            // Эффект получения урона
+            createParticleEffect(playerPosition, 0xff0000, 5);
+            
             if (navigator.vibrate && typeof navigator.vibrate === 'function') {
                 navigator.vibrate(200);
             }
@@ -815,13 +1031,15 @@
             }
         }
 
-        // Выстрел (исправленный рейкастинг)
+        // Выстрел с системой оружия
         let lastShotTime = 0;
         function shoot() {
             if (!isGameRunning || isPaused) return;
             
             const currentTime = Date.now();
-            if (currentTime - lastShotTime < 1000 / playerStats.fireRate) return;
+            const weapon = weapons[currentWeapon];
+            
+            if (currentTime - lastShotTime < 1000 / weapon.fireRate) return;
             
             lastShotTime = currentTime;
             
@@ -842,11 +1060,13 @@
                 if (zombies.includes(zombie)) {
                     // Проверяем крит
                     const isCrit = Math.random() < playerStats.critChance;
-                    const damage = isCrit ? playerStats.damage * playerStats.critMultiplier : playerStats.damage;
+                    const damage = isCrit ? weapon.damage * playerStats.critMultiplier : weapon.damage;
                     
                     zombie.userData.health -= damage;
                     
                     // Эффект попадания
+                    createParticleEffect(intersects[0].point, 0xffff00, 3);
+                    
                     if (isCrit) {
                         zombie.children.forEach(child => {
                             if (child.material) {
@@ -873,7 +1093,7 @@
         function createMuzzleFlash() {
             const flashGeometry = new THREE.SphereGeometry(0.1, 8, 8);
             const flashMaterial = new THREE.MeshBasicMaterial({ 
-                color: 0xffff00,
+                color: weapons[currentWeapon].color,
                 transparent: true,
                 opacity: 0.8
             });
@@ -900,9 +1120,9 @@
             const moveVector = new THREE.Vector3(0, 0, 0);
             
             if (joystickActive) {
-                // ИСПРАВЛЕНО: правильное направление движения
+                // Используем направление от джойстика
                 moveVector.x = joystickDirection.x;
-                moveVector.z = joystickDirection.y; // Убрал инвертирование
+                moveVector.z = joystickDirection.y;
             }
             
             // Нормализуем и применяем скорость
@@ -918,7 +1138,7 @@
                 playerVelocity.set(0, 0, 0);
             }
             
-            // ПРОСТОЕ ДВИЖЕНИЕ БЕЗ КОЛЛИЗИЙ
+            // Движение игрока
             const newPosition = playerPosition.clone().add(playerVelocity);
             
             // Простая проверка границ
@@ -937,14 +1157,62 @@
         function manageWaves() {
             if (zombiesAlive === 0 && !isPaused) {
                 currentWave++;
-                zombiesInWave = 2 + currentWave * 1; // Меньше зомби в волнах
+                zombiesInWave = 2 + currentWave * 1;
                 
                 for (let i = 0; i < zombiesInWave; i++) {
-                    setTimeout(() => createZombie(), i * 1500); // Увеличил задержку между появлением
+                    setTimeout(() => createZombie(), i * 1500);
+                }
+                
+                // Босс каждые 5 волн
+                if (currentWave % 5 === 0) {
+                    setTimeout(() => createBoss(), zombiesInWave * 1500 + 1000);
                 }
                 
                 updateWaveDisplay();
             }
+        }
+
+        // Создание босса
+        function createBoss() {
+            const boss = new THREE.Group();
+            
+            // Большая модель босса
+            const bossGeometry = new THREE.CylinderGeometry(1, 1, 3, 8);
+            const bossMaterial = new THREE.MeshPhongMaterial({ color: 0xff00ff });
+            const bossBody = new THREE.Mesh(bossGeometry, bossMaterial);
+            bossBody.position.y = 1.5;
+            boss.add(bossBody);
+            
+            // Голова босса
+            const bossHeadGeometry = new THREE.SphereGeometry(0.8, 8, 8);
+            const bossHead = new THREE.Mesh(bossHeadGeometry, bossMaterial);
+            bossHead.position.y = 2.8;
+            boss.add(bossHead);
+            
+            // Позиция босса
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 25;
+            boss.position.set(
+                Math.cos(angle) * distance,
+                0,
+                Math.sin(angle) * distance
+            );
+            
+            boss.userData = {
+                health: 50 + (currentWave * 10),
+                speed: 0.004,
+                damage: 30,
+                isBoss: true,
+                score: 1000
+            };
+            
+            scene.add(boss);
+            zombies.push(boss);
+            zombiesAlive++;
+            updateZombiesCount();
+            
+            // Сообщение о появлении босса
+            alert('⚠️ ПОЯВИЛСЯ БОСС! ⚠️');
         }
 
         // Регенерация здоровья
@@ -953,6 +1221,23 @@
             
             playerHealth = Math.min(playerMaxHealth, playerHealth + playerStats.healthRegen * 0.016);
             updateHealthBar();
+        }
+
+        // Смена оружия
+        function switchWeapon() {
+            const weaponKeys = Object.keys(weapons);
+            const currentIndex = weaponKeys.indexOf(currentWeapon);
+            let nextIndex = (currentIndex + 1) % weaponKeys.length;
+            
+            // Пропускаем неразблокированное оружие
+            while (!weaponUnlocks[weaponKeys[nextIndex]] && nextIndex !== currentIndex) {
+                nextIndex = (nextIndex + 1) % weaponKeys.length;
+            }
+            
+            if (weaponUnlocks[weaponKeys[nextIndex]]) {
+                currentWeapon = weaponKeys[nextIndex];
+                weaponDisplay.textContent = weapons[currentWeapon].name;
+            }
         }
 
         // Настройка джойстика
@@ -1035,52 +1320,63 @@
             });
         }
 
-        // Настройка управления
+        // Настройка управления - ИСПРАВЛЕНА ДЛЯ ОДНОВРЕМЕННОГО УПРАВЛЕНИЯ
         function setupControls() {
             setupJoystick();
             
-            // Управление камерой (поворот) - ИСПРАВЛЕНО для одновременного движения и поворота
+            // Управление камерой (правая часть экрана)
             const gameContainer = document.getElementById('gameContainer');
             
-            // Отдельная область для управления камерой (правая часть экрана)
-            const cameraControlArea = document.createElement('div');
-            cameraControlArea.style.position = 'absolute';
-            cameraControlArea.style.top = '0';
-            cameraControlArea.style.right = '0';
-            cameraControlArea.style.width = '50%';
-            cameraControlArea.style.height = '100%';
-            cameraControlArea.style.zIndex = '150';
-            document.getElementById('app').appendChild(cameraControlArea);
-            
-            cameraControlArea.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) {
-                    isDragging = true;
-                    previousMouseX = e.touches[0].clientX;
-                    previousMouseY = e.touches[0].clientY;
-                    e.preventDefault();
+            gameContainer.addEventListener('touchstart', (e) => {
+                // Проверяем, не началось ли касание в области джойстика
+                const joystickRect = joystickContainer.getBoundingClientRect();
+                for (let touch of e.changedTouches) {
+                    const x = touch.clientX;
+                    const y = touch.clientY;
+                    
+                    // Если касание в правой половине экрана (не в джойстике)
+                    if (x > window.innerWidth / 2 && 
+                       !(x >= joystickRect.left && x <= joystickRect.right && 
+                         y >= joystickRect.top && y <= joystickRect.bottom)) {
+                        isDragging = true;
+                        cameraTouchId = touch.identifier;
+                        previousMouseX = touch.clientX;
+                        previousMouseY = touch.clientY;
+                        e.preventDefault();
+                        break;
+                    }
                 }
             });
             
-            cameraControlArea.addEventListener('touchmove', (e) => {
-                if (isDragging && e.touches.length === 1) {
-                    const deltaX = e.touches[0].clientX - previousMouseX;
-                    const deltaY = e.touches[0].clientY - previousMouseY;
-                    
-                    cameraRotation.y -= deltaX * 0.01;
-                    cameraRotation.x -= deltaY * 0.01;
-                    
-                    // Ограничиваем вертикальный поворот
-                    cameraRotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraRotation.x));
-                    
-                    previousMouseX = e.touches[0].clientX;
-                    previousMouseY = e.touches[0].clientY;
-                    
-                    e.preventDefault();
+            gameContainer.addEventListener('touchmove', (e) => {
+                if (isDragging) {
+                    for (let touch of e.touches) {
+                        if (touch.identifier === cameraTouchId) {
+                            const deltaX = touch.clientX - previousMouseX;
+                            const deltaY = touch.clientY - previousMouseY;
+                            
+                            cameraRotation.y -= deltaX * 0.01;
+                            cameraRotation.x -= deltaY * 0.01;
+                            
+                            cameraRotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraRotation.x));
+                            
+                            previousMouseX = touch.clientX;
+                            previousMouseY = touch.clientY;
+                            e.preventDefault();
+                            break;
+                        }
+                    }
                 }
             });
             
-            cameraControlArea.addEventListener('touchend', (e) => {
-                isDragging = false;
+            gameContainer.addEventListener('touchend', (e) => {
+                for (let touch of e.changedTouches) {
+                    if (touch.identifier === cameraTouchId) {
+                        isDragging = false;
+                        cameraTouchId = null;
+                        break;
+                    }
+                }
             });
             
             // Стрельба
@@ -1088,6 +1384,57 @@
             shootBtn.addEventListener('touchstart', (e) => {
                 shoot();
                 e.preventDefault();
+            });
+            
+            // Смена оружия по двойному тапу
+            let lastTap = 0;
+            gameContainer.addEventListener('touchend', (e) => {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                if (tapLength < 500 && tapLength > 0) {
+                    switchWeapon();
+                }
+                lastTap = currentTime;
+            });
+            
+            // Управление с клавиатуры для тестирования
+            document.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'w': case 'ArrowUp': 
+                        joystickDirection.y = 1; 
+                        joystickActive = true;
+                        break;
+                    case 's': case 'ArrowDown': 
+                        joystickDirection.y = -1; 
+                        joystickActive = true;
+                        break;
+                    case 'a': case 'ArrowLeft': 
+                        joystickDirection.x = -1; 
+                        joystickActive = true;
+                        break;
+                    case 'd': case 'ArrowRight': 
+                        joystickDirection.x = 1; 
+                        joystickActive = true;
+                        break;
+                    case ' ': shoot(); break;
+                    case 'q': switchWeapon(); break;
+                    case 'e': useSkill(); break;
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                switch(e.key) {
+                    case 'w': case 'ArrowUp': 
+                    case 's': case 'ArrowDown': 
+                        joystickDirection.y = 0; 
+                        if (joystickDirection.x === 0) joystickActive = false;
+                        break;
+                    case 'a': case 'ArrowLeft': 
+                    case 'd': case 'ArrowRight': 
+                        joystickDirection.x = 0; 
+                        if (joystickDirection.y === 0) joystickActive = false;
+                        break;
+                }
             });
         }
 
@@ -1125,6 +1472,7 @@
             updatePlayer();
             updateZombies();
             updateCrystals();
+            updateParticles();
             manageWaves();
             updateRegeneration();
             
@@ -1157,9 +1505,12 @@
             
             zombies = [];
             crystals = [];
+            particles = [];
             
             joystickActive = false;
             joystickDirection.set(0, 0);
+            isDragging = false;
+            cameraTouchId = null;
             
             playerVelocity.set(0, 0, 0);
             playerPosition.set(0, 1.6, 0);
@@ -1176,12 +1527,6 @@
             if (gameContainer) {
                 gameContainer.innerHTML = '';
             }
-            
-            // Удаляем область управления камерой
-            const cameraControlArea = document.querySelector('[style*="cameraControlArea"]');
-            if (cameraControlArea) {
-                cameraControlArea.remove();
-            }
         }
 
         // Функции меню
@@ -1193,6 +1538,8 @@
             crosshair.style.display = 'block';
             joystickContainer.style.display = 'block';
             shootBtn.style.display = 'block';
+            skillBtn.style.display = 'block';
+            weaponDisplay.style.display = 'block';
             upgradeMenu.style.display = 'none';
             results.style.display = 'none';
             
@@ -1214,6 +1561,15 @@
                 critChance: 0.05,
                 critMultiplier: 2.0
             };
+            
+            // Сброс оружия и умений
+            currentWeapon = 'pistol';
+            weaponUnlocks = { pistol: true, shotgun: false, rifle: false };
+            skills.freeze.currentCooldown = 0;
+            skillBtn.style.opacity = '1';
+            skillBtn.disabled = false;
+            
+            weaponDisplay.textContent = weapons[currentWeapon].name;
             
             initThreeJS();
             setupControls();
@@ -1239,7 +1595,38 @@
         }
 
         function showInstructions() {
-            alert(`🎮 ZOMBIE FPS - ИНСТРУКЦИЯ\n\n🎯 УПРАВЛЕНИЕ:\n• Джойстик слева - движение\n• Кнопка справа - стрельба\n• Двигайте пальцем по ПРАВОЙ части экрана для поворота камеры\n\n💎 ПРОКАЧКА:\n• Убивайте зомби для получения опыта\n• Собирайте зеленые кристаллы\n• При повышении уровня выбирайте улучшения\n\n⚡ УЛУЧШЕНИЯ:\n• Увеличение урона, скорости, здоровья\n• Регенерация, критические удары\n\nУдачи! 🧟`);
+            alert(`🎮 ZOMBIE FPS - ИНСТРУКЦИЯ
+
+🎯 УПРАВЛЕНИЕ:
+• Джойстик слева - движение
+• Кнопка справа - стрельба
+• Правая часть экрана - поворот камеры
+• Двойной тап - смена оружия
+• Кнопка ❄️ - умение "Заморозка"
+
+💎 СИСТЕМА ПРОГРЕССА:
+• Убивайте зомби для получения опыта
+• Собирайте зеленые кристаллы
+• При повышении уровня выбирайте улучшения
+• Разблокируйте новое оружие
+
+🧟 ТИПЫ ЗОМБИ:
+• Обычные (зеленые) - базовые
+• Быстрые (синие) - хрупкие но быстрые
+• Танки (красные) - много здоровья но медленные
+• Боссы (фиолетовые) - появляются каждые 5 волн
+
+⚡ УЛУЧШЕНИЯ:
+• Увеличение урона, скорости, здоровья
+• Регенерация, критические удары
+• Новое оружие
+
+🔫 ОРУЖИЕ:
+• Пистолет - сбалансированный
+• Дробовик - мощный но медленный (ур. 3)
+• Автомат - быстрая стрельба (ур. 6)
+
+Удачи! 🧟`);
         }
 
         function endGame() {
@@ -1249,7 +1636,9 @@
             crosshair.style.display = 'none';
             joystickContainer.style.display = 'none';
             shootBtn.style.display = 'none';
-            results.style.display = 'flex'; // Теперь точно показываем результаты
+            skillBtn.style.display = 'none';
+            weaponDisplay.style.display = 'none';
+            results.style.display = 'flex';
             
             finalScore.textContent = `${score} ОЧКОВ`;
             finalLevel.textContent = playerLevel;
@@ -1262,7 +1651,8 @@
                     score: score,
                     waves: currentWave - 1,
                     time: gameTime,
-                    zombies: Math.floor(score / 100)
+                    zombies: Math.floor(score / 100),
+                    level: playerLevel
                 };
                 Telegram.WebApp.sendData(JSON.stringify(gameData));
             }
