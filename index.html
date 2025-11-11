@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Хроники падающих звёзд | Простое управление</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -163,6 +164,16 @@
             z-index: 5;
         }
         
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            text-align: center;
+            z-index: 100;
+        }
+        
         /* Адаптация для очень маленьких экранов */
         @media (max-height: 600px) {
             .hud, .resources {
@@ -179,6 +190,7 @@
     </style>
 </head>
 <body>
+    <div id="loading" class="loading">Загрузка игры...</div>
     <div id="gameContainer"></div>
     <div id="ui">
         <div class="scanlines"></div>
@@ -218,67 +230,14 @@
     </div>
 
     <script>
-        // Инициализация Three.js
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        
-        // Настройка рендерера
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x000011, 1);
-        renderer.shadowMap.enabled = true;
-        document.getElementById('gameContainer').appendChild(renderer.domElement);
-        
-        // Освещение
-        const ambientLight = new THREE.AmbientLight(0x333355);
-        scene.add(ambientLight);
-        
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(1, 1, 1);
-        directionalLight.castShadow = true;
-        scene.add(directionalLight);
-        
-        // Звёздное небо
-        const starGeometry = new THREE.BufferGeometry();
-        const starCount = 5000;
-        const starPositions = new Float32Array(starCount * 3);
-        
-        for (let i = 0; i < starCount * 3; i += 3) {
-            starPositions[i] = (Math.random() - 0.5) * 2000;
-            starPositions[i + 1] = (Math.random() - 0.5) * 2000;
-            starPositions[i + 2] = (Math.random() - 0.5) * 2000;
+        // Проверяем загрузку Three.js
+        if (typeof THREE === 'undefined') {
+            document.getElementById('loading').innerHTML = 'Ошибка загрузки Three.js. Пожалуйста, обновите страницу.';
+            throw new Error('Three.js не загружен');
         }
-        
-        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-        
-        const starMaterial = new THREE.PointsMaterial({
-            color: 0xffffff,
-            size: 1.5,
-            sizeAttenuation: true
-        });
-        
-        const stars = new THREE.Points(starGeometry, starMaterial);
-        scene.add(stars);
-        
-        // Корабль игрока
-        const shipGeometry = new THREE.ConeGeometry(3, 10, 4);
-        const shipMaterial = new THREE.MeshPhongMaterial({
-            color: 0x00aaff,
-            shininess: 100,
-            emissive: 0x002266
-        });
-        
-        const ship = new THREE.Mesh(shipGeometry, shipMaterial);
-        ship.rotation.x = Math.PI / 2;
-        ship.position.z = 15;
-        ship.castShadow = true;
-        scene.add(ship);
-        
-        // Массивы для объектов
-        let asteroids = [];
-        let enemyShips = [];
-        let starFields = [];
-        let blackHoles = [];
+
+        let scene, camera, renderer, ship;
+        let asteroids = [], enemyShips = [], starFields = [], blackHoles = [];
         
         // Игровые переменные
         let gameState = {
@@ -301,6 +260,85 @@
                 back: false
             }
         };
+
+        // Инициализация Three.js
+        function initThreeJS() {
+            try {
+                // Сцена
+                scene = new THREE.Scene();
+                
+                // Камера
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+                
+                // Рендерер
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor(0x000011, 1);
+                document.getElementById('gameContainer').appendChild(renderer.domElement);
+                
+                // Освещение
+                const ambientLight = new THREE.AmbientLight(0x333355);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(1, 1, 1);
+                scene.add(directionalLight);
+                
+                // Звёздное небо
+                createStarfield();
+                
+                // Корабль игрока
+                createShip();
+                
+                // Скрываем загрузку
+                document.getElementById('loading').style.display = 'none';
+                
+                return true;
+            } catch (error) {
+                console.error('Ошибка инициализации Three.js:', error);
+                document.getElementById('loading').innerHTML = 'Ошибка инициализации 3D. Проверьте поддержку WebGL.';
+                return false;
+            }
+        }
+        
+        // Создание звёздного неба
+        function createStarfield() {
+            const starGeometry = new THREE.BufferGeometry();
+            const starCount = 2000;
+            const starPositions = new Float32Array(starCount * 3);
+            
+            for (let i = 0; i < starCount * 3; i += 3) {
+                starPositions[i] = (Math.random() - 0.5) * 2000;
+                starPositions[i + 1] = (Math.random() - 0.5) * 2000;
+                starPositions[i + 2] = (Math.random() - 0.5) * 2000;
+            }
+            
+            starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            
+            const starMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 1.5,
+                sizeAttenuation: true
+            });
+            
+            const stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+        }
+        
+        // Создание корабля
+        function createShip() {
+            const shipGeometry = new THREE.ConeGeometry(3, 10, 4);
+            const shipMaterial = new THREE.MeshPhongMaterial({
+                color: 0x00aaff,
+                shininess: 100,
+                emissive: 0x002266
+            });
+            
+            ship = new THREE.Mesh(shipGeometry, shipMaterial);
+            ship.rotation.x = Math.PI / 2;
+            ship.position.z = 15;
+            scene.add(ship);
+        }
         
         // Процедурная генерация астероидов
         function generateAsteroids(count) {
@@ -330,7 +368,6 @@
                     speed: Math.random() * 0.5 + 0.1
                 };
                 
-                asteroid.castShadow = true;
                 scene.add(asteroid);
                 asteroids.push(asteroid);
             }
@@ -357,7 +394,6 @@
                     health: 30
                 };
                 
-                enemyShip.castShadow = true;
                 scene.add(enemyShip);
                 enemyShips.push(enemyShip);
             }
@@ -384,7 +420,6 @@
                     collected: false
                 };
                 
-                starField.castShadow = true;
                 scene.add(starField);
                 starFields.push(starField);
             }
@@ -409,7 +444,6 @@
                     gravityStrength: 0.05
                 };
                 
-                blackHole.castShadow = true;
                 scene.add(blackHole);
                 blackHoles.push(blackHole);
             }
@@ -417,7 +451,7 @@
         
         // Обновление игрового состояния
         function updateGameState() {
-            if (!gameState.gameActive) return;
+            if (!gameState.gameActive || !ship) return;
             
             // Автопилот - корабль летит вперед автоматически
             if (gameState.autoPilot) {
@@ -620,7 +654,7 @@
         
         // Активация щита
         function activateShield() {
-            if (gameState.shieldEnergy >= 20 && !gameState.isShieldActive) {
+            if (gameState.shieldEnergy >= 20 && !gameState.isShieldActive && ship) {
                 gameState.isShieldActive = true;
                 
                 const shieldGeometry = new THREE.SphereGeometry(6, 16, 16);
@@ -670,11 +704,14 @@
             gameState.gameActive = true;
             gameState.autoPilot = false;
             
-            ship.position.x = 0;
-            ship.position.y = 0;
-            ship.position.z = 15;
-            ship.rotation.z = 0;
+            if (ship) {
+                ship.position.x = 0;
+                ship.position.y = 0;
+                ship.position.z = 15;
+                ship.rotation.z = 0;
+            }
             
+            // Очистка сцены
             asteroids.forEach(asteroid => scene.remove(asteroid));
             enemyShips.forEach(enemy => scene.remove(enemy));
             starFields.forEach(star => scene.remove(star));
@@ -685,6 +722,7 @@
             starFields = [];
             blackHoles = [];
             
+            // Генерация новых объектов
             generateAsteroids(15);
             generateEnemyShips(5);
             generateStarFields(8);
@@ -704,44 +742,46 @@
             const restartBtn = document.getElementById('restartBtn');
             
             // Обработчики для кнопок направления
-            leftBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                gameState.touchControls.left = true;
-                leftBtn.classList.add('active');
-            });
+            const addButtonHandler = (button, controlName) => {
+                button.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    gameState.touchControls[controlName] = true;
+                    button.classList.add('active');
+                });
+                
+                button.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    gameState.touchControls[controlName] = false;
+                    button.classList.remove('active');
+                });
+                
+                // Для десктопа
+                button.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    gameState.touchControls[controlName] = true;
+                    button.classList.add('active');
+                });
+                
+                button.addEventListener('mouseup', (e) => {
+                    e.preventDefault();
+                    gameState.touchControls[controlName] = false;
+                    button.classList.remove('active');
+                });
+            };
             
-            leftBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                gameState.touchControls.left = false;
-                leftBtn.classList.remove('active');
-            });
-            
-            rightBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                gameState.touchControls.right = true;
-                rightBtn.classList.add('active');
-            });
-            
-            rightBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                gameState.touchControls.right = false;
-                rightBtn.classList.remove('active');
-            });
-            
-            backBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                gameState.touchControls.back = true;
-                backBtn.classList.add('active');
-            });
-            
-            backBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                gameState.touchControls.back = false;
-                backBtn.classList.remove('active');
-            });
+            addButtonHandler(leftBtn, 'left');
+            addButtonHandler(rightBtn, 'right');
+            addButtonHandler(backBtn, 'back');
             
             // Обработчики для специальных кнопок
             shieldBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                activateShield();
+                shieldBtn.classList.add('active');
+                setTimeout(() => shieldBtn.classList.remove('active'), 300);
+            });
+            
+            shieldBtn.addEventListener('mousedown', (e) => {
                 e.preventDefault();
                 activateShield();
                 shieldBtn.classList.add('active');
@@ -753,38 +793,50 @@
                 toggleAutoPilot();
             });
             
+            autoPilotBtn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                toggleAutoPilot();
+            });
+            
             restartBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 restartGame();
             });
             
-            // Предотвращаем стандартное поведение браузера для касаний
-            document.addEventListener('touchstart', (e) => {
-                if (e.target.classList.contains('control-btn') || 
-                    e.target.classList.contains('btn')) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
+            restartBtn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                restartGame();
+            });
         }
         
         // Обработчики событий
         function setupEventListeners() {
             window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
+                if (camera && renderer) {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                }
             });
         }
         
         // Игровой цикл
         function gameLoop() {
-            updateGameState();
-            renderer.render(scene, camera);
+            if (scene && camera && renderer) {
+                updateGameState();
+                renderer.render(scene, camera);
+            }
             requestAnimationFrame(gameLoop);
         }
         
         // Инициализация игры
         function init() {
+            // Сначала инициализируем Three.js
+            if (!initThreeJS()) {
+                return;
+            }
+            
+            // Затем настраиваем управление
             setupEventListeners();
             setupTouchControls();
             
@@ -794,6 +846,7 @@
             generateStarFields(8);
             generateBlackHoles(2);
             
+            // Запускаем игру
             updateUI();
             gameLoop();
         }
