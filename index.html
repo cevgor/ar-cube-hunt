@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Хроники падающих звёзд | Простое управление</title>
+    <title>Хроники падающих звёзд | Космические приключения</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * {
@@ -45,6 +45,24 @@
             z-index: 10;
         }
         
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 5, 15, 0.9);
+            z-index: 20;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
         .hud {
             position: absolute;
             top: 10px;
@@ -70,8 +88,8 @@
             text-align: right;
         }
         
-        /* Простое управление - 4 кнопки */
-        .simple-controls {
+        /* Управление */
+        .controls {
             position: absolute;
             bottom: 20px;
             width: 100%;
@@ -112,21 +130,6 @@
         .control-btn.active {
             background: rgba(0, 255, 255, 0.8);
             box-shadow: 0 0 30px #0ff;
-        }
-        
-        .game-over {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 30px;
-            border: 2px solid #f00;
-            text-align: center;
-            display: none;
-            z-index: 20;
-            pointer-events: auto;
-            border-radius: 10px;
         }
         
         .btn {
@@ -174,6 +177,44 @@
             z-index: 100;
         }
         
+        .planet-interface {
+            background: rgba(0, 10, 30, 0.95);
+            padding: 30px;
+            border: 3px solid #0ff;
+            border-radius: 15px;
+            max-width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        
+        .dialogue {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #0ff;
+            border-radius: 10px;
+            background: rgba(0, 20, 40, 0.7);
+        }
+        
+        .trader-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .trader-option {
+            padding: 10px;
+            border: 1px solid #0ff;
+            border-radius: 5px;
+            background: rgba(0, 30, 60, 0.7);
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .trader-option:active {
+            background: rgba(0, 50, 100, 0.7);
+        }
+        
         /* Адаптация для очень маленьких экранов */
         @media (max-height: 600px) {
             .hud, .resources {
@@ -195,37 +236,81 @@
     <div id="ui">
         <div class="scanlines"></div>
         
-        <div class="hud">
-            <div>❤️: <span id="healthValue">100</span>%</div>
-            <div>⚡: <span id="energyValue">100</span>%</div>
-            <div>🚀: <span id="speedValue">0</span></div>
-            <div>🛡️: <span id="shieldValue">100</span>%</div>
+        <!-- Главное меню -->
+        <div id="menuScreen" class="screen">
+            <h1>ХРОНИКИ ПАДАЮЩИХ ЗВЁЗД</h1>
+            <p style="margin-bottom: 30px; text-align: center;">Космические приключения</p>
+            <button class="btn" id="startBtn">НАЧАТЬ ИГРУ</button>
+            <button class="btn" id="continueBtn">ПРОДОЛЖИТЬ</button>
         </div>
         
-        <div class="resources">
-            <div>⭐: <span id="starsValue">0</span></div>
-            <div>🔧: <span id="fragmentsValue">0</span></div>
-            <div>🏆: <span id="scoreValue">0</span></div>
+        <!-- Игровой экран -->
+        <div id="gameScreen" class="screen hidden">
+            <div class="hud">
+                <div>❤️: <span id="healthValue">100</span>%</div>
+                <div>⚡: <span id="energyValue">100</span>%</div>
+                <div>🚀: <span id="speedValue">0</span></div>
+                <div>🛡️: <span id="shieldValue">100</span>%</div>
+            </div>
+            
+            <div class="resources">
+                <div>⭐: <span id="starsValue">0</span></div>
+                <div>🔧: <span id="fragmentsValue">0</span></div>
+                <div>🏆: <span id="scoreValue">0</span></div>
+            </div>
+            
+            <div class="controls">
+                <div class="control-column">
+                    <div class="control-btn" id="leftBtn">←</div>
+                    <div class="control-btn" id="backBtn">↓</div>
+                </div>
+                <div class="control-column">
+                    <div class="control-btn" id="rightBtn">→</div>
+                    <div class="control-btn" id="shieldBtn">🛡️</div>
+                </div>
+                <div class="control-column">
+                    <div class="control-btn" id="autoPilotBtn">🔑</div>
+                </div>
+            </div>
         </div>
         
-        <div class="simple-controls">
-            <div class="control-column">
-                <div class="control-btn" id="leftBtn">←</div>
-                <div class="control-btn" id="backBtn">↓</div>
-            </div>
-            <div class="control-column">
-                <div class="control-btn" id="rightBtn">→</div>
-                <div class="control-btn" id="shieldBtn">🛡️</div>
-            </div>
-            <div class="control-column">
-                <div class="control-btn" id="autoPilotBtn">🔑</div>
+        <!-- Экран планеты -->
+        <div id="planetScreen" class="screen hidden">
+            <div class="planet-interface">
+                <h2 id="planetName">ПЛАНЕТА</h2>
+                <div class="dialogue" id="planetDialogue">
+                    Добро пожаловать на планету! Чем могу помочь?
+                </div>
+                
+                <div class="trader-options">
+                    <div class="trader-option" data-action="trade">ТОРГОВАТЬ</div>
+                    <div class="trader-option" data-action="talk">ПОБОЛТАТЬ</div>
+                    <div class="trader-option" data-action="repair">ПОЧИНИТЬ КОРАБЛЬ</div>
+                    <div class="trader-option" data-action="upgrade">УЛУЧШЕНИЯ</div>
+                    <div class="trader-option" data-action="mission">ПОЛУЧИТЬ ЗАДАНИЕ</div>
+                    <div class="trader-option" data-action="leave">УЛЕТЕТЬ</div>
+                </div>
+                
+                <div id="tradeInterface" style="display: none; margin-top: 20px;">
+                    <h3>ТОРГОВЛЯ</h3>
+                    <div class="trader-options">
+                        <div class="trader-option" data-trade="buyStars">КУПИТЬ ЗВЁЗДЫ (10🔧 за 1⭐)</div>
+                        <div class="trader-option" data-trade="sellStars">ПРОДАТЬ ЗВЁЗДЫ (1⭐ за 8🔧)</div>
+                        <div class="trader-option" data-trade="buyShield">КУПИТЬ ЩИТ (50🔧)</div>
+                        <div class="trader-option" data-trade="back">НАЗАД</div>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <div id="gameOver" class="game-over">
-            <h2>КОРАБЛЬ УНИЧТОЖЕН</h2>
-            <p style="margin: 20px 0; font-size: 18px;">Счёт: <span id="finalScore">0</span></p>
-            <button class="btn" id="restartBtn">НОВАЯ ИГРА</button>
+        <!-- Экран завершения игры -->
+        <div id="gameOver" class="screen hidden">
+            <div style="background: rgba(0, 0, 0, 0.9); padding: 30px; border: 2px solid #f00; text-align: center; border-radius: 10px;">
+                <h2>КОРАБЛЬ УНИЧТОЖЕН</h2>
+                <p style="margin: 20px 0; font-size: 18px;">Счёт: <span id="finalScore">0</span></p>
+                <button class="btn" id="restartBtn">НОВАЯ ИГРА</button>
+                <button class="btn" id="menuBtn">ГЛАВНОЕ МЕНЮ</button>
+            </div>
         </div>
     </div>
 
@@ -237,7 +322,7 @@
         }
 
         let scene, camera, renderer, ship;
-        let asteroids = [], enemyShips = [], starFields = [], blackHoles = [];
+        let asteroids = [], enemyShips = [], starFields = [], planets = [], crystals = [];
         
         // Игровые переменные
         let gameState = {
@@ -247,19 +332,45 @@
             fragments: 0,
             score: 0,
             speed: 0,
-            maxSpeed: 0.5,
-            acceleration: 0.01,
+            maxSpeed: 0.8,
+            acceleration: 0.02,
             rotationSpeed: 0.05,
             isShieldActive: false,
             shieldEnergy: 100,
-            gameActive: true,
+            gameActive: false,
             autoPilot: false,
             touchControls: {
                 left: false,
                 right: false,
                 back: false
-            }
+            },
+            currentPlanet: null,
+            savedProgress: null
         };
+
+        // Планеты и их описания
+        const planetData = [
+            { 
+                name: "КРИОНИС", 
+                dialogue: "Ледяная планета. Местные торговцы предлагают редкие кристаллы.",
+                trader: { name: "Торговец Глорб", mood: "дружелюбный" }
+            },
+            { 
+                name: "ПИРОС", 
+                dialogue: "Огненный мир. Опасно, но богат ресурсами.",
+                trader: { name: "Шахтёр Брак", mood: "грубый" }
+            },
+            { 
+                name: "ВЕРДАНТ", 
+                dialogue: "Зелёная планета с древними руинами.",
+                trader: { name: "Археолог Зара", mood: "учёный" }
+            },
+            { 
+                name: "НЕКСУС", 
+                dialogue: "Космическая станция, центр торговли сектора.",
+                trader: { name: "Мерchant AI", mood: "нейтральный" }
+            }
+        ];
 
         // Инициализация Three.js
         function initThreeJS() {
@@ -354,7 +465,7 @@
                 
                 asteroid.position.x = (Math.random() - 0.5) * 200;
                 asteroid.position.y = (Math.random() - 0.5) * 200;
-                asteroid.position.z = ship.position.z - 100 - Math.random() * 500;
+                asteroid.position.z = -100 - Math.random() * 500;
                 
                 asteroid.rotation.x = Math.random() * Math.PI;
                 asteroid.rotation.y = Math.random() * Math.PI;
@@ -365,7 +476,7 @@
                         y: (Math.random() - 0.5) * 0.02,
                         z: (Math.random() - 0.5) * 0.02
                     },
-                    speed: Math.random() * 0.5 + 0.1
+                    speed: 0.3 + Math.random() * 0.3
                 };
                 
                 scene.add(asteroid);
@@ -387,10 +498,10 @@
                 
                 enemyShip.position.x = (Math.random() - 0.5) * 150;
                 enemyShip.position.y = (Math.random() - 0.5) * 150;
-                enemyShip.position.z = ship.position.z - 200 - Math.random() * 400;
+                enemyShip.position.z = -200 - Math.random() * 400;
                 
                 enemyShip.userData = {
-                    speed: Math.random() * 0.3 + 0.2,
+                    speed: 0.2 + Math.random() * 0.3,
                     health: 30
                 };
                 
@@ -413,7 +524,7 @@
                 
                 starField.position.x = (Math.random() - 0.5) * 180;
                 starField.position.y = (Math.random() - 0.5) * 180;
-                starField.position.z = ship.position.z - 150 - Math.random() * 450;
+                starField.position.z = -150 - Math.random() * 450;
                 
                 starField.userData = {
                     rotationSpeed: (Math.random() - 0.5) * 0.05,
@@ -425,27 +536,62 @@
             }
         }
         
-        // Процедурная генерация чёрных дыр
-        function generateBlackHoles(count) {
+        // Процедурная генерация кристаллов
+        function generateCrystals(count) {
             for (let i = 0; i < count; i++) {
-                const geometry = new THREE.SphereGeometry(8, 32, 32);
+                const geometry = new THREE.OctahedronGeometry(1.5, 0);
                 const material = new THREE.MeshPhongMaterial({
-                    color: 0x000000,
-                    emissive: 0x220022
+                    color: 0xff00ff,
+                    shininess: 100,
+                    emissive: 0x330033
                 });
                 
-                const blackHole = new THREE.Mesh(geometry, material);
+                const crystal = new THREE.Mesh(geometry, material);
                 
-                blackHole.position.x = (Math.random() - 0.5) * 100;
-                blackHole.position.y = (Math.random() - 0.5) * 100;
-                blackHole.position.z = ship.position.z - 250 - Math.random() * 300;
+                crystal.position.x = (Math.random() - 0.5) * 200;
+                crystal.position.y = (Math.random() - 0.5) * 200;
+                crystal.position.z = -100 - Math.random() * 600;
                 
-                blackHole.userData = {
-                    gravityStrength: 0.05
+                crystal.userData = {
+                    rotationSpeed: (Math.random() - 0.5) * 0.03,
+                    collected: false
                 };
                 
-                scene.add(blackHole);
-                blackHoles.push(blackHole);
+                scene.add(crystal);
+                crystals.push(crystal);
+            }
+        }
+        
+        // Процедурная генерация планет
+        function generatePlanets(count) {
+            for (let i = 0; i < count; i++) {
+                const size = 15 + Math.random() * 20;
+                const geometry = new THREE.SphereGeometry(size, 32, 32);
+                
+                // Случайный цвет планеты
+                const colors = [0x4488ff, 0xff8844, 0x44ff88, 0x8844ff, 0xffff44];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                const material = new THREE.MeshPhongMaterial({
+                    color: color,
+                    shininess: 30,
+                    emissive: 0x111111
+                });
+                
+                const planet = new THREE.Mesh(geometry, material);
+                
+                planet.position.x = (Math.random() - 0.5) * 300;
+                planet.position.y = (Math.random() - 0.5) * 300;
+                planet.position.z = -400 - Math.random() * 800;
+                
+                planet.userData = {
+                    speed: 0.1 + Math.random() * 0.2,
+                    size: size,
+                    planetData: planetData[Math.floor(Math.random() * planetData.length)]
+                };
+                
+                scene.add(planet);
+                planets.push(planet);
             }
         }
         
@@ -474,9 +620,8 @@
                 ship.rotation.z -= gameState.rotationSpeed;
             }
             
-            // Движение корабля вперед/назад
-            ship.position.x -= Math.sin(ship.rotation.z) * gameState.speed;
-            ship.position.y += Math.cos(ship.rotation.z) * gameState.speed;
+            // Движение корабля вперед/назад - теперь по Z!
+            ship.position.z += gameState.speed;
             
             // Обновление позиции камеры
             camera.position.x = ship.position.x;
@@ -510,7 +655,8 @@
                     generateAsteroids(1);
                 }
                 
-                if (asteroid.position.z > ship.position.z + 50) {
+                // Если астероид ушел далеко вперед, удаляем и создаем новый сзади
+                if (asteroid.position.z > ship.position.z + 100) {
                     scene.remove(asteroid);
                     asteroids.splice(index, 1);
                     generateAsteroids(1);
@@ -521,6 +667,7 @@
             enemyShips.forEach((enemy, index) => {
                 enemy.position.z += enemy.userData.speed;
                 
+                // Простое преследование игрока
                 if (enemy.position.x < ship.position.x) {
                     enemy.position.x += 0.1;
                 } else {
@@ -552,7 +699,7 @@
                     generateEnemyShips(1);
                 }
                 
-                if (enemy.position.z > ship.position.z + 50) {
+                if (enemy.position.z > ship.position.z + 100) {
                     scene.remove(enemy);
                     enemyShips.splice(index, 1);
                     generateEnemyShips(1);
@@ -583,36 +730,64 @@
                     }, 300);
                 }
                 
-                if (star.position.z > ship.position.z + 50) {
+                if (star.position.z > ship.position.z + 100) {
                     scene.remove(star);
                     starFields.splice(index, 1);
                     generateStarFields(1);
                 }
             });
             
-            // Обновление чёрных дыр
-            blackHoles.forEach((blackHole, index) => {
-                const dx = blackHole.position.x - ship.position.x;
-                const dy = blackHole.position.y - ship.position.y;
-                const dz = blackHole.position.z - ship.position.z;
+            // Обновление кристаллов
+            crystals.forEach((crystal, index) => {
+                crystal.rotation.y += crystal.userData.rotationSpeed;
                 
-                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                const distance = Math.sqrt(
+                    Math.pow(crystal.position.x - ship.position.x, 2) +
+                    Math.pow(crystal.position.y - ship.position.y, 2) +
+                    Math.pow(crystal.position.z - ship.position.z, 2)
+                );
                 
-                if (distance < 30) {
-                    const force = blackHole.userData.gravityStrength / (distance * distance);
-                    ship.position.x += dx * force;
-                    ship.position.y += dy * force;
-                    ship.position.z += dz * force;
+                if (distance < 6 && !crystal.userData.collected) {
+                    crystal.userData.collected = true;
+                    gameState.fragments += 2;
+                    gameState.score += 20;
                     
-                    if (distance < 15) {
-                        gameState.health -= 0.5;
-                    }
+                    crystal.scale.set(0.1, 0.1, 0.1);
+                    
+                    setTimeout(() => {
+                        scene.remove(crystal);
+                        crystals.splice(index, 1);
+                        generateCrystals(1);
+                    }, 300);
                 }
                 
-                if (blackHole.position.z > ship.position.z + 50) {
-                    scene.remove(blackHole);
-                    blackHoles.splice(index, 1);
-                    generateBlackHoles(1);
+                if (crystal.position.z > ship.position.z + 100) {
+                    scene.remove(crystal);
+                    crystals.splice(index, 1);
+                    generateCrystals(1);
+                }
+            });
+            
+            // Обновление планет и проверка посадки
+            planets.forEach((planet, index) => {
+                planet.position.z += planet.userData.speed;
+                planet.rotation.y += 0.005;
+                
+                const distance = Math.sqrt(
+                    Math.pow(planet.position.x - ship.position.x, 2) +
+                    Math.pow(planet.position.y - ship.position.y, 2) +
+                    Math.pow(planet.position.z - ship.position.z, 2)
+                );
+                
+                // Если близко к планете, предлагаем посадку
+                if (distance < planet.userData.size + 10) {
+                    landOnPlanet(planet);
+                }
+                
+                if (planet.position.z > ship.position.z + 100) {
+                    scene.remove(planet);
+                    planets.splice(index, 1);
+                    generatePlanets(1);
                 }
             });
             
@@ -683,16 +858,130 @@
             updateUI();
         }
         
+        // Посадка на планету
+        function landOnPlanet(planet) {
+            gameState.gameActive = false;
+            gameState.currentPlanet = planet;
+            
+            // Убираем планету из сцены
+            scene.remove(planet);
+            planets = planets.filter(p => p !== planet);
+            
+            // Показываем интерфейс планеты
+            document.getElementById('planetName').textContent = planet.userData.planetData.name;
+            document.getElementById('planetDialogue').textContent = 
+                `${planet.userData.planetData.dialogue}\n\n${planet.userData.planetData.trader.name}: "${getTraderGreeting(planet.userData.planetData.trader.mood)}"`;
+            
+            showScreen('planetScreen');
+        }
+        
+        // Получение приветствия торговца
+        function getTraderGreeting(mood) {
+            const greetings = {
+                'дружелюбный': 'Привет, странник! Хочешь посмотреть мой товар?',
+                'грубый': 'Ну чего уставился? Покупать будешь или просто стоять?',
+                'учёный': 'Интересно... Ты первый, кто посетил эти руины за много лет.',
+                'нейтральный': 'Добро пожаловать. Выберите категорию услуг.'
+            };
+            return greetings[mood] || 'Здравствуйте. Чем могу помочь?';
+        }
+        
+        // Обработка действий на планете
+        function handlePlanetAction(action) {
+            const dialogue = document.getElementById('planetDialogue');
+            const tradeInterface = document.getElementById('tradeInterface');
+            
+            switch(action) {
+                case 'trade':
+                    tradeInterface.style.display = 'block';
+                    dialogue.textContent = 'Что вас интересует?';
+                    break;
+                case 'talk':
+                    const responses = [
+                        'Местные легенды говорят о древней цивилизации, оставившей артефакты в этих звёздных системах.',
+                        'Будь осторожен в секторе N-7, там видели корабли неизвестного происхождения.',
+                        'Если найдёшь голубые кристаллы - не продавай их первому встречному, они ценны для учёных.',
+                        'На этой планете когда-то была великая империя, но теперь остались лишь руины.'
+                    ];
+                    dialogue.textContent = responses[Math.floor(Math.random() * responses.length)];
+                    break;
+                case 'repair':
+                    if (gameState.fragments >= 30) {
+                        gameState.health = Math.min(gameState.health + 50, 100);
+                        gameState.fragments -= 30;
+                        dialogue.textContent = 'Корабль отремонтирован! Здоровье восстановлено.';
+                    } else {
+                        dialogue.textContent = 'У вас недостаточно обломков для ремонта (нужно 30🔧).';
+                    }
+                    break;
+                case 'upgrade':
+                    if (gameState.stars >= 5) {
+                        gameState.maxSpeed += 0.2;
+                        gameState.stars -= 5;
+                        dialogue.textContent = 'Двигатель улучшен! Максимальная скорость увеличена.';
+                    } else {
+                        dialogue.textContent = 'У вас недостаточно звёзд для улучшения (нужно 5⭐).';
+                    }
+                    break;
+                case 'mission':
+                    const missions = [
+                        'Собери 10 кристаллов в соседней системе и получишь 50⭐.',
+                        'Уничтожь 5 вражеских кораблей для получения улучшенного щита.',
+                        'Найди древний артефакт в астероидном поле за 100🔧.'
+                    ];
+                    dialogue.textContent = 'Задание: ' + missions[Math.floor(Math.random() * missions.length)];
+                    break;
+                case 'leave':
+                    tradeInterface.style.display = 'none';
+                    showScreen('gameScreen');
+                    gameState.gameActive = true;
+                    generatePlanets(1); // Создаем новую планету
+                    break;
+                case 'buyStars':
+                    if (gameState.fragments >= 10) {
+                        gameState.stars += 1;
+                        gameState.fragments -= 10;
+                        dialogue.textContent = 'Покупка совершена! Получена 1⭐.';
+                    } else {
+                        dialogue.textContent = 'Недостаточно обломков для покупки (нужно 10🔧).';
+                    }
+                    break;
+                case 'sellStars':
+                    if (gameState.stars >= 1) {
+                        gameState.stars -= 1;
+                        gameState.fragments += 8;
+                        dialogue.textContent = 'Продажа совершена! Получено 8🔧.';
+                    } else {
+                        dialogue.textContent = 'Недостаточно звёзд для продажи (нужно 1⭐).';
+                    }
+                    break;
+                case 'buyShield':
+                    if (gameState.fragments >= 50) {
+                        gameState.shieldEnergy = 100;
+                        gameState.fragments -= 50;
+                        dialogue.textContent = 'Щит полностью восстановлен!';
+                    } else {
+                        dialogue.textContent = 'Недостаточно обломков для покупки щита (нужно 50🔧).';
+                    }
+                    break;
+                case 'back':
+                    tradeInterface.style.display = 'none';
+                    dialogue.textContent = 'Чем ещё могу помочь?';
+                    break;
+            }
+            updateUI();
+        }
+        
         // Конец игры
         function gameOver() {
             gameState.gameActive = false;
             gameState.autoPilot = false;
             document.getElementById('finalScore').textContent = Math.round(gameState.score);
-            document.getElementById('gameOver').style.display = 'block';
+            showScreen('gameOver');
         }
         
         // Новая игра
-        function restartGame() {
+        function startGame() {
             gameState.health = 100;
             gameState.energy = 100;
             gameState.stars = 0;
@@ -715,21 +1004,35 @@
             asteroids.forEach(asteroid => scene.remove(asteroid));
             enemyShips.forEach(enemy => scene.remove(enemy));
             starFields.forEach(star => scene.remove(star));
-            blackHoles.forEach(blackHole => scene.remove(blackHole));
+            crystals.forEach(crystal => scene.remove(crystal));
+            planets.forEach(planet => scene.remove(planet));
             
             asteroids = [];
             enemyShips = [];
             starFields = [];
-            blackHoles = [];
+            crystals = [];
+            planets = [];
             
             // Генерация новых объектов
             generateAsteroids(15);
             generateEnemyShips(5);
             generateStarFields(8);
-            generateBlackHoles(2);
+            generateCrystals(5);
+            generatePlanets(3);
             
-            document.getElementById('gameOver').style.display = 'none';
+            showScreen('gameScreen');
             updateUI();
+        }
+        
+        // Показать экран
+        function showScreen(screenId) {
+            // Скрываем все экраны
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.add('hidden');
+            });
+            
+            // Показываем нужный экран
+            document.getElementById(screenId).classList.remove('hidden');
         }
         
         // Настройка сенсорного управления
@@ -740,6 +1043,9 @@
             const shieldBtn = document.getElementById('shieldBtn');
             const autoPilotBtn = document.getElementById('autoPilotBtn');
             const restartBtn = document.getElementById('restartBtn');
+            const startBtn = document.getElementById('startBtn');
+            const continueBtn = document.getElementById('continueBtn');
+            const menuBtn = document.getElementById('menuBtn');
             
             // Обработчики для кнопок направления
             const addButtonHandler = (button, controlName) => {
@@ -798,14 +1104,47 @@
                 toggleAutoPilot();
             });
             
-            restartBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                restartGame();
+            // Кнопки меню
+            startBtn.addEventListener('click', () => {
+                startGame();
             });
             
-            restartBtn.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                restartGame();
+            continueBtn.addEventListener('click', () => {
+                if (gameState.savedProgress) {
+                    // Загружаем сохраненную игру
+                    gameState = {...gameState, ...gameState.savedProgress};
+                    showScreen('gameScreen');
+                    gameState.gameActive = true;
+                    updateUI();
+                } else {
+                    startGame();
+                }
+            });
+            
+            restartBtn.addEventListener('click', () => {
+                startGame();
+            });
+            
+            menuBtn.addEventListener('click', () => {
+                // Сохраняем прогресс перед выходом в меню
+                gameState.savedProgress = {
+                    health: gameState.health,
+                    stars: gameState.stars,
+                    fragments: gameState.fragments,
+                    score: gameState.score
+                };
+                gameState.gameActive = false;
+                showScreen('menuScreen');
+            });
+            
+            // Обработчики для интерфейса планеты
+            document.querySelectorAll('.trader-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const action = option.getAttribute('data-action') || option.getAttribute('data-trade');
+                    if (action) {
+                        handlePlanetAction(action);
+                    }
+                });
             });
         }
         
@@ -840,14 +1179,10 @@
             setupEventListeners();
             setupTouchControls();
             
-            // Генерация начальных объектов
-            generateAsteroids(15);
-            generateEnemyShips(5);
-            generateStarFields(8);
-            generateBlackHoles(2);
+            // Показываем меню
+            showScreen('menuScreen');
             
-            // Запускаем игру
-            updateUI();
+            // Запускаем игровой цикл
             gameLoop();
         }
         
