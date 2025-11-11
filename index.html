@@ -7,7 +7,6 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        /* Существующие стили остаются без изменений */
         * {
             margin: 0;
             padding: 0;
@@ -31,12 +30,371 @@
             position: relative;
         }
 
-        /* ... остальные стили без изменений ... */
+        /* Меню */
+        #menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            text-align: center;
+        }
+
+        .menu-title {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #ff0000;
+        }
+
+        .menu-subtitle {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        .menu-button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+
+        .menu-button:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+        }
+
+        .menu-button.secondary {
+            background: #3498db;
+        }
+
+        .menu-button.secondary:hover {
+            background: #2980b9;
+        }
+
+        /* Игровой интерфейс */
+        #gameUI {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .stats-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .health-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            width: 200px;
+            backdrop-filter: blur(10px);
+        }
+
+        .bar-container {
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+
+        .health-bar {
+            background: linear-gradient(90deg, #e74c3c, #f39c12);
+            height: 20px;
+            width: 100%;
+            transition: width 0.3s;
+        }
+
+        .exp-bar {
+            background: linear-gradient(90deg, #00ff00, #00cc00);
+            height: 10px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Джойстик */
+        #joystickContainer {
+            position: absolute;
+            bottom: 100px;
+            left: 80px;
+            pointer-events: auto;
+        }
+
+        #joystickBase {
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            position: relative;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        #joystickHandle {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(255,255,255,0.8);
+        }
+
+        /* Кнопки действия */
+        .action-button {
+            position: absolute;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            pointer-events: auto;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .action-button:active {
+            transform: scale(0.9);
+        }
+
+        #shootBtn {
+            bottom: 100px;
+            right: 80px;
+            width: 80px;
+            height: 80px;
+            background: rgba(231, 76, 60, 0.7);
+        }
+
+        #skillBtn {
+            bottom: 200px;
+            right: 80px;
+            width: 60px;
+            height: 60px;
+            background: rgba(52, 152, 219, 0.7);
+            font-size: 1.2em;
+        }
+
+        #weaponDisplay {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: white;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Прицел */
+        #crosshair {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .crosshair-vertical {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: #fff;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .crosshair-horizontal {
+            position: absolute;
+            width: 20px;
+            height: 2px;
+            background: #fff;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Меню улучшений */
+        #upgradeMenu {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .upgrade-option {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            margin: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            min-width: 300px;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .upgrade-option:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+
+        .upgrade-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .upgrade-desc {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        /* Результаты игры */
+        #results {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .results-stats {
+            font-size: 1.2em;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .results-stats div {
+            margin: 10px 0;
+        }
+
+        /* Контейнер игры */
+        #gameContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
     <div id="app">
-        <!-- Существующая разметка остается без изменений -->
+        <!-- Главное меню -->
+        <div id="menu">
+            <h1 class="menu-title">🧟 ZOMBIE SHOOTER</h1>
+            <p class="menu-subtitle">Выживай любой ценой!</p>
+            <button class="menu-button" onclick="startGame()">🎮 НАЧАТЬ ИГРУ</button>
+            <button class="menu-button secondary" onclick="showInstructions()">📖 ОБУЧЕНИЕ</button>
+        </div>
+
+        <!-- Игровой интерфейс -->
+        <div id="gameUI">
+            <!-- Статистика -->
+            <div class="stats-panel">
+                <div>⭐ Очки: <span id="scoreValue">0</span></div>
+                <div>🎯 Уровень: <span id="levelValue">1</span></div>
+                <div>🌊 Волна: <span id="waveValue">1</span></div>
+                <div>🧟 Зомби: <span id="zombiesValue">0</span></div>
+            </div>
+            
+            <!-- Здоровье и опыт -->
+            <div class="health-panel">
+                <div style="margin-bottom: 5px;">❤️ Здоровье</div>
+                <div class="bar-container">
+                    <div id="healthFill" class="health-bar"></div>
+                </div>
+                <div style="margin-top: 10px;">⚡ Опыт</div>
+                <div class="bar-container">
+                    <div id="expFill" class="exp-bar"></div>
+                </div>
+            </div>
+            
+            <!-- Джойстик -->
+            <div id="joystickContainer">
+                <div id="joystickBase"></div>
+                <div id="joystickHandle"></div>
+            </div>
+            
+            <!-- Кнопки действия -->
+            <button id="shootBtn" class="action-button">🔫</button>
+            <button id="skillBtn" class="action-button">❄️</button>
+            
+            <!-- Отображение оружия -->
+            <div id="weaponDisplay">🔫 Пистолет</div>
+        </div>
+
+        <!-- Прицел -->
+        <div id="crosshair">
+            <div class="crosshair-vertical"></div>
+            <div class="crosshair-horizontal"></div>
+        </div>
+
+        <!-- Меню улучшений -->
+        <div id="upgradeMenu">
+            <h2>🎯 ВЫБЕРИТЕ УЛУЧШЕНИЕ</h2>
+            <div id="upgradeOptions"></div>
+        </div>
+
+        <!-- Результаты игры -->
+        <div id="results">
+            <h2>🎮 ИГРА ЗАВЕРШЕНА</h2>
+            <div class="results-stats">
+                <div>⭐ Очки: <span id="finalScore">0</span></div>
+                <div>🎯 Уровень: <span id="finalLevel">1</span></div>
+                <div>🧟 Убито зомби: <span id="zombiesKilled">0</span></div>
+                <div>🌊 Волн пройдено: <span id="wavesCompleted">1</span></div>
+            </div>
+            <button class="menu-button" onclick="restartGame()">🔄 ИГРАТЬ СНОВА</button>
+            <button class="menu-button secondary" onclick="showMenu()">📋 ГЛАВНОЕ МЕНЮ</button>
+        </div>
+
+        <!-- Контейнер для Three.js -->
+        <div id="gameContainer"></div>
     </div>
 
     <script>
@@ -49,7 +407,7 @@
 
         // Игровые переменные
         let scene, camera, renderer;
-        let zombies = [], crystals = [], particles = [], mapObjects = [];
+        let zombies = [], crystals = [], particles = [];
         let score = 0;
         let playerHealth = 100;
         let playerMaxHealth = 100;
@@ -64,6 +422,7 @@
         let isGameRunning = false;
         let isPaused = false;
         let animationFrameId = null;
+        let totalZombiesKilled = 0;
         
         // Low-poly материалы
         const materials = {
@@ -781,6 +1140,7 @@
                     zombies.splice(index, 1);
                     zombiesAlive--;
                     score += zombie.userData.score;
+                    totalZombiesKilled++;
                     updateScore();
                     updateZombiesCount();
                     return;
@@ -1297,6 +1657,13 @@
                 lastTap = currentTime;
             });
             
+            // Умение
+            skillBtn.addEventListener('click', useSkill);
+            skillBtn.addEventListener('touchstart', (e) => {
+                useSkill();
+                e.preventDefault();
+            });
+            
             // Управление с клавиатуры для тестирования
             document.addEventListener('keydown', (e) => {
                 switch(e.key) {
@@ -1363,6 +1730,14 @@
         function updateExpBar() {
             const expPercent = playerExp / expToNextLevel;
             expFill.style.width = (expPercent * 100) + '%';
+        }
+
+        // Регенерация здоровья
+        function updateRegeneration() {
+            if (playerStats.healthRegen > 0 && playerHealth < playerMaxHealth) {
+                playerHealth = Math.min(playerMaxHealth, playerHealth + playerStats.healthRegen * 0.016);
+                updateHealthBar();
+            }
         }
 
         // Игровой цикл
@@ -1462,6 +1837,7 @@
             currentWave = 1;
             zombiesInWave = 2;
             zombiesAlive = 0;
+            totalZombiesKilled = 0;
             
             playerStats = {
                 damage: 20,
@@ -1504,7 +1880,54 @@
             updateExpBar();
         }
 
-        // ... остальные функции (showInstructions, endGame, showMenu, restartGame) остаются без изменений
+        function showInstructions() {
+            alert("🎮 УПРАВЛЕНИЕ:\n• Джойстик слева - движение\n• Кнопка справа - стрельба\n• Правая часть экрана - поворот камеры\n• Двойной тап - смена оружия\n• Кнопка ❄️ - умение 'Заморозка'");
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            isPaused = true;
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            if (gameTimer) {
+                clearInterval(gameTimer);
+            }
+            
+            // Сохраняем результаты в Telegram WebApp
+            if (window.Telegram && Telegram.WebApp) {
+                const gameData = {
+                    score: score,
+                    waves: currentWave - 1,
+                    time: gameTime,
+                    zombies: totalZombiesKilled,
+                    level: playerLevel
+                };
+                Telegram.WebApp.sendData(JSON.stringify(gameData));
+            }
+            
+            // Показываем результаты
+            finalScore.textContent = score;
+            finalLevel.textContent = playerLevel;
+            zombiesKilled.textContent = totalZombiesKilled;
+            wavesCompleted.textContent = currentWave - 1;
+            
+            gameUI.style.display = 'none';
+            results.style.display = 'flex';
+        }
+
+        function showMenu() {
+            cleanupGame();
+            menu.style.display = 'flex';
+            gameUI.style.display = 'none';
+            results.style.display = 'none';
+        }
+
+        function restartGame() {
+            showMenu();
+            setTimeout(startGame, 500);
+        }
 
         // Обработка изменения размера
         window.addEventListener('resize', () => {
@@ -1528,6 +1951,13 @@
                 alert('Ваш браузер не поддерживает WebGL.');
                 return;
             }
+            
+            // Инициализация кнопок
+            skillBtn.addEventListener('click', useSkill);
+            skillBtn.addEventListener('touchstart', function(e) {
+                useSkill();
+                e.preventDefault();
+            });
         });
     </script>
 </body>
