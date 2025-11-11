@@ -331,7 +331,7 @@
             stars: 0,
             fragments: 0,
             score: 0,
-            speed: 0.5,
+            speed: 0.8, // Увеличил скорость для более динамичной игры
             rotationSpeed: 0.03,
             isShieldActive: false,
             shieldEnergy: 100,
@@ -735,8 +735,13 @@
         function updateGameState() {
             if (!gameState.gameActive || !ship) return;
             
-            // Движение корабля вперед (постоянное)
-            ship.position.z += gameState.speed;
+            // Корабль всегда летит ВПЕРЁД по своей локальной оси Z
+            // Вычисляем вектор направления корабля
+            const direction = new THREE.Vector3(0, 0, -1);
+            direction.applyQuaternion(ship.quaternion);
+            
+            // Двигаем корабль в направлении его носа
+            ship.position.add(direction.multiplyScalar(gameState.speed));
             
             // Поворот корабля влево/вправо
             if (gameState.touchControls.left) {
@@ -746,19 +751,20 @@
                 ship.rotation.y -= gameState.rotationSpeed;
             }
             
-            // Движение корабля в стороны в зависимости от поворота
-            ship.position.x += Math.sin(ship.rotation.y) * gameState.speed;
-            
-            // Обновление позиции камеры
+            // Обновление позиции камеры - следует за кораблем
             camera.position.x = ship.position.x;
             camera.position.y = 5; // Немного выше для лучшего обзора
             camera.position.z = ship.position.z + 20;
-            camera.lookAt(ship.position.x, 0, ship.position.z - 10);
+            
+            // Камера всегда смотрит немного вперед от корабля
+            const lookAtPoint = ship.position.clone();
+            lookAtPoint.add(direction.multiplyScalar(10));
+            camera.lookAt(lookAtPoint);
             
             // Обновление частиц двигателя
             updateEngineParticles();
             
-            // Обновление астероидов
+            // Обновление астероидов (они стоят на месте, создавая иллюзию движения)
             asteroids.forEach((asteroid, index) => {
                 asteroid.rotation.x += asteroid.userData.rotationSpeed.x;
                 asteroid.rotation.y += asteroid.userData.rotationSpeed.y;
@@ -788,8 +794,8 @@
                     generateAsteroids(1);
                 }
                 
-                // Если астероид остался позади, удаляем и создаем новый впереди
-                if (asteroid.position.z > ship.position.z + 100) {
+                // Если астероид слишком далеко позади, удаляем и создаем новый впереди
+                if (asteroid.position.z > ship.position.z + 200) {
                     scene.remove(asteroid);
                     asteroids.splice(index, 1);
                     generateAsteroids(1);
@@ -808,9 +814,6 @@
                     // Если близко, преследуем игрока
                     enemy.position.x += dx * 0.01;
                 }
-                
-                // Враги всегда летят вперед с той же скоростью, что и корабль
-                enemy.position.z += gameState.speed;
                 
                 const collisionDistance = Math.sqrt(
                     Math.pow(enemy.position.x - ship.position.x, 2) +
@@ -833,8 +836,8 @@
                     generateEnemyShips(1);
                 }
                 
-                // Если враг остался позади, удаляем и создаем нового впереди
-                if (enemy.position.z > ship.position.z + 100) {
+                // Если враг слишком далеко позади, удаляем и создаем нового впереди
+                if (enemy.position.z > ship.position.z + 200) {
                     scene.remove(enemy);
                     enemyShips.splice(index, 1);
                     generateEnemyShips(1);
@@ -866,8 +869,8 @@
                     }, 300);
                 }
                 
-                // Если звезда осталась позади, удаляем и создаем новую впереди
-                if (star.position.z > ship.position.z + 100) {
+                // Если звезда слишком далеко позади, удаляем и создаем новую впереди
+                if (star.position.z > ship.position.z + 200) {
                     scene.remove(star);
                     starFields.splice(index, 1);
                     generateStarFields(1);
@@ -899,8 +902,8 @@
                     }, 300);
                 }
                 
-                // Если кристалл остался позади, удаляем и создаем новый впереди
-                if (crystal.position.z > ship.position.z + 100) {
+                // Если кристалл слишком далеко позади, удаляем и создаем новый впереди
+                if (crystal.position.z > ship.position.z + 200) {
                     scene.remove(crystal);
                     crystals.splice(index, 1);
                     generateCrystals(1);
@@ -909,8 +912,6 @@
             
             // Обновление планет и проверка посадки
             planets.forEach((planet, index) => {
-                // Планеты движутся вместе с кораблем
-                planet.position.z += gameState.speed;
                 planet.rotation.y += 0.002;
                 
                 const distance = Math.sqrt(
@@ -923,8 +924,8 @@
                     landOnPlanet(planet);
                 }
                 
-                // Если планета осталась позади, удаляем и создаем новую впереди
-                if (planet.position.z > ship.position.z + 100) {
+                // Если планета слишком далеко позади, удаляем и создаем новую впереди
+                if (planet.position.z > ship.position.z + 200) {
                     scene.remove(planet);
                     planets.splice(index, 1);
                     generatePlanets(1);
@@ -1186,7 +1187,7 @@
             gameState.stars = 0;
             gameState.fragments = 0;
             gameState.score = 0;
-            gameState.speed = 0.5;
+            gameState.speed = 0.8;
             gameState.isShieldActive = false;
             gameState.shieldEnergy = 100;
             gameState.gameActive = true;
