@@ -155,6 +155,7 @@
       background: rgba(0,0,0,0.25);
       pointer-events: auto;
       touch-action: none;
+      position: relative;
     }
     #surfaceKnob {
       position: absolute;
@@ -354,7 +355,8 @@ const STATE = {
   canShoot: true,
   lastShot: 0,
   overdrive: false,
-  shieldActive: false
+  shieldActive: false,
+  currentPlanet: null
 };
 
 // ========== THREE.js scene setup ==========
@@ -370,6 +372,15 @@ let hasComposer = false;
 // Control states
 let spaceJoystick = { x: 0, y: 0 };
 let surfaceJoystick = { x: 0, y: 0, active: false };
+
+// Landing animation state
+let landingAnimation = {
+  active: false,
+  startPos: new THREE.Vector3(),
+  targetPos: new THREE.Vector3(),
+  progress: 0,
+  duration: 2000
+};
 
 // ========== INIT THREE.js ==========
 function initThree(){
@@ -742,42 +753,58 @@ function flashDamage(){
 
 // ========== PLANET LANDING & SURFACE ==========
 function performLanding(planet){
+  console.log("Starting landing sequence on:", planet.userData.name);
   STATE.mode = 'landing';
+  STATE.currentPlanet = planet;
   
-  const targetPos = planet.position.clone().add(new THREE.Vector3(0, planet.geometry.parameters.radius + 8, 0));
-  const startPos = shipGroup.position.clone();
-  let t=0;
-  const duration = 1200;
-  const start = performance.now();
+  landingAnimation.active = true;
+  landingAnimation.startPos.copy(shipGroup.position);
+  landingAnimation.targetPos.copy(planet.position).add(new THREE.Vector3(0, planet.geometry.parameters.radius + 8, 0));
+  landingAnimation.progress = 0;
+  landingAnimation.startTime = performance.now();
   
-  function step(){
-    const now = performance.now(); 
-    t = (now - start) / duration;
-    if(t>1) t=1;
-    
-    shipGroup.position.lerpVectors(startPos, targetPos, t);
-    camera.position.lerpVectors(
-      camera.position, 
-      shipGroup.position.clone().add(new THREE.Vector3(0,8,15)), 
-      0.1
-    );
-    
-    if(t<1) {
-      requestAnimationFrame(step);
-    } else {
-      completeLanding(planet);
-    }
+  // Immediately start the landing animation in the main game loop
+}
+
+function updateLanding(delta){
+  if (!landingAnimation.active) return;
+  
+  const now = performance.now();
+  landingAnimation.progress = (now - landingAnimation.startTime) / landingAnimation.duration;
+  
+  if (landingAnimation.progress >= 1) {
+    // Landing complete
+    landingAnimation.active = false;
+    completeLanding(STATE.currentPlanet);
+    return;
   }
-  step();
+  
+  // Smooth easing function
+  const t = easeOutCubic(landingAnimation.progress);
+  
+  // Move ship toward planet
+  shipGroup.position.lerpVectors(landingAnimation.startPos, landingAnimation.targetPos, t);
+  
+  // Update camera to follow ship
+  const camOffset = new THREE.Vector3(0, 8, 15);
+  camera.position.lerp(shipGroup.position.clone().add(camOffset), 0.1);
+  camera.lookAt(shipGroup.position);
+}
+
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
 }
 
 function completeLanding(planet){
+  console.log("Landing complete on:", planet.userData.name);
+  
   // Hide space objects
   stars.visible = false;
   nebulas.forEach(n => n.visible = false);
   planets.forEach(p => p.visible = false);
-  asteroids.forEach(a => a.visible = false);
-  enemies.forEach(e => e.visible = false);
+  asteroids.forEach(a => { a.visible = false; });
+  enemies.forEach(e => { e.visible = false; });
+  bullets.forEach(b => { b.visible = false; });
   shipGroup.visible = false;
   
   // Create surface
@@ -792,15 +819,19 @@ function completeLanding(planet){
   
   // Switch controls
   document.getElementById('spaceControls').style.display = 'none';
-  document.getElementById('spaceActionButtons').style.display = 'none';
+  document.querySelector('.spaceActionButtons').style.display = 'none';
   document.getElementById('surfaceControls').style.display = 'flex';
-  document.getElementById('surfaceActionButtons').style.display = 'flex';
+  document.querySelector('.surfaceActionButtons').style.display = 'flex';
   
   STATE.mode = 'surface';
   showPlanetPanel(planet);
+  
+  console.log("Surface mode activated");
 }
 
 function takeOffFromPlanet(){
+  console.log("Taking off from planet");
+  
   // Remove surface
   if(surfaceScene) {
     scene.remove(surfaceScene);
@@ -815,21 +846,27 @@ function takeOffFromPlanet(){
   planets.forEach(p => p.visible = true);
   asteroids.forEach(a => a.visible = true);
   enemies.forEach(e => e.visible = true);
+  bullets.forEach(b => b.visible = true);
   shipGroup.visible = true;
   
   // Position ship away from planet
-  shipGroup.position.z -= 80;
+  if (STATE.currentPlanet) {
+    shipGroup.position.copy(STATE.currentPlanet.position).add(new THREE.Vector3(0, 0, -80));
+  }
   
   // Switch controls
   document.getElementById('surfaceControls').style.display = 'none';
-  document.getElementById('surfaceActionButtons').style.display = 'none';
+  document.querySelector('.surfaceActionButtons').style.display = 'none';
   document.getElementById('spaceControls').style.display = 'flex';
-  document.getElementById('spaceActionButtons').style.display = 'flex';
+  document.querySelector('.spaceActionButtons').style.display = 'flex';
   
   // Close planet UI
   document.getElementById('planetPanel').style.display = 'none';
   
   STATE.mode = 'space';
+  STATE.currentPlanet = null;
+  
+  console.log("Back to space mode");
 }
 
 // ========== UI & SHOP SYSTEM ==========
@@ -1066,6 +1103,8 @@ function animate(){
 
   if(STATE.mode === 'space'){
     updateSpace(delta);
+  } else if(STATE.mode === 'landing') {
+    updateLanding(delta);
   } else if(STATE.mode === 'surface'){
     updateSurface(delta);
   }
@@ -1198,10 +1237,10 @@ function updateSpace(delta){
     STATE.overdrive=false; 
   }
 
-  // Planet proximity check
+  // Planet proximity check - AUTO LANDING
   for(let p of planets){
     const d = shipGroup.position.distanceTo(p.position);
-    if(d < p.geometry.parameters.radius + 32){
+    if(d < p.geometry.parameters.radius + 50 && STATE.mode === 'space'){
       // Auto-land when close
       performLanding(p);
       break;
