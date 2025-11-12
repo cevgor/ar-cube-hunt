@@ -1,1706 +1,790 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Хроники падающих звёзд | Космический рейдер</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-        
-        body {
-            background: #000;
-            color: #0ff;
-            font-family: 'Courier New', monospace;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-        }
-        
-        #gameContainer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-        
-        #ui {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-        
-        .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(0, 5, 15, 0.95);
-            z-index: 20;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .hud {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 16px;
-            text-shadow: 0 0 10px #0ff;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 12px;
-            border: 2px solid #0ff;
-            border-radius: 8px;
-        }
-        
-        .resources {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 16px;
-            text-shadow: 0 0 10px #0ff;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 12px;
-            border: 2px solid #0ff;
-            border-radius: 8px;
-            text-align: right;
-        }
-        
-        /* Простое управление - 3 кнопки */
-        .simple-controls {
-            position: absolute;
-            bottom: 30px;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            pointer-events: auto;
-        }
-        
-        .control-btn {
-            width: 90px;
-            height: 90px;
-            border-radius: 20px;
-            background: rgba(0, 255, 255, 0.4);
-            border: 3px solid #0ff;
-            color: #0ff;
-            font-size: 32px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            box-shadow: 0 0 25px #0ff;
-            touch-action: manipulation;
-            transition: all 0.1s;
-        }
-        
-        .control-btn:active {
-            background: rgba(0, 255, 255, 0.8);
-            transform: scale(0.95);
-            box-shadow: 0 0 40px #0ff;
-        }
-        
-        .btn {
-            background: transparent;
-            color: #0ff;
-            border: 2px solid #0ff;
-            padding: 15px 30px;
-            margin: 15px;
-            font-family: 'Courier New', monospace;
-            font-size: 18px;
-            cursor: pointer;
-            pointer-events: auto;
-            transition: all 0.3s;
-            border-radius: 8px;
-            text-shadow: 0 0 5px #0ff;
-            box-shadow: 0 0 15px #0ff;
-        }
-        
-        .btn:active {
-            background: rgba(0, 255, 255, 0.2);
-        }
-        
-        .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                to bottom,
-                rgba(255,255,255,0) 0%,
-                rgba(255,255,255,0.03) 50%,
-                rgba(255,255,255,0) 100%
-            );
-            background-size: 100% 3px;
-            pointer-events: none;
-            z-index: 5;
-        }
-        
-        .loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 28px;
-            text-align: center;
-            z-index: 100;
-            text-shadow: 0 0 10px #0ff;
-        }
-        
-        .planet-interface {
-            background: rgba(0, 15, 40, 0.95);
-            padding: 40px;
-            border: 3px solid #0ff;
-            border-radius: 20px;
-            max-width: 90%;
-            max-height: 80%;
-            overflow-y: auto;
-            box-shadow: 0 0 40px #0ff;
-        }
-        
-        .dialogue {
-            margin: 25px 0;
-            padding: 20px;
-            border: 2px solid #0ff;
-            border-radius: 12px;
-            background: rgba(0, 25, 50, 0.8);
-            font-size: 16px;
-            line-height: 1.5;
-        }
-        
-        .trader-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 25px 0;
-        }
-        
-        .trader-option {
-            padding: 15px;
-            border: 2px solid #0ff;
-            border-radius: 8px;
-            background: rgba(0, 40, 80, 0.7);
-            cursor: pointer;
-            text-align: center;
-            pointer-events: auto;
-            transition: all 0.2s;
-            font-size: 14px;
-        }
-        
-        .trader-option:active {
-            background: rgba(0, 60, 120, 0.9);
-            transform: scale(0.98);
-        }
-        
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-        
-        /* Адаптация для очень маленьких экранов */
-        @media (max-height: 600px) {
-            .hud, .resources {
-                font-size: 14px;
-                padding: 8px;
-            }
-            
-            .control-btn {
-                width: 80px;
-                height: 80px;
-                font-size: 28px;
-            }
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Космический рейдер — улучшенная версия</title>
+
+  <!-- Three + postprocessing (не модульные версии, работают с r128) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://threejs.org/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://threejs.org/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://threejs.org/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script src="https://threejs.org/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://threejs.org/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://threejs.org/examples/js/shaders/GammaCorrectionShader.js"></script>
+
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;user-select:none}
+    html,body{width:100%;height:100%;background:#020812}
+    #gameContainer{position:fixed;inset:0;z-index:1}
+    #ui{position:fixed;inset:0;pointer-events:none;z-index:10;font-family:'Courier New',monospace;color:#0ff}
+    .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+    .hidden{display:none}
+    .hud{pointer-events:auto;position:absolute;left:12px;top:12px;background:rgba(0,0,0,0.6);padding:10px;border:1px solid rgba(0,255,255,0.14);backdrop-filter:blur(4px)}
+    .resources{pointer-events:auto;position:absolute;right:12px;top:12px;background:rgba(0,0,0,0.6);padding:10px;border:1px solid rgba(0,255,255,0.14)}
+    .btn{pointer-events:auto;background:transparent;border:1px solid #0ff;padding:8px 14px;color:#0ff;margin:8px;border-radius:8px;cursor:pointer}
+    .simple-controls{pointer-events:auto;position:absolute;bottom:30px;display:flex;gap:18px}
+    .control-btn{width:72px;height:72px;border-radius:14px;background:rgba(0,255,255,0.06);border:1px solid rgba(0,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:28px;color:#0ff;cursor:pointer}
+    .scanlines{position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom, rgba(255,255,255,0.0) 0px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0.0) 3px);opacity:0.25;mix-blend-mode:overlay}
+    .loading{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);color:#0ff;padding:10px;background:rgba(0,0,0,0.6);border-radius:8px}
+    /* HUD flash */
+    .damage-flash{position:fixed;inset:0;background:#ff0000;opacity:0;pointer-events:none;mix-blend-mode:screen;transition:opacity 250ms}
+  </style>
 </head>
 <body>
-    <div id="loading" class="loading pulse">ЗАГРУЗКА КОСМИЧЕСКОГО РЕЙДЕРА...</div>
-    <div id="gameContainer"></div>
-    <div id="ui">
-        <div class="scanlines"></div>
-        
-        <!-- Главное меню -->
-        <div id="menuScreen" class="screen">
-            <h1 style="font-size: 3.5rem; margin-bottom: 2rem; text-shadow: 0 0 20px #0ff;" class="pulse">КОСМИЧЕСКИЙ РЕЙДЕР</h1>
-            <p style="margin-bottom: 40px; text-align: center; font-size: 1.2rem;">Бесконечное путешествие через галактику</p>
-            <button class="btn" id="startBtn">СТАРТ</button>
-        </div>
-        
-        <!-- Игровой экран -->
-        <div id="gameScreen" class="screen hidden">
-            <div class="hud">
-                <div>❤️ ЗДОРОВЬЕ: <span id="healthValue">100</span>%</div>
-                <div>🚀 СКОРОСТЬ: <span id="speedValue">50</span></div>
-                <div>🛡️ ЩИТ: <span id="shieldValue">100</span>%</div>
-                <div>🎯 ПРИЦЕЛ: <span id="targetValue">0</span></div>
-            </div>
-            
-            <div class="resources">
-                <div>⭐ ЗВЁЗДЫ: <span id="starsValue">0</span></div>
-                <div>💎 КРИСТАЛЛЫ: <span id="fragmentsValue">0</span></div>
-                <div>🏆 ОЧКИ: <span id="scoreValue">0</span></div>
-                <div>🎯 МИССИЯ: <span id="missionValue">0/5</span></div>
-            </div>
-            
-            <div class="simple-controls">
-                <div class="control-btn" id="leftBtn">←</div>
-                <div class="control-btn" id="shieldBtn">🛡️</div>
-                <div class="control-btn" id="shootBtn">💥</div>
-                <div class="control-btn" id="rightBtn">→</div>
-            </div>
-        </div>
-        
-        <!-- Экран планеты -->
-        <div id="planetScreen" class="screen hidden">
-            <div class="planet-interface">
-                <h2 id="planetName" style="text-align: center; margin-bottom: 20px; text-shadow: 0 0 10px #0ff;">ПЛАНЕТА</h2>
-                <div class="dialogue" id="planetDialogue">
-                    Добро пожаловать на планету! Чем могу помочь?
-                </div>
-                
-                <div class="trader-options">
-                    <div class="trader-option" data-action="trade">🛒 ТОРГОВАТЬ</div>
-                    <div class="trader-option" data-action="talk">💬 ПОБОЛТАТЬ</div>
-                    <div class="trader-option" data-action="repair">🔧 ПОЧИНИТЬ КОРАБЛЬ</div>
-                    <div class="trader-option" data-action="upgrade">⚡ УЛУЧШЕНИЯ</div>
-                    <div class="trader-option" data-action="mission">🎯 ЗАДАНИЕ</div>
-                    <div class="trader-option" data-action="leave">🚀 УЛЕТЕТЬ</div>
-                </div>
-                
-                <div id="tradeInterface" style="display: none; margin-top: 25px;">
-                    <h3 style="text-align: center; margin-bottom: 15px;">🛒 ТОРГОВЛЯ</h3>
-                    <div class="trader-options">
-                        <div class="trader-option" data-trade="buyStars">КУПИТЬ ⭐ (10💎)</div>
-                        <div class="trader-option" data-trade="sellStars">ПРОДАТЬ ⭐ (8💎)</div>
-                        <div class="trader-option" data-trade="buyShield">КУПИТЬ ЩИТ (50💎)</div>
-                        <div class="trader-option" data-trade="back">← НАЗАД</div>
-                    </div>
-                </div>
-
-                <div id="upgradeInterface" style="display: none; margin-top: 25px;">
-                    <h3 style="text-align: center; margin-bottom: 15px;">⚡ УЛУЧШЕНИЯ</h3>
-                    <div class="trader-options">
-                        <div class="trader-option" data-upgrade="engine">🚀 ДВИГАТЕЛЬ (5⭐)</div>
-                        <div class="trader-option" data-upgrade="shield">🛡️ УСИЛЕНИЕ ЩИТА (8⭐)</div>
-                        <div class="trader-option" data-upgrade="weapon">💥 ОРУЖИЕ (10⭐)</div>
-                        <div class="trader-option" data-upgrade="back">← НАЗАД</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Экран завершения игры -->
-        <div id="gameOver" class="screen hidden">
-            <div style="background: rgba(0, 0, 0, 0.95); padding: 40px; border: 3px solid #f00; text-align: center; border-radius: 15px; box-shadow: 0 0 40px #f00;">
-                <h2 style="color: #f00; text-shadow: 0 0 10px #f00;">КОРАБЛЬ УНИЧТОЖЕН</h2>
-                <p style="margin: 25px 0; font-size: 20px;">Ваш счёт: <span id="finalScore">0</span></p>
-                <button class="btn" id="restartBtn">НОВАЯ ИГРА</button>
-                <button class="btn" id="menuBtn">ГЛАВНОЕ МЕНЮ</button>
-            </div>
-        </div>
+  <div id="gameContainer"></div>
+  <div id="ui">
+    <div class="scanlines"></div>
+    <div id="menuScreen" class="screen">
+      <h1 style="font-size:3rem;color:#0ff;text-shadow:0 0 20px #0ff">КОСМИЧЕСКИЙ РЕЙДЕР</h1>
+      <button id="startBtn" class="btn" style="pointer-events:auto">СТАРТ</button>
     </div>
 
-    <script>
-        // Проверяем загрузку Three.js
-        if (typeof THREE === 'undefined') {
-            document.getElementById('loading').innerHTML = 'Ошибка загрузки Three.js. Пожалуйста, обновите страницу.';
-            throw new Error('Three.js не загружен');
-        }
+    <div id="gameScreen" class="screen hidden">
+      <div class="hud" id="hudBox">
+        <div>❤️ ЗДОРОВЬЕ: <span id="healthValue">100</span></div>
+        <div>🛡 ЩИТ: <span id="shieldValue">100</span></div>
+        <div>⭐ ЗВЁЗДЫ: <span id="starsValue">0</span></div>
+        <div>💎 КРИСТАЛЛЫ: <span id="fragmentsValue">0</span></div>
+      </div>
 
-        let scene, camera, renderer, ship;
-        let asteroids = [], enemyShips = [], starFields = [], planets = [], crystals = [];
-        let engineParticles = [], nebulas = [], bullets = [];
-        
-        // Игровые переменные
-        let gameState = {
-            health: 100,
-            stars: 0,
-            fragments: 0,
-            score: 0,
-            speed: 2.0, // Увеличил скорость для более динамичной игры
-            rotationSpeed: 0.03,
-            isShieldActive: false,
-            shieldEnergy: 100,
-            gameActive: false,
-            touchControls: {
-                left: false,
-                right: false,
-                shoot: false
-            },
-            currentPlanet: null,
-            mission: {
-                type: 'collect',
-                target: 5,
-                progress: 0,
-                reward: 100
-            },
-            upgrades: {
-                engine: 1,
-                shield: 1,
-                weapon: 1
-            }
-        };
+      <div class="resources" id="resBox">
+        <div>🏆 ОЧКИ: <span id="scoreValue">0</span></div>
+        <div>🎯 МИССИЯ: <span id="missionValue">0/5</span></div>
+      </div>
 
-        // Планеты и их описания
-        const planetData = [
-            { 
-                name: "КРИОНИС", 
-                dialogue: "Ледяной гигант с сияющими кристаллическими образованиями.",
-                color: 0x88ccff,
-                size: 25
-            },
-            { 
-                name: "ПИРОС", 
-                dialogue: "Раскалённый мир с вулканическими морями лавы.",
-                color: 0xff6633,
-                size: 30
-            },
-            { 
-                name: "ВЕРДАНТ", 
-                dialogue: "Зелёный мир с биолюминесцентными лесами.",
-                color: 0x44ff88,
-                size: 22
-            },
-            { 
-                name: "НЕКСУС", 
-                dialogue: "Гигантская космическая станция - центр торговли.",
-                color: 0x8888ff,
-                size: 35
-            },
-            { 
-                name: "АУРЕЛИЯ", 
-                dialogue: "Золотая планета с редкими металлическими формами жизни.",
-                color: 0xffdd44,
-                size: 28
-            }
-        ];
+      <div class="simple-controls">
+        <div id="leftBtn" class="control-btn">←</div>
+        <div id="shieldBtn" class="control-btn">🛡</div>
+        <div id="shootBtn" class="control-btn">💥</div>
+        <div id="rightBtn" class="control-btn">→</div>
+      </div>
+    </div>
 
-        // Инициализация Three.js
-        function initThreeJS() {
-            try {
-                // Сцена
-                scene = new THREE.Scene();
-                
-                // Камера - отодвигаем дальше
-                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
-                
-                // Рендерер с улучшенными настройками
-                renderer = new THREE.WebGLRenderer({ 
-                    antialias: true,
-                    alpha: true
-                });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setClearColor(0x001122, 1); // Сделаем фон светлее
-                renderer.shadowMap.enabled = true;
-                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                document.getElementById('gameContainer').appendChild(renderer.domElement);
-                
-                // Улучшенное освещение - СДЕЛАЕМ ЯРЧЕ
-                const ambientLight = new THREE.AmbientLight(0x666688, 1.2); // Увеличил интенсивность
-                scene.add(ambientLight);
-                
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Ярче
-                directionalLight.position.set(5, 5, 10);
-                directionalLight.castShadow = true;
-                directionalLight.shadow.mapSize.width = 2048;
-                directionalLight.shadow.mapSize.height = 2048;
-                scene.add(directionalLight);
-                
-                const pointLight = new THREE.PointLight(0x4488ff, 1.5, 200); // Ярче и дальше
-                pointLight.position.set(0, 0, 50);
-                scene.add(pointLight);
+    <div id="gameOver" class="screen hidden">
+      <div style="background:rgba(0,0,0,0.85);padding:20px;border-radius:12px;border:1px solid #f33;color:#f33">
+        <h2>КОРАБЛЬ УНИЧТОЖЕН</h2>
+        <div>Счёт: <span id="finalScore">0</span></div>
+        <div style="margin-top:10px"><button id="restartBtn" class="btn" style="pointer-events:auto">РЕСТАРТ</button></div>
+      </div>
+    </div>
 
-                // Добавим еще один источник света спереди
-                const frontLight = new THREE.PointLight(0x88aaff, 0.8, 300);
-                frontLight.position.set(0, 0, 100);
-                scene.add(frontLight);
-                
-                // Звёздное небо
-                createStarfield();
-                
-                // Туманности
-                createNebulas();
-                
-                // Корабль игрока
-                createShip();
-                
-                // Скрываем загрузку
-                document.getElementById('loading').style.display = 'none';
-                
-                return true;
-            } catch (error) {
-                console.error('Ошибка инициализации Three.js:', error);
-                document.getElementById('loading').innerHTML = 'Ошибка инициализации 3D. Проверьте поддержку WebGL.';
-                return false;
-            }
-        }
-        
-        // Создание звёздного неба
-        function createStarfield() {
-            const starGeometry = new THREE.BufferGeometry();
-            const starCount = 5000; // Больше звезд
-            const starPositions = new Float32Array(starCount * 3);
-            const starColors = new Float32Array(starCount * 3);
-            const starSizes = new Float32Array(starCount);
-            
-            for (let i = 0; i < starCount * 3; i += 3) {
-                starPositions[i] = (Math.random() - 0.5) * 4000; // Увеличил пространство
-                starPositions[i + 1] = (Math.random() - 0.5) * 4000;
-                starPositions[i + 2] = (Math.random() - 0.5) * 4000;
-                
-                // Разные цвета звезд
-                const colorChoice = Math.random();
-                if (colorChoice < 0.6) {
-                    starColors[i] = 1; starColors[i + 1] = 1; starColors[i + 2] = 1; // Белый
-                } else if (colorChoice < 0.8) {
-                    starColors[i] = 0.8; starColors[i + 1] = 0.9; starColors[i + 2] = 1; // Голубой
-                } else {
-                    starColors[i] = 1; starColors[i + 1] = 0.8; starColors[i + 2] = 0.6; // Желтый
-                }
+    <div id="damageFlash" class="damage-flash"></div>
+    <div id="loading" class="loading">ЗАГРУЗКА...</div>
+  </div>
 
-                // Разные размеры звезд
-                starSizes[i/3] = Math.random() * 3 + 0.5;
-            }
-            
-            starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-            starGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-            starGeometry.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
-            
-            const starMaterial = new THREE.PointsMaterial({
-                size: 3,
-                sizeAttenuation: true,
-                vertexColors: true,
-                transparent: true
-            });
-            
-            const stars = new THREE.Points(starGeometry, starMaterial);
-            scene.add(stars);
-        }
-        
-        // Создание туманностей
-        function createNebulas() {
-            for (let i = 0; i < 5; i++) { // Больше туманностей
-                const nebulaGeometry = new THREE.SphereGeometry(400 + Math.random() * 300, 16, 16);
-                const nebulaMaterial = new THREE.MeshBasicMaterial({
-                    color: new THREE.Color().setHSL(Math.random(), 0.7, 0.5), // Ярче
-                    transparent: true,
-                    opacity: 0.08, // Прозрачнее
-                    side: THREE.BackSide
-                });
-                
-                const nebula = new THREE.Mesh(nebulaGeometry, nebulaMaterial);
-                nebula.position.set(
-                    (Math.random() - 0.5) * 2000,
-                    (Math.random() - 0.5) * 2000,
-                    (Math.random() - 0.5) * 2000
-                );
-                scene.add(nebula);
-                nebulas.push(nebula);
-            }
-        }
-        
-        // Создание корабля - ПЕРЕВЕРНУЛ ПРАВИЛЬНО
-        function createShip() {
-            const group = new THREE.Group();
-            
-            // Корпус корабля - перевернул правильно
-            const hullGeometry = new THREE.ConeGeometry(4, 12, 4);
-            const hullMaterial = new THREE.MeshPhongMaterial({
-                color: 0x00aaff,
-                shininess: 100,
-                emissive: 0x0044aa // Ярче свечение
-            });
-            const hull = new THREE.Mesh(hullGeometry, hullMaterial);
-            hull.rotation.x = -Math.PI / 2; // ПРАВИЛЬНОЕ НАПРАВЛЕНИЕ
-            group.add(hull);
-            
-            // Крылья
-            const wingGeometry = new THREE.BoxGeometry(8, 1, 4);
-            const wingMaterial = new THREE.MeshPhongMaterial({
-                color: 0x0088ff,
-                shininess: 80,
-                emissive: 0x002266
-            });
-            const leftWing = new THREE.Mesh(wingGeometry, wingMaterial);
-            leftWing.position.set(-6, 0, 0);
-            group.add(leftWing);
-            
-            const rightWing = new THREE.Mesh(wingGeometry, wingMaterial);
-            rightWing.position.set(6, 0, 0);
-            group.add(rightWing);
-            
-            // Двигатели
-            const engineGeometry = new THREE.CylinderGeometry(1.5, 2, 3, 8);
-            const engineMaterial = new THREE.MeshPhongMaterial({
-                color: 0xff6600,
-                emissive: 0xff3300,
-                shininess: 30
-            });
-            const leftEngine = new THREE.Mesh(engineGeometry, engineMaterial);
-            leftEngine.position.set(-3, 0, 4); // Переместил двигатели вперед
-            leftEngine.rotation.x = Math.PI / 2;
-            group.add(leftEngine);
-            
-            const rightEngine = new THREE.Mesh(engineGeometry, engineMaterial);
-            rightEngine.position.set(3, 0, 4);
-            rightEngine.rotation.x = Math.PI / 2;
-            group.add(rightEngine);
-            
-            group.position.z = 15;
-            group.position.y = 0;
-            scene.add(group);
-            ship = group;
-            
-            // Создаем частицы двигателя
-            createEngineParticles();
-        }
-        
-        // Создание частиц двигателя
-        function createEngineParticles() {
-            const particleCount = 30; // Больше частиц
-            const particles = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            const colors = new Float32Array(particleCount * 3);
-            
-            for (let i = 0; i < particleCount * 3; i += 3) {
-                positions[i] = (Math.random() - 0.5) * 3;
-                positions[i + 1] = (Math.random() - 0.5) * 3;
-                positions[i + 2] = 5 + Math.random() * 8; // Частицы выходят из двигателей
-                
-                // Оранжево-желтые цвета для частиц
-                colors[i] = 1;     // R
-                colors[i + 1] = 0.5 + Math.random() * 0.5; // G
-                colors[i + 2] = 0;   // B
-            }
-            
-            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            
-            const particleMaterial = new THREE.PointsMaterial({
-                size: 3,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.9,
-                blending: THREE.AdditiveBlending
-            });
-            
-            const particleSystem = new THREE.Points(particles, particleMaterial);
-            ship.add(particleSystem);
-            engineParticles.push(particleSystem);
-        }
-        
-        // Обновление частиц двигателя
-        function updateEngineParticles() {
-            engineParticles.forEach(particles => {
-                const positions = particles.geometry.attributes.position.array;
-                for (let i = 0; i < positions.length; i += 3) {
-                    positions[i + 2] += 0.8 + Math.random() * 0.8; // Частицы летят назад
-                    if (positions[i + 2] > 15) {
-                        positions[i + 2] = 5 + Math.random() * 3;
-                        positions[i] = (Math.random() - 0.5) * 3;
-                        positions[i + 1] = (Math.random() - 0.5) * 3;
-                    }
-                }
-                particles.geometry.attributes.position.needsUpdate = true;
-            });
-        }
-        
-        // Процедурная генерация астероидов - РЕДЕЕ И ДАЛЬШЕ
-        function generateAsteroids(count) {
-            for (let i = 0; i < count; i++) {
-                // 30% шанс не создавать астероид - чистые зоны
-                if (Math.random() < 0.3) continue;
-                
-                const size = Math.random() * 8 + 3; // Больше астероиды
-                const geometry = new THREE.IcosahedronGeometry(size, 1);
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0xcccccc, // Светлее
-                    shininess: 50,
-                    emissive: 0x444444
-                });
-                
-                const asteroid = new THREE.Mesh(geometry, material);
-                
-                // Размещаем дальше и реже
-                asteroid.position.x = (Math.random() - 0.5) * 800;
-                asteroid.position.y = (Math.random() - 0.5) * 200; // Добавим высоту
-                asteroid.position.z = -200 - Math.random() * 1500;
-                
-                asteroid.rotation.x = Math.random() * Math.PI;
-                asteroid.rotation.y = Math.random() * Math.PI;
-                
-                asteroid.userData = {
-                    rotationSpeed: {
-                        x: (Math.random() - 0.5) * 0.02,
-                        y: (Math.random() - 0.5) * 0.02,
-                        z: (Math.random() - 0.5) * 0.02
-                    }
-                };
-                
-                asteroid.castShadow = true;
-                scene.add(asteroid);
-                asteroids.push(asteroid);
-            }
-        }
-        
-        // Процедурная генерация вражеских кораблей
-        function generateEnemyShips(count) {
-            for (let i = 0; i < count; i++) {
-                // 40% шанс не создавать врага - чистые зоны
-                if (Math.random() < 0.4) continue;
-                
-                const geometry = new THREE.OctahedronGeometry(5, 0); // Больше враги
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0xff3300,
-                    shininess: 100,
-                    emissive: 0x880000
-                });
-                
-                const enemyShip = new THREE.Mesh(geometry, material);
-                
-                enemyShip.position.x = (Math.random() - 0.5) * 600;
-                enemyShip.position.y = (Math.random() - 0.5) * 150;
-                enemyShip.position.z = -300 - Math.random() * 1200;
-                
-                enemyShip.userData = {
-                    health: 30,
-                    speed: 0.5 + Math.random() * 0.5
-                };
-                
-                enemyShip.castShadow = true;
-                scene.add(enemyShip);
-                enemyShips.push(enemyShip);
-            }
-        }
-        
-        // Процедурная генерация полей звёзд (ресурсы)
-        function generateStarFields(count) {
-            for (let i = 0; i < count; i++) {
-                const geometry = new THREE.SphereGeometry(4, 16, 16); // Больше звезды
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0xffff00,
-                    shininess: 100,
-                    emissive: 0x888800 // Ярче свечение
-                });
-                
-                const starField = new THREE.Mesh(geometry, material);
-                
-                starField.position.x = (Math.random() - 0.5) * 700;
-                starField.position.y = (Math.random() - 0.5) * 180;
-                starField.position.z = -250 - Math.random() * 1300;
-                
-                starField.userData = {
-                    rotationSpeed: (Math.random() - 0.5) * 0.05,
-                    collected: false
-                };
-                
-                starField.castShadow = true;
-                scene.add(starField);
-                starFields.push(starField);
-            }
-        }
-        
-        // Процедурная генерация кристаллов
-        function generateCrystals(count) {
-            for (let i = 0; i < count; i++) {
-                const geometry = new THREE.OctahedronGeometry(3, 0); // Больше кристаллы
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0xff00ff,
-                    shininess: 100,
-                    emissive: 0x880088 // Ярче свечение
-                });
-                
-                const crystal = new THREE.Mesh(geometry, material);
-                
-                crystal.position.x = (Math.random() - 0.5) * 750;
-                crystal.position.y = (Math.random() - 0.5) * 200;
-                crystal.position.z = -200 - Math.random() * 1400;
-                
-                crystal.userData = {
-                    rotationSpeed: (Math.random() - 0.5) * 0.03,
-                    collected: false
-                };
-                
-                crystal.castShadow = true;
-                scene.add(crystal);
-                crystals.push(crystal);
-            }
-        }
-        
-        // Процедурная генерация планет
-        function generatePlanets(count) {
-            for (let i = 0; i < count; i++) {
-                const planetInfo = planetData[Math.floor(Math.random() * planetData.length)];
-                const geometry = new THREE.SphereGeometry(planetInfo.size, 32, 32);
-                
-                const material = new THREE.MeshPhongMaterial({
-                    color: planetInfo.color,
-                    shininess: 50,
-                    emissive: new THREE.Color(planetInfo.color).multiplyScalar(0.3) // Ярче свечение
-                });
-                
-                const planet = new THREE.Mesh(geometry, material);
-                
-                planet.position.x = (Math.random() - 0.5) * 1000;
-                planet.position.y = (Math.random() - 0.5) * 300;
-                planet.position.z = -600 - Math.random() * 2000;
-                
-                planet.userData = {
-                    size: planetInfo.size,
-                    planetData: planetInfo
-                };
-                
-                planet.castShadow = true;
-                scene.add(planet);
-                planets.push(planet);
-            }
-        }
+  <script>
+  // --------------------------
+  // Инициализация сцены, рендерера и пост-эффектов
+  // --------------------------
+  let scene, camera, renderer, composer;
+  let clock = new THREE.Clock();
+  let ship;
+  let starsPoints;
+  let engineParticlesPool = [];
+  let bulletsPool = [];
+  let activeBullets = [];
+  let activeExplosions = [];
+  let asteroids = [], enemyShips = [], starFields = [], crystals = [], planets = [];
+  let nebulas = [];
+  let gameState = {
+    health:100, stars:0, fragments:0, score:0,
+    speed:2.0, rotationSpeed:0.03, isShieldActive:false, shieldEnergy:100,
+    gameActive:false, touchControls:{left:false,right:false,shoot:false},
+    upgrades:{engine:1,shield:1,weapon:1}, mission:{type:'collect',target:5,progress:0,reward:100}
+  };
+  const MAX_BULLETS = 60;
+  const MAX_ENGINE_PARTICLES = 80;
 
-        // Стрельба
-        function shoot() {
-            if (!gameState.gameActive || !ship) return;
-            
-            const bulletGeometry = new THREE.SphereGeometry(0.8, 8, 8);
-            const bulletMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffff00,
-                emissive: 0xffff00
-            });
-            
-            const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
-            
-            // Позиция пули перед кораблем
-            bullet.position.copy(ship.position);
-            const direction = new THREE.Vector3(0, 0, -1);
-            direction.applyQuaternion(ship.quaternion);
-            bullet.position.add(direction.multiplyScalar(-10));
-            
-            bullet.userData = {
-                velocity: direction.clone().multiplyScalar(15 * gameState.upgrades.weapon), // Скорость зависит от улучшения
-                lifetime: 100
-            };
-            
-            scene.add(bullet);
-            bullets.push(bullet);
-            
-            // Эффект выстрела
-            createMuzzleFlash(ship.position, direction);
-        }
+  function initRenderer() {
+    scene = new THREE.Scene();
 
-        // Создание вспышки выстрела
-        function createMuzzleFlash(position, direction) {
-            const flashGeometry = new THREE.SphereGeometry(2, 8, 8);
-            const flashMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffff00,
-                transparent: true,
-                opacity: 0.8
-            });
-            
-            const flash = new THREE.Mesh(flashGeometry, flashMaterial);
-            flash.position.copy(position);
-            flash.position.add(direction.multiplyScalar(-8));
-            scene.add(flash);
-            
-            // Анимация исчезновения
-            let scale = 1;
-            const shrink = setInterval(() => {
-                scale -= 0.2;
-                flash.scale.set(scale, scale, scale);
-                flashMaterial.opacity = scale * 0.8;
-                
-                if (scale <= 0) {
-                    clearInterval(shrink);
-                    scene.remove(flash);
-                }
-            }, 50);
-        }
-        
-        // Обновление игрового состояния
-        function updateGameState() {
-            if (!gameState.gameActive || !ship) return;
-            
-            // Корабль всегда летит ВПЕРЁД по своей локальной оси Z
-            const direction = new THREE.Vector3(0, 0, -1);
-            direction.applyQuaternion(ship.quaternion);
-            
-            // Двигаем корабль в направлении его носа с учетом улучшений
-            ship.position.add(direction.multiplyScalar(gameState.speed * gameState.upgrades.engine));
-            
-            // Поворот корабля влево/вправо
-            if (gameState.touchControls.left) {
-                ship.rotation.y += gameState.rotationSpeed;
-            }
-            if (gameState.touchControls.right) {
-                ship.rotation.y -= gameState.rotationSpeed;
-            }
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 6000);
+    camera.position.set(0,8,25);
 
-            // Стрельба
-            if (gameState.touchControls.shoot) {
-                if (Date.now() - (gameState.lastShot || 0) > 300 / gameState.upgrades.weapon) { // Ограничение скорострельности
-                    shoot();
-                    gameState.lastShot = Date.now();
-                }
-            }
-            
-            // УЛУЧШЕННАЯ КАМЕРА - следует за кораблем и смотрит вперед
-            const cameraOffset = new THREE.Vector3(0, 8, 25); // Отодвинул камеру дальше и выше
-            cameraOffset.applyQuaternion(ship.quaternion);
-            camera.position.copy(ship.position).add(cameraOffset);
-            
-            // Камера всегда смотрит вперед по направлению корабля
-            const lookAtPoint = ship.position.clone();
-            const lookDirection = new THREE.Vector3(0, 0, -1);
-            lookDirection.applyQuaternion(ship.quaternion);
-            lookAtPoint.add(lookDirection.multiplyScalar(50)); // Смотрим далеко вперед
-            camera.lookAt(lookAtPoint);
-            
-            // Обновление частиц двигателя
-            updateEngineParticles();
-            
-            // Обновление пуль
-            updateBullets();
-            
-            // Обновление астероидов
-            asteroids.forEach((asteroid, index) => {
-                asteroid.rotation.x += asteroid.userData.rotationSpeed.x;
-                asteroid.rotation.y += asteroid.userData.rotationSpeed.y;
-                asteroid.rotation.z += asteroid.userData.rotationSpeed.z;
-                
-                // Астероиды медленно движутся навстречу
-                asteroid.position.z += 0.5;
-                
-                // Проверка столкновения с кораблем
-                const distance = ship.position.distanceTo(asteroid.position);
-                
-                if (distance < asteroid.geometry.parameters.radius + 8) {
-                    if (gameState.isShieldActive) {
-                        gameState.shieldEnergy -= 15;
-                        // Эффект отскока при щите
-                        const pushDirection = asteroid.position.clone().sub(ship.position).normalize();
-                        asteroid.position.add(pushDirection.multiplyScalar(10));
-                    } else {
-                        gameState.health -= 15;
-                        // Визуальный эффект повреждения
-                        ship.scale.set(1.2, 1.2, 1.2);
-                        setTimeout(() => ship.scale.set(1, 1, 1), 200);
-                    }
-                    
-                    createExplosion(asteroid.position);
-                    scene.remove(asteroid);
-                    asteroids.splice(index, 1);
-                    generateAsteroids(1);
-                }
-                
-                // Если астероид слишком далеко позади, удаляем и создаем новый впереди
-                if (asteroid.position.z > ship.position.z + 300) {
-                    scene.remove(asteroid);
-                    asteroids.splice(index, 1);
-                    generateAsteroids(1);
-                }
-            });
-            
-            // Обновление вражеских кораблей
-            enemyShips.forEach((enemy, index) => {
-                // Враги движутся к кораблю
-                const dx = ship.position.x - enemy.position.x;
-                const dz = ship.position.z - enemy.position.z;
-                
-                const distance = Math.sqrt(dx * dx + dz * dz);
-                
-                if (distance < 200) {
-                    // Если близко, преследуем игрока
-                    enemy.position.x += dx * 0.008 * enemy.userData.speed;
-                    enemy.position.z += dz * 0.008 * enemy.userData.speed;
-                }
-                
-                // Враги тоже стреляют
-                if (Math.random() < 0.005 && distance < 150) {
-                    createEnemyLaser(enemy.position, ship.position);
-                }
-                
-                const collisionDistance = ship.position.distanceTo(enemy.position);
-                
-                if (collisionDistance < 12) {
-                    if (gameState.isShieldActive) {
-                        gameState.shieldEnergy -= 20;
-                    } else {
-                        gameState.health -= 20;
-                    }
-                    
-                    // Эффект взрыва
-                    createExplosion(enemy.position);
-                    
-                    scene.remove(enemy);
-                    enemyShips.splice(index, 1);
-                    gameState.fragments += 8;
-                    gameState.score += 50;
-                    generateEnemyShips(1);
-                }
-                
-                // Если враг слишком далеко позади, удаляем и создаем нового впереди
-                if (enemy.position.z > ship.position.z + 400) {
-                    scene.remove(enemy);
-                    enemyShips.splice(index, 1);
-                    generateEnemyShips(1);
-                }
-            });
-            
-            // Обновление полей звёзд
-            starFields.forEach((star, index) => {
-                star.rotation.y += star.userData.rotationSpeed;
-                
-                const distance = ship.position.distanceTo(star.position);
-                
-                if (distance < 10 && !star.userData.collected) {
-                    star.userData.collected = true;
-                    gameState.stars += 1;
-                    gameState.score += 15;
-                    
-                    // Обновляем миссию
-                    if (gameState.mission.type === 'collect') {
-                        gameState.mission.progress++;
-                    }
-                    
-                    // Эффект сбора
-                    star.scale.set(0.1, 0.1, 0.1);
-                    createCollectEffect(star.position);
-                    
-                    setTimeout(() => {
-                        scene.remove(star);
-                        starFields.splice(index, 1);
-                        generateStarFields(1);
-                    }, 300);
-                }
-                
-                // Если звезда слишком далеко позади, удаляем и создаем новую впереди
-                if (star.position.z > ship.position.z + 400) {
-                    scene.remove(star);
-                    starFields.splice(index, 1);
-                    generateStarFields(1);
-                }
-            });
-            
-            // Обновление кристаллов
-            crystals.forEach((crystal, index) => {
-                crystal.rotation.y += crystal.userData.rotationSpeed;
-                
-                const distance = ship.position.distanceTo(crystal.position);
-                
-                if (distance < 8 && !crystal.userData.collected) {
-                    crystal.userData.collected = true;
-                    gameState.fragments += 3;
-                    gameState.score += 25;
-                    
-                    // Эффект сбора
-                    crystal.scale.set(0.1, 0.1, 0.1);
-                    createCollectEffect(crystal.position);
-                    
-                    setTimeout(() => {
-                        scene.remove(crystal);
-                        crystals.splice(index, 1);
-                        generateCrystals(1);
-                    }, 300);
-                }
-                
-                // Если кристалл слишком далеко позади, удаляем и создаем новый впереди
-                if (crystal.position.z > ship.position.z + 400) {
-                    scene.remove(crystal);
-                    crystals.splice(index, 1);
-                    generateCrystals(1);
-                }
-            });
-            
-            // Обновление планет и проверка посадки
-            planets.forEach((planet, index) => {
-                planet.rotation.y += 0.002;
-                
-                const distance = ship.position.distanceTo(planet.position);
-                
-                // Если близко к планете, предлагаем посадку
-                if (distance < planet.userData.size + 25) {
-                    landOnPlanet(planet);
-                }
-                
-                // Если планета слишком далеко позади, удаляем и создаем новую впереди
-                if (planet.position.z > ship.position.z + 600) {
-                    scene.remove(planet);
-                    planets.splice(index, 1);
-                    generatePlanets(1);
-                }
-            });
-            
-            // Восстановление энергии щита
-            if (!gameState.isShieldActive && gameState.shieldEnergy < 100) {
-                gameState.shieldEnergy = Math.min(gameState.shieldEnergy + 0.15, 100);
-            }
-            
-            // Обновление UI
-            updateUI();
-            
-            // Проверка выполнения миссии
-            if (gameState.mission.progress >= gameState.mission.target) {
-                completeMission();
-            }
-            
-            // Проверка окончания игры
-            if (gameState.health <= 0) {
-                gameOver();
-            }
-            
-            // Увеличение счёта со временем
-            gameState.score += gameState.speed * 0.2;
-        }
+    renderer = new THREE.WebGLRenderer({antialias:true, alpha:false});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // более светлый фон, но не белый
+    renderer.setClearColor(0x08121a, 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.getElementById('gameContainer').appendChild(renderer.domElement);
 
-        // Обновление пуль
-        function updateBullets() {
-            bullets.forEach((bullet, index) => {
-                // Двигаем пулю
-                bullet.position.add(bullet.userData.velocity);
-                bullet.userData.lifetime--;
-                
-                // Проверка столкновения пули с врагами
-                enemyShips.forEach((enemy, enemyIndex) => {
-                    if (bullet.position.distanceTo(enemy.position) < 8) {
-                        enemy.userData.health -= 10 * gameState.upgrades.weapon;
-                        
-                        if (enemy.userData.health <= 0) {
-                            createExplosion(enemy.position);
-                            scene.remove(enemy);
-                            enemyShips.splice(enemyIndex, 1);
-                            gameState.fragments += 10;
-                            gameState.score += 100;
-                            generateEnemyShips(1);
-                            
-                            // Обновляем миссию уничтожения
-                            if (gameState.mission.type === 'destroy') {
-                                gameState.mission.progress++;
-                            }
-                        }
-                        
-                        // Удаляем пулю
-                        scene.remove(bullet);
-                        bullets.splice(index, 1);
-                    }
-                });
-                
-                // Проверка столкновения с астероидами
-                asteroids.forEach((asteroid, asteroidIndex) => {
-                    if (bullet.position.distanceTo(asteroid.position) < asteroid.geometry.parameters.radius + 2) {
-                        createExplosion(bullet.position);
-                        scene.remove(bullet);
-                        bullets.splice(index, 1);
-                    }
-                });
-                
-                // Удаляем пулю если она далеко или истекло время жизни
-                if (bullet.userData.lifetime <= 0 || 
-                    bullet.position.distanceTo(ship.position) > 500) {
-                    scene.remove(bullet);
-                    bullets.splice(index, 1);
-                }
-            });
-        }
+    // Постэффекты — composer + bloom
+    composer = new THREE.EffectComposer(renderer);
+    const renderPass = new THREE.RenderPass(scene, camera);
+    composer.addPass(renderPass);
 
-        // Создание лазера врага
-        function createEnemyLaser(from, to) {
-            const direction = to.clone().sub(from).normalize();
-            const laserGeometry = new THREE.CylinderGeometry(0.3, 0.3, 20, 8);
-            const laserMaterial = new THREE.MeshBasicMaterial({
-                color: 0xff0000,
-                emissive: 0xff0000
-            });
-            
-            const laser = new THREE.Mesh(laserGeometry, laserMaterial);
-            laser.position.copy(from);
-            laser.lookAt(to);
-            laser.rotateX(Math.PI / 2);
-            
-            laser.userData = {
-                velocity: direction.clone().multiplyScalar(10),
-                lifetime: 60
-            };
-            
-            scene.add(laser);
-            
-            // Проверка столкновения с игроком
-            const laserInterval = setInterval(() => {
-                laser.position.add(laser.userData.velocity);
-                laser.userData.lifetime--;
-                
-                if (laser.userData.lifetime <= 0) {
-                    clearInterval(laserInterval);
-                    scene.remove(laser);
-                }
-                
-                if (laser.position.distanceTo(ship.position) < 8) {
-                    if (gameState.isShieldActive) {
-                        gameState.shieldEnergy -= 10;
-                    } else {
-                        gameState.health -= 10;
-                        ship.scale.set(1.1, 1.1, 1.1);
-                        setTimeout(() => ship.scale.set(1, 1, 1), 100);
-                    }
-                    clearInterval(laserInterval);
-                    scene.remove(laser);
-                    createExplosion(laser.position);
-                }
-            }, 50);
-        }
-        
-        // Создание эффекта взрыва
-        function createExplosion(position) {
-            const particleCount = 20;
-            const particles = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            const colors = new Float32Array(particleCount * 3);
-            
-            for (let i = 0; i < particleCount * 3; i += 3) {
-                positions[i] = position.x + (Math.random() - 0.5) * 8;
-                positions[i + 1] = position.y + (Math.random() - 0.5) * 8;
-                positions[i + 2] = position.z + (Math.random() - 0.5) * 8;
-                
-                colors[i] = 1;     // R
-                colors[i + 1] = 0.3 + Math.random() * 0.4; // G
-                colors[i + 2] = 0;   // B
-            }
-            
-            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            
-            const particleMaterial = new THREE.PointsMaterial({
-                size: 4,
-                vertexColors: true,
-                transparent: true,
-                opacity: 1,
-                blending: THREE.AdditiveBlending
-            });
-            
-            const particleSystem = new THREE.Points(particles, particleMaterial);
-            scene.add(particleSystem);
-            
-            // Анимация исчезновения
-            let opacity = 1;
-            const fadeInterval = setInterval(() => {
-                opacity -= 0.05;
-                particleMaterial.opacity = opacity;
-                
-                if (opacity <= 0) {
-                    clearInterval(fadeInterval);
-                    scene.remove(particleSystem);
-                }
-            }, 50);
-        }
-        
-        // Создание эффекта сбора ресурсов
-        function createCollectEffect(position) {
-            const particleCount = 12;
-            const particles = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            const colors = new Float32Array(particleCount * 3);
-            
-            for (let i = 0; i < particleCount * 3; i += 3) {
-                positions[i] = position.x + (Math.random() - 0.5) * 4;
-                positions[i + 1] = position.y + (Math.random() - 0.5) * 4;
-                positions[i + 2] = position.z + (Math.random() - 0.5) * 4;
-                
-                colors[i] = 1;     // R
-                colors[i + 1] = 1; // G
-                colors[i + 2] = 0;   // B
-            }
-            
-            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            
-            const particleMaterial = new THREE.PointsMaterial({
-                size: 3,
-                vertexColors: true,
-                transparent: true,
-                opacity: 1,
-                blending: THREE.AdditiveBlending
-            });
-            
-            const particleSystem = new THREE.Points(particles, particleMaterial);
-            scene.add(particleSystem);
-            
-            // Анимация исчезновения
-            let opacity = 1;
-            const fadeInterval = setInterval(() => {
-                opacity -= 0.1;
-                particleMaterial.opacity = opacity;
-                
-                if (opacity <= 0) {
-                    clearInterval(fadeInterval);
-                    scene.remove(particleSystem);
-                }
-            }, 50);
-        }
-        
-        // Обновление интерфейса
-        function updateUI() {
-            document.getElementById('healthValue').textContent = Math.max(0, Math.round(gameState.health));
-            document.getElementById('speedValue').textContent = Math.round(gameState.speed * gameState.upgrades.engine * 50);
-            document.getElementById('shieldValue').textContent = Math.round(gameState.shieldEnergy);
-            document.getElementById('starsValue').textContent = gameState.stars;
-            document.getElementById('fragmentsValue').textContent = gameState.fragments;
-            document.getElementById('scoreValue').textContent = Math.round(gameState.score);
-            document.getElementById('missionValue').textContent = `${gameState.mission.progress}/${gameState.mission.target}`;
-            document.getElementById('targetValue').textContent = enemyShips.length;
-        }
+    const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.8, 0.4, 0.9);
+    bloomPass.threshold = 0.1;
+    bloomPass.strength = 0.9;
+    bloomPass.radius = 0.5;
+    composer.addPass(bloomPass);
 
-        // Завершение миссии
-        function completeMission() {
-            gameState.stars += gameState.mission.reward;
-            gameState.score += gameState.mission.reward * 10;
-            
-            // Создаем новую случайную миссию
-            const missionTypes = ['collect', 'destroy'];
-            gameState.mission = {
-                type: missionTypes[Math.floor(Math.random() * missionTypes.length)],
-                target: 5 + Math.floor(Math.random() * 6),
-                progress: 0,
-                reward: 100 + Math.floor(Math.random() * 100)
-            };
-            
-            // Показываем сообщение о выполнении миссии
-            if (gameState.gameActive) {
-                const message = document.createElement('div');
-                message.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: rgba(0, 0, 0, 0.9);
-                    color: #0ff;
-                    padding: 20px;
-                    border: 2px solid #0ff;
-                    border-radius: 10px;
-                    font-size: 24px;
-                    z-index: 100;
-                    text-align: center;
-                `;
-                message.innerHTML = `🎉 МИССИЯ ВЫПОЛНЕНА!<br>+${gameState.mission.reward}⭐`;
-                document.body.appendChild(message);
-                
-                setTimeout(() => {
-                    document.body.removeChild(message);
-                }, 3000);
-            }
-        }
-        
-        // Активация щита
-        function activateShield() {
-            if (gameState.shieldEnergy >= 25 && !gameState.isShieldActive && ship) {
-                gameState.isShieldActive = true;
-                gameState.shieldEnergy -= 25;
-                
-                const shieldGeometry = new THREE.SphereGeometry(10, 16, 16);
-                const shieldMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x00ffff,
-                    transparent: true,
-                    opacity: 0.4,
-                    wireframe: true
-                });
-                
-                const shield = new THREE.Mesh(shieldGeometry, shieldMaterial);
-                ship.add(shield);
-                
-                setTimeout(() => {
-                    if (shield.parent) {
-                        ship.remove(shield);
-                    }
-                    gameState.isShieldActive = false;
-                }, 3000);
-            }
-        }
-        
-        // Посадка на планету
-        function landOnPlanet(planet) {
-            gameState.gameActive = false;
-            gameState.currentPlanet = planet;
-            
-            // Убираем планету из сцены
-            scene.remove(planet);
-            planets = planets.filter(p => p !== planet);
-            
-            // Показываем интерфейс планеты
-            document.getElementById('planetName').textContent = planet.userData.planetData.name;
-            document.getElementById('planetDialogue').textContent = planet.userData.planetData.dialogue;
-            
-            showScreen('planetScreen');
-        }
-        
-        // Обработка действий на планете
-        function handlePlanetAction(action) {
-            const dialogue = document.getElementById('planetDialogue');
-            const tradeInterface = document.getElementById('tradeInterface');
-            const upgradeInterface = document.getElementById('upgradeInterface');
-            
-            switch(action) {
-                case 'trade':
-                    tradeInterface.style.display = 'block';
-                    upgradeInterface.style.display = 'none';
-                    dialogue.textContent = 'Что вас интересует?';
-                    break;
-                case 'talk':
-                    tradeInterface.style.display = 'none';
-                    upgradeInterface.style.display = 'none';
-                    const responses = [
-                        'Местные легенды говорят о древней цивилизации, оставившей артефакты в этих звёздных системах.',
-                        'Будь осторожен в секторе N-7, там видели корабли неизвестного происхождения.',
-                        'Если найдёшь голубые кристаллы - не продавай их первому встречному, они ценны для учёных.',
-                        'На этой планете когда-то была великая империя, но теперь остались лишь руины.'
-                    ];
-                    dialogue.textContent = responses[Math.floor(Math.random() * responses.length)];
-                    break;
-                case 'repair':
-                    tradeInterface.style.display = 'none';
-                    upgradeInterface.style.display = 'none';
-                    if (gameState.fragments >= 30) {
-                        gameState.health = Math.min(gameState.health + 50, 100);
-                        gameState.fragments -= 30;
-                        dialogue.textContent = 'Корабль отремонтирован! Здоровье восстановлено.';
-                    } else {
-                        dialogue.textContent = 'У вас недостаточно кристаллов для ремонта (нужно 30💎).';
-                    }
-                    break;
-                case 'upgrade':
-                    tradeInterface.style.display = 'none';
-                    upgradeInterface.style.display = 'block';
-                    dialogue.textContent = 'Выберите улучшение для вашего корабля:';
-                    break;
-                case 'mission':
-                    tradeInterface.style.display = 'none';
-                    upgradeInterface.style.display = 'none';
-                    dialogue.textContent = `Текущая миссия: ${gameState.mission.type === 'collect' ? 'Собрать' : 'Уничтожить'} ${gameState.mission.target} ${gameState.mission.type === 'collect' ? 'звёзд' : 'врагов'}. Награда: ${gameState.mission.reward}⭐ (Прогресс: ${gameState.mission.progress}/${gameState.mission.target})`;
-                    break;
-                case 'leave':
-                    tradeInterface.style.display = 'none';
-                    upgradeInterface.style.display = 'none';
-                    showScreen('gameScreen');
-                    gameState.gameActive = true;
-                    generatePlanets(1); // Создаем новую планету
-                    break;
-                case 'buyStars':
-                    if (gameState.fragments >= 10) {
-                        gameState.stars += 1;
-                        gameState.fragments -= 10;
-                        dialogue.textContent = 'Покупка совершена! Получена 1⭐.';
-                    } else {
-                        dialogue.textContent = 'Недостаточно кристаллов для покупки (нужно 10💎).';
-                    }
-                    break;
-                case 'sellStars':
-                    if (gameState.stars >= 1) {
-                        gameState.stars -= 1;
-                        gameState.fragments += 8;
-                        dialogue.textContent = 'Продажа совершена! Получено 8💎.';
-                    } else {
-                        dialogue.textContent = 'Недостаточно звёзд для продажи (нужно 1⭐).';
-                    }
-                    break;
-                case 'buyShield':
-                    if (gameState.fragments >= 50) {
-                        gameState.shieldEnergy = 100;
-                        gameState.fragments -= 50;
-                        dialogue.textContent = 'Щит полностью восстановлен!';
-                    } else {
-                        dialogue.textContent = 'Недостаточно кристаллов для покупки щита (нужно 50💎).';
-                    }
-                    break;
-                case 'engine':
-                    if (gameState.stars >= 5 * gameState.upgrades.engine) {
-                        gameState.stars -= 5 * gameState.upgrades.engine;
-                        gameState.upgrades.engine += 0.5;
-                        dialogue.textContent = `Двигатель улучшен! Уровень: ${gameState.upgrades.engine}.`;
-                    } else {
-                        dialogue.textContent = `Недостаточно звёзд для улучшения (нужно ${5 * gameState.upgrades.engine}⭐).`;
-                    }
-                    break;
-                case 'shield':
-                    if (gameState.stars >= 8 * gameState.upgrades.shield) {
-                        gameState.stars -= 8 * gameState.upgrades.shield;
-                        gameState.upgrades.shield += 0.5;
-                        dialogue.textContent = `Щит усилен! Уровень: ${gameState.upgrades.shield}.`;
-                    } else {
-                        dialogue.textContent = `Недостаточно звёзд для улучшения (нужно ${8 * gameState.upgrades.shield}⭐).`;
-                    }
-                    break;
-                case 'weapon':
-                    if (gameState.stars >= 10 * gameState.upgrades.weapon) {
-                        gameState.stars -= 10 * gameState.upgrades.weapon;
-                        gameState.upgrades.weapon += 0.5;
-                        dialogue.textContent = `Оружие улучшено! Уровень: ${gameState.upgrades.weapon}.`;
-                    } else {
-                        dialogue.textContent = `Недостаточно звёзд для улучшения (нужно ${10 * gameState.upgrades.weapon}⭐).`;
-                    }
-                    break;
-                case 'back':
-                    tradeInterface.style.display = 'none';
-                    upgradeInterface.style.display = 'none';
-                    dialogue.textContent = 'Чем ещё могу помочь?';
-                    break;
-            }
-            updateUI();
-        }
-        
-        // Конец игры
-        function gameOver() {
-            gameState.gameActive = false;
-            document.getElementById('finalScore').textContent = Math.round(gameState.score);
-            showScreen('gameOver');
-        }
-        
-        // Новая игра
-        function startGame() {
-            gameState.health = 100;
-            gameState.stars = 0;
-            gameState.fragments = 0;
-            gameState.score = 0;
-            gameState.speed = 2.0;
-            gameState.isShieldActive = false;
-            gameState.shieldEnergy = 100;
-            gameState.gameActive = true;
-            gameState.upgrades = {
-                engine: 1,
-                shield: 1,
-                weapon: 1
-            };
-            gameState.mission = {
-                type: Math.random() > 0.5 ? 'collect' : 'destroy',
-                target: 5,
-                progress: 0,
-                reward: 100
-            };
-            
-            if (ship) {
-                ship.position.x = 0;
-                ship.position.y = 0;
-                ship.position.z = 15;
-                ship.rotation.y = 0;
-            }
-            
-            // Очистка сцены
-            asteroids.forEach(asteroid => scene.remove(asteroid));
-            enemyShips.forEach(enemy => scene.remove(enemy));
-            starFields.forEach(star => scene.remove(star));
-            crystals.forEach(crystal => scene.remove(crystal));
-            planets.forEach(planet => scene.remove(planet));
-            bullets.forEach(bullet => scene.remove(bullet));
-            
-            asteroids = [];
-            enemyShips = [];
-            starFields = [];
-            crystals = [];
-            planets = [];
-            bullets = [];
-            
-            // Генерация новых объектов - БОЛЬШЕ И ДАЛЬШЕ
-            generateAsteroids(30);
-            generateEnemyShips(15);
-            generateStarFields(20);
-            generateCrystals(15);
-            generatePlanets(6);
-            
-            showScreen('gameScreen');
-            updateUI();
-        }
-        
-        // Показать экран
-        function showScreen(screenId) {
-            // Скрываем все экраны
-            document.querySelectorAll('.screen').forEach(screen => {
-                screen.classList.add('hidden');
-            });
-            
-            // Показываем нужный экран
-            document.getElementById(screenId).classList.remove('hidden');
-        }
-        
-        // Настройка сенсорного управления
-        function setupTouchControls() {
-            const leftBtn = document.getElementById('leftBtn');
-            const rightBtn = document.getElementById('rightBtn');
-            const shieldBtn = document.getElementById('shieldBtn');
-            const shootBtn = document.getElementById('shootBtn');
-            const restartBtn = document.getElementById('restartBtn');
-            const startBtn = document.getElementById('startBtn');
-            const menuBtn = document.getElementById('menuBtn');
-            
-            // Обработчики для кнопок направления
-            const addButtonHandler = (button, controlName) => {
-                button.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    gameState.touchControls[controlName] = true;
-                });
-                
-                button.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    gameState.touchControls[controlName] = false;
-                });
-                
-                // Для десктопа
-                button.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    gameState.touchControls[controlName] = true;
-                });
-                
-                button.addEventListener('mouseup', (e) => {
-                    e.preventDefault();
-                    gameState.touchControls[controlName] = false;
-                });
-                
-                button.addEventListener('mouseleave', (e) => {
-                    e.preventDefault();
-                    gameState.touchControls[controlName] = false;
-                });
-            };
-            
-            addButtonHandler(leftBtn, 'left');
-            addButtonHandler(rightBtn, 'right');
-            addButtonHandler(shootBtn, 'shoot');
-            
-            // Кнопка щита
-            shieldBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                activateShield();
-            });
-            
-            shieldBtn.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                activateShield();
-            });
-            
-            // Кнопки меню
-            startBtn.addEventListener('click', () => {
-                startGame();
-            });
-            
-            restartBtn.addEventListener('click', () => {
-                startGame();
-            });
-            
-            menuBtn.addEventListener('click', () => {
-                gameState.gameActive = false;
-                showScreen('menuScreen');
-            });
-            
-            // Обработчики для интерфейса планеты
-            document.querySelectorAll('.trader-option').forEach(option => {
-                option.addEventListener('click', () => {
-                    const action = option.getAttribute('data-action') || 
-                                 option.getAttribute('data-trade') || 
-                                 option.getAttribute('data-upgrade');
-                    if (action) {
-                        handlePlanetAction(action);
-                    }
-                });
-            });
-        }
-        
-        // Обработчики событий
-        function setupEventListeners() {
-            window.addEventListener('resize', () => {
-                if (camera && renderer) {
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                }
-            });
+    // gamma correction
+    const gammaPass = new THREE.ShaderPass(THREE.GammaCorrectionShader);
+    composer.addPass(gammaPass);
+  }
 
-            // Добавляем управление клавиатурой для тестирования
-            window.addEventListener('keydown', (e) => {
-                if (!gameState.gameActive) return;
-                
-                switch(e.key) {
-                    case 'ArrowLeft':
-                    case 'a':
-                        gameState.touchControls.left = true;
-                        break;
-                    case 'ArrowRight':
-                    case 'd':
-                        gameState.touchControls.right = true;
-                        break;
-                    case ' ':
-                        gameState.touchControls.shoot = true;
-                        break;
-                    case 's':
-                        activateShield();
-                        break;
-                }
-            });
+  function addLights() {
+    const amb = new THREE.AmbientLight(0x8aaacc, 0.9);
+    scene.add(amb);
 
-            window.addEventListener('keyup', (e) => {
-                switch(e.key) {
-                    case 'ArrowLeft':
-                    case 'a':
-                        gameState.touchControls.left = false;
-                        break;
-                    case 'ArrowRight':
-                    case 'd':
-                        gameState.touchControls.right = false;
-                        break;
-                    case ' ':
-                        gameState.touchControls.shoot = false;
-                        break;
-                }
-            });
+    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+    dir.position.set(20,30,10);
+    dir.castShadow = true;
+    dir.shadow.mapSize.width = dir.shadow.mapSize.height = 2048;
+    scene.add(dir);
+
+    // rim light / backlight
+    const rim = new THREE.DirectionalLight(0x66bbff, 0.6);
+    rim.position.set(-10, -5, -20);
+    scene.add(rim);
+
+    // small front fill
+    const fill = new THREE.PointLight(0xaaffff, 0.4, 500);
+    fill.position.set(0,5,50);
+    scene.add(fill);
+  }
+
+  // --------------------------
+  // Звёздное небо (Points) — с анимацией
+  // --------------------------
+  function createStarfield() {
+    const starCount = 3000;
+    const positions = new Float32Array(starCount * 3);
+    const colors = new Float32Array(starCount * 3);
+    const sizes = new Float32Array(starCount);
+
+    for (let i=0;i<starCount;i++){
+      const i3 = i*3;
+      positions[i3] = (Math.random()-0.5)*4000;
+      positions[i3+1] = (Math.random()-0.5)*2000;
+      positions[i3+2] = (Math.random()-0.5)*6000 - 1000;
+      const c = Math.random();
+      if (c < 0.7) { colors[i3]=1; colors[i3+1]=1; colors[i3+2]=1; }
+      else if (c < 0.9) { colors[i3]=0.8; colors[i3+1]=0.9; colors[i3+2]=1; }
+      else { colors[i3]=1; colors[i3+1]=0.9; colors[i3+2]=0.6; }
+      sizes[i] = Math.random()*2 + 0.5;
+    }
+
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(positions,3));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors,3));
+    geom.setAttribute('size', new THREE.BufferAttribute(sizes,1));
+
+    const mat = new THREE.PointsMaterial({
+      vertexColors:true,
+      size:2.2,
+      sizeAttenuation:true,
+      transparent:true,
+      opacity:0.95,
+      blending:THREE.AdditiveBlending
+    });
+
+    starsPoints = new THREE.Points(geom, mat);
+    scene.add(starsPoints);
+  }
+
+  // --------------------------
+  // Nebulas (простые большие сферы с прозрачностью)
+  // --------------------------
+  function createNebulas() {
+    for (let i=0;i<4;i++){
+      const g = new THREE.SphereGeometry(400 + Math.random()*300, 32, 32);
+      const mat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color().setHSL(Math.random(),0.6,0.45),
+        transparent:true,
+        opacity:0.06,
+        side:THREE.BackSide,
+        depthWrite:false
+      });
+      const m = new THREE.Mesh(g, mat);
+      m.position.set((Math.random()-0.5)*2000, (Math.random()-0.5)*1200, (Math.random()-0.5)*3000 - 800);
+      scene.add(m);
+      nebulas.push(m);
+    }
+  }
+
+  // --------------------------
+  // Корабль (Group) + пул частиц двигателя (пул)
+  // --------------------------
+  function createShip() {
+    const group = new THREE.Group();
+
+    const hull = new THREE.ConeGeometry(3.5,10,6);
+    const matHull = new THREE.MeshStandardMaterial({color:0x0088ff, metalness:0.5, roughness:0.25, emissive:0x002244, emissiveIntensity:0.6});
+    const hullMesh = new THREE.Mesh(hull, matHull);
+    hullMesh.rotation.x = -Math.PI/2;
+    hullMesh.castShadow = true;
+    group.add(hullMesh);
+
+    const wingGeom = new THREE.BoxGeometry(7,0.8,3);
+    const wingMat = new THREE.MeshStandardMaterial({color:0x0066aa, metalness:0.4, roughness:0.4, emissive:0x001122});
+    const leftWing = new THREE.Mesh(wingGeom, wingMat); leftWing.position.set(-5,0,0); group.add(leftWing);
+    const rightWing = leftWing.clone(); rightWing.position.set(5,0,0); group.add(rightWing);
+
+    const engineGeom = new THREE.CylinderGeometry(0.9,1.2,2.6,12);
+    const engineMat = new THREE.MeshStandardMaterial({color:0xff6f00, emissive:0xff3800, emissiveIntensity:0.9, metalness:0.1, roughness:0.3});
+    const leftEngine = new THREE.Mesh(engineGeom, engineMat); leftEngine.rotation.x = Math.PI/2; leftEngine.position.set(-2.5,0,4); group.add(leftEngine);
+    const rightEngine = leftEngine.clone(); rightEngine.position.set(2.5,0,4); group.add(rightEngine);
+
+    group.position.set(0,0,15);
+    scene.add(group);
+    ship = group;
+
+    // prepare engine particles pool (shared geometry)
+    const particleGeom = new THREE.BufferGeometry();
+    const positions = new Float32Array(MAX_ENGINE_PARTICLES*3);
+    const colors = new Float32Array(MAX_ENGINE_PARTICLES*3);
+    for (let i=0;i<MAX_ENGINE_PARTICLES;i++){
+      const i3 = i*3;
+      positions[i3]= (Math.random()-0.5)*1.5;
+      positions[i3+1]= (Math.random()-0.5)*1.5;
+      positions[i3+2]= 3 + Math.random()*5;
+      colors[i3]=1; colors[i3+1]=0.5 + Math.random()*0.5; colors[i3+2]=0;
+    }
+    particleGeom.setAttribute('position', new THREE.BufferAttribute(positions,3));
+    particleGeom.setAttribute('color', new THREE.BufferAttribute(colors,3));
+    const particleMat = new THREE.PointsMaterial({size:2.8, vertexColors:true, transparent:true, opacity:0.95, blending:THREE.AdditiveBlending});
+    const particles = new THREE.Points(particleGeom, particleMat);
+    particles.frustumCulled = false; // чтобы не "исчезали"
+    ship.add(particles);
+    engineParticlesPool.push({points:particles, geom:particleGeom});
+  }
+
+  // --------------------------
+  // Генерация объектов (астероиды, враги, ресурсы)
+  // --------------------------
+  function makeAsteroid(size=6, x=0,y=0,z=-200) {
+    const geom = new THREE.IcosahedronGeometry(size, 1);
+    const mat = new THREE.MeshStandardMaterial({color:0xaaaaaa, metalness:0.1, roughness:0.6, emissive:0x111111});
+    const m = new THREE.Mesh(geom, mat);
+    m.position.set(x,y,z);
+    m.userData = {rotationSpeed:{x:(Math.random()-0.5)*0.02,y:(Math.random()-0.5)*0.02,z:(Math.random()-0.5)*0.02}, radius:size};
+    m.castShadow = true;
+    scene.add(m);
+    asteroids.push(m);
+  }
+
+  function generateAsteroids(count=20) {
+    for (let i=0;i<count;i++){
+      if (Math.random()<0.25) continue;
+      const sz = Math.random()*6 + 2;
+      const x=(Math.random()-0.5)*800;
+      const y=(Math.random()-0.5)*200;
+      const z = -200 - Math.random()*1600;
+      makeAsteroid(sz,x,y,z);
+    }
+  }
+
+  function generateEnemyShips(count=8) {
+    for (let i=0;i<count;i++){
+      if (Math.random()<0.4) continue;
+      const geom = new THREE.OctahedronGeometry(5,0);
+      const mat = new THREE.MeshStandardMaterial({color:0xff5533, emissive:0x660000, metalness:0.3, roughness:0.4});
+      const e = new THREE.Mesh(geom, mat);
+      e.position.set((Math.random()-0.5)*600, (Math.random()-0.5)*150, -300 - Math.random()*1200);
+      e.userData = {health:25, speed:0.5 + Math.random()*0.6};
+      e.castShadow = true;
+      scene.add(e);
+      enemyShips.push(e);
+    }
+  }
+
+  function generateStarFields(count=12) {
+    for (let i=0;i<count;i++){
+      const geom = new THREE.SphereGeometry(3+Math.random()*3,12,12);
+      const mat = new THREE.MeshStandardMaterial({color:0xffee66, emissive:0xffdd55, emissiveIntensity:0.8, metalness:0.2, roughness:0.2});
+      const m = new THREE.Mesh(geom,mat);
+      m.position.set((Math.random()-0.5)*700, (Math.random()-0.5)*180, -250 - Math.random()*1300);
+      m.userData = {rotationSpeed:(Math.random()-0.5)*0.03, collected:false};
+      scene.add(m);
+      starFields.push(m);
+    }
+  }
+
+  function generateCrystals(count=10) {
+    for (let i=0;i<count;i++){
+      const geom = new THREE.OctahedronGeometry(2.6,0);
+      const mat = new THREE.MeshStandardMaterial({color:0xff00ff, emissive:0x880088, emissiveIntensity:0.9, metalness:0.1, roughness:0.3});
+      const m = new THREE.Mesh(geom,mat);
+      m.position.set((Math.random()-0.5)*750, (Math.random()-0.5)*200, -200 - Math.random()*1400);
+      m.userData = {rotationSpeed:(Math.random()-0.5)*0.02, collected:false};
+      scene.add(m);
+      crystals.push(m);
+    }
+  }
+
+  function generatePlanets(count=3) {
+    const planetData = [
+      {name:"КРИОНИС", color:0x88ccff, size:25, dialog:"Ледяной гигант"},
+      {name:"ПИРОС", color:0xff6633, size:30, dialog:"Вулканический мир"},
+      {name:"ВЕРДАНТ", color:0x44ff88, size:22, dialog:"Биолюминесцентный"}
+    ];
+    for (let i=0;i<count;i++){
+      const p = planetData[Math.floor(Math.random()*planetData.length)];
+      const geom = new THREE.SphereGeometry(p.size, 32,32);
+      const mat = new THREE.MeshStandardMaterial({color:p.color, emissive:new THREE.Color(p.color).multiplyScalar(0.2), roughness:0.5});
+      const m = new THREE.Mesh(geom,mat);
+      m.position.set((Math.random()-0.5)*1000, (Math.random()-0.5)*300, -600 - Math.random()*2000);
+      m.userData = {size:p.size, planetData:p};
+      scene.add(m);
+      planets.push(m);
+    }
+  }
+
+  // --------------------------
+  // Пулы пуль (recycle)
+  // --------------------------
+  function initBulletPool() {
+    const geom = new THREE.SphereGeometry(0.7,8,8);
+    const mat = new THREE.MeshBasicMaterial({color:0xffff66, emissive:0xffff66});
+    for (let i=0;i<MAX_BULLETS;i++){
+      const m = new THREE.Mesh(geom, mat);
+      m.visible = false;
+      m.userData = {velocity:new THREE.Vector3(), lifetime:0};
+      scene.add(m);
+      bulletsPool.push(m);
+    }
+  }
+
+  function getBulletFromPool() {
+    for (let i=0;i<bulletsPool.length;i++){
+      if (!bulletsPool[i].visible) return bulletsPool[i];
+    }
+    return null;
+  }
+
+  // --------------------------
+  // Стрельба — берём пуль из пула
+  // --------------------------
+  function shoot() {
+    if (!gameState.gameActive || !ship) return;
+    const b = getBulletFromPool();
+    if (!b) return;
+    b.visible = true;
+    b.position.copy(ship.position);
+    const dir = new THREE.Vector3(0,0,-1).applyQuaternion(ship.quaternion);
+    b.userData.velocity.copy(dir).multiplyScalar(18 * (1 + (gameState.upgrades.weapon-1)*0.25));
+    b.userData.lifetime = 80;
+    activeBullets.push(b);
+    // muzzle flash — быстрый scale пула маленькой сферы
+    const flash = new THREE.Mesh(new THREE.SphereGeometry(1.8,8,8), new THREE.MeshBasicMaterial({color:0xffffaa, transparent:true, opacity:0.9}));
+    flash.position.copy(ship.position).add(dir.clone().multiplyScalar(-8));
+    scene.add(flash);
+    setTimeout(()=>scene.remove(flash),80);
+  }
+
+  // --------------------------
+  // Враги стреляют лазерами (упрощённо)
+  // --------------------------
+  function createEnemyLaser(from, to) {
+    const dir = to.clone().sub(from).normalize();
+    const geom = new THREE.CylinderGeometry(0.18,0.18,12,8);
+    const mat = new THREE.MeshBasicMaterial({color:0xff6666});
+    const laser = new THREE.Mesh(geom, mat);
+    laser.position.copy(from);
+    laser.lookAt(to);
+    laser.rotateX(Math.PI/2);
+    laser.userData = {velocity:dir.clone().multiplyScalar(12), lifetime:60};
+    scene.add(laser);
+    // interval-based movement simplified into activeExplosions array for update
+    activeExplosions.push({type:'laser', mesh:laser});
+  }
+
+  // --------------------------
+  // Эффекты: взрыв (простая анимация с точками) — с пулом
+  // --------------------------
+  function createExplosion(pos, size=18) {
+    const particleCount = 22;
+    const positions = new Float32Array(particleCount*3);
+    const colors = new Float32Array(particleCount*3);
+    const geom = new THREE.BufferGeometry();
+    for (let i=0;i<particleCount;i++){
+      const i3 = i*3;
+      positions[i3] = pos.x + (Math.random()-0.5)*size;
+      positions[i3+1] = pos.y + (Math.random()-0.5)*size;
+      positions[i3+2] = pos.z + (Math.random()-0.5)*size;
+      colors[i3]=1; colors[i3+1]=0.4+Math.random()*0.4; colors[i3+2]=0;
+    }
+    geom.setAttribute('position', new THREE.BufferAttribute(positions,3));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors,3));
+    const mat = new THREE.PointsMaterial({size:3.2, vertexColors:true, transparent:true, blending:THREE.AdditiveBlending});
+    const pts = new THREE.Points(geom, mat);
+    pts.userData = {life:1.0};
+    pts.position.set(0,0,0);
+    scene.add(pts);
+    activeExplosions.push({type:'points', mesh:pts});
+  }
+
+  // --------------------------
+  // Обновление частиц двигателя (меняем positions attr)
+  // --------------------------
+  function updateEngineParticles(delta) {
+    engineParticlesPool.forEach(entry => {
+      const positions = entry.geom.attributes.position.array;
+      for (let i=0;i<positions.length;i+=3){
+        positions[i+2] += (1.0 + Math.random()*1.0) * (1 + (gameState.touchControls.shoot?0.5:0)) * (1 + (gameState.upgrades.engine-1)*0.15);
+        if (positions[i+2] > 18) {
+          positions[i] = (Math.random()-0.5)*1.8;
+          positions[i+1] = (Math.random()-0.5)*1.8;
+          positions[i+2] = 2 + Math.random()*5;
         }
-        
-        // Игровой цикл
-        function gameLoop() {
-            if (scene && camera && renderer) {
-                updateGameState();
-                renderer.render(scene, camera);
-            }
-            requestAnimationFrame(gameLoop);
+      }
+      entry.geom.attributes.position.needsUpdate = true;
+      // pulsate emissive intensity
+      entry.points.material.opacity = 0.7 + Math.abs(Math.sin(perfTime*6))*0.3;
+    });
+  }
+
+  // --------------------------
+  // Обновление всего — game loop
+  // --------------------------
+  let perfTime = 0;
+  function update(delta) {
+    perfTime += delta;
+    if (!gameState.gameActive) return;
+
+    // движение корабля вперёд
+    if (ship) {
+      const dir = new THREE.Vector3(0,0,-1).applyQuaternion(ship.quaternion);
+      ship.position.add(dir.clone().multiplyScalar(gameState.speed * (1 + (gameState.upgrades.engine-1)*0.15) * delta * 60));
+      // ручная ротация
+      if (gameState.touchControls.left) ship.rotation.y += gameState.rotationSpeed * delta * 60;
+      if (gameState.touchControls.right) ship.rotation.y -= gameState.rotationSpeed * delta * 60;
+
+      // камера следует
+      const cameraOffset = new THREE.Vector3(0,8,25).applyQuaternion(ship.quaternion);
+      camera.position.copy(ship.position).add(cameraOffset);
+      const lookDir = new THREE.Vector3(0,0,-1).applyQuaternion(ship.quaternion);
+      camera.lookAt(ship.position.clone().add(lookDir.multiplyScalar(90)));
+    }
+
+    // update engine particles
+    updateEngineParticles(delta);
+
+    // move stars slowly to simulate flight
+    if (starsPoints) {
+      starsPoints.position.z += 0.15 * delta * 60;
+      if (starsPoints.position.z > 2000) starsPoints.position.z = -2000;
+    }
+
+    // nebulas rotate
+    nebulas.forEach(n => n.rotation.y += 0.0005 * delta * 60);
+
+    // bullets update
+    for (let i=activeBullets.length-1;i>=0;i--){
+      const b = activeBullets[i];
+      b.position.add(b.userData.velocity.clone().multiplyScalar(delta*60));
+      b.userData.lifetime--;
+      // collision with enemies
+      for (let j=enemyShips.length-1;j>=0;j--){
+        const e = enemyShips[j];
+        if (b.position.distanceTo(e.position) < 8) {
+          e.userData.health -= 10 * (1 + (gameState.upgrades.weapon-1)*0.2);
+          b.visible = false;
+          activeBullets.splice(i,1);
+          if (e.userData.health <= 0) {
+            createExplosion(e.position.clone(), 16);
+            scene.remove(e);
+            enemyShips.splice(j,1);
+            gameState.fragments += 8;
+            gameState.score += 50;
+            generateEnemyShips(1);
+          }
+          break;
         }
-        
-        // Инициализация игры
-        function init() {
-            // Сначала инициализируем Three.js
-            if (!initThreeJS()) {
-                return;
-            }
-            
-            // Затем настраиваем управление
-            setupEventListeners();
-            setupTouchControls();
-            
-            // Показываем меню
-            showScreen('menuScreen');
-            
-            // Запускаем игровой цикл
-            gameLoop();
+      }
+      // remove bullets out of range
+      if (b.userData.lifetime <= 0 || b.position.distanceTo(ship.position) > 600) {
+        b.visible = false;
+        const idx = activeBullets.indexOf(b);
+        if (idx>=0) activeBullets.splice(idx,1);
+      }
+    }
+
+    // asteroids
+    for (let i=asteroids.length-1;i>=0;i--){
+      const a = asteroids[i];
+      a.rotation.x += a.userData.rotationSpeed.x * delta * 60;
+      a.rotation.y += a.userData.rotationSpeed.y * delta * 60;
+      a.rotation.z += a.userData.rotationSpeed.z * delta * 60;
+      a.position.z += 0.6 * delta * 60;
+      // collision
+      if (ship && ship.position.distanceTo(a.position) < (a.userData.radius + 6)) {
+        if (gameState.isShieldActive) {
+          gameState.shieldEnergy -= 15;
+        } else {
+          gameState.health -= 12;
+          flashDamage();
         }
-        
-        // Запуск игры после загрузки страницы
-        window.addEventListener('load', init);
-    </script>
+        createExplosion(a.position.clone(), a.userData.radius*1.5);
+        scene.remove(a); asteroids.splice(i,1); generateAsteroids(1);
+      }
+      if (a.position.z > ship.position.z + 500) { scene.remove(a); asteroids.splice(i,1); generateAsteroids(1); }
+    }
+
+    // enemy ships
+    for (let i=enemyShips.length-1;i>=0;i--){
+      const e = enemyShips[i];
+      const dx = ship.position.x - e.position.x;
+      const dz = ship.position.z - e.position.z;
+      const dist = Math.sqrt(dx*dx + dz*dz);
+      if (dist < 220) {
+        e.position.x += dx * 0.008 * e.userData.speed * delta * 60;
+        e.position.z += dz * 0.008 * e.userData.speed * delta * 60;
+      } else {
+        e.position.z += 0.2 * delta * 60;
+      }
+      // enemy fire
+      if (Math.random() < 0.002 && dist < 200) {
+        createEnemyLaser(e.position.clone(), ship.position.clone());
+      }
+      if (ship && e.position.distanceTo(ship.position) < 12) {
+        if (gameState.isShieldActive) gameState.shieldEnergy -= 20;
+        else { gameState.health -= 18; flashDamage(); }
+        createExplosion(e.position.clone(), 12);
+        scene.remove(e); enemyShips.splice(i,1); generateEnemyShips(1);
+      }
+      if (e.position.z > ship.position.z + 450) { scene.remove(e); enemyShips.splice(i,1); generateEnemyShips(1); }
+    }
+
+    // starfields collect
+    for (let i=starFields.length-1;i>=0;i--){
+      const s = starFields[i];
+      s.rotation.y += s.userData.rotationSpeed * delta * 60;
+      if (ship && ship.position.distanceTo(s.position) < 10 && !s.userData.collected) {
+        s.userData.collected = true;
+        gameState.stars++; gameState.score += 15;
+        createCollectEffect(s.position.clone());
+        setTimeout(()=>{ scene.remove(s); starFields.splice(i,1); generateStarFields(1); }, 300);
+      }
+      if (s.position.z > ship.position.z + 400) { scene.remove(s); starFields.splice(i,1); generateStarFields(1); }
+    }
+
+    // crystals
+    for (let i=crystals.length-1;i>=0;i--){
+      const c = crystals[i];
+      c.rotation.y += c.userData.rotationSpeed * delta * 60;
+      if (ship && ship.position.distanceTo(c.position) < 8 && !c.userData.collected) {
+        c.userData.collected = true;
+        gameState.fragments += 3; gameState.score += 25;
+        createCollectEffect(c.position.clone());
+        setTimeout(()=>{ scene.remove(c); crystals.splice(i,1); generateCrystals(1); }, 300);
+      }
+      if (c.position.z > ship.position.z + 400) { scene.remove(c); crystals.splice(i,1); generateCrystals(1); }
+    }
+
+    // planets rotation and landing
+    for (let i=planets.length-1;i>=0;i--){
+      const p = planets[i];
+      p.rotation.y += 0.001 * delta * 60;
+      if (ship && ship.position.distanceTo(p.position) < p.userData.size + 24) {
+        // landing: pause game and show planet UI (simplified)
+        gameState.gameActive = false;
+        showScreen('menuScreen'); // На место планетного экрана добавь свой интерфейс
+      }
+      if (p.position.z > ship.position.z + 700) { scene.remove(p); planets.splice(i,1); generatePlanets(1); }
+    }
+
+    // shield regen
+    if (!gameState.isShieldActive && gameState.shieldEnergy < 100) gameState.shieldEnergy = Math.min(gameState.shieldEnergy + 0.12*delta*60, 100);
+
+    // update active laser/explosion points
+    for (let i=activeExplosions.length-1;i>=0;i--){
+      const obj = activeExplosions[i];
+      if (obj.type === 'laser') {
+        obj.mesh.position.add(obj.mesh.userData.velocity.clone().multiplyScalar(delta*60));
+        obj.mesh.userData.lifetime--;
+        if (obj.mesh.userData.lifetime <= 0) { scene.remove(obj.mesh); activeExplosions.splice(i,1); }
+        if (ship && obj.mesh.position.distanceTo(ship.position) < 8) {
+          if (gameState.isShieldActive) gameState.shieldEnergy -= 8;
+          else { gameState.health -= 8; flashDamage(); }
+          createExplosion(obj.mesh.position.clone(), 10);
+          scene.remove(obj.mesh); activeExplosions.splice(i,1);
+        }
+      } else if (obj.type === 'points') {
+        obj.mesh.userData.life -= 0.02 * delta * 60;
+        obj.mesh.material.opacity = Math.max(0, obj.mesh.userData.life);
+        if (obj.mesh.userData.life <= 0) { scene.remove(obj.mesh); activeExplosions.splice(i,1); }
+      }
+    }
+
+    // level progression score
+    gameState.score += 0.02 * delta * 60 * gameState.speed;
+
+    // check mission completion and death
+    if (gameState.mission.progress >= gameState.mission.target) {
+      completeMission();
+    }
+    if (gameState.health <= 0) {
+      gameOver();
+    }
+
+    // UI update
+    updateUI();
+  }
+
+  function createCollectEffect(pos) {
+    // small sparkle effect (points)
+    createExplosion(pos, 6);
+  }
+
+  function flashDamage() {
+    const el = document.getElementById('damageFlash');
+    el.style.transition = 'opacity 60ms';
+    el.style.opacity = '0.55';
+    setTimeout(()=>{ el.style.opacity = '0'; }, 140);
+  }
+
+  function updateUI(){
+    document.getElementById('healthValue').textContent = Math.max(0, Math.round(gameState.health));
+    document.getElementById('shieldValue').textContent = Math.round(gameState.shieldEnergy);
+    document.getElementById('starsValue').textContent = gameState.stars;
+    document.getElementById('fragmentsValue').textContent = gameState.fragments;
+    document.getElementById('scoreValue').textContent = Math.round(gameState.score);
+    document.getElementById('missionValue').textContent = `${gameState.mission.progress}/${gameState.mission.target}`;
+  }
+
+  function completeMission(){
+    gameState.stars += gameState.mission.reward;
+    gameState.score += gameState.mission.reward*10;
+    gameState.mission = {type:Math.random()>0.5?'collect':'destroy', target:5+Math.floor(Math.random()*6), progress:0, reward:100+Math.floor(Math.random()*100)};
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;left:50%;top:20%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#0ff;padding:10px 18px;border-radius:8px;border:1px solid #0ff';
+    msg.textContent = '🎉 Миссия выполнена!';
+    document.body.appendChild(msg);
+    setTimeout(()=>document.body.removeChild(msg),2400);
+  }
+
+  function gameOver() {
+    gameState.gameActive = false;
+    document.getElementById('finalScore').textContent = Math.round(gameState.score);
+    showScreen('gameOver');
+  }
+
+  // --------------------------
+  // экранный контрол
+  // --------------------------
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  // --------------------------
+  // Controls (touch + keyboard)
+  // --------------------------
+  function setupControls() {
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    const shootBtn = document.getElementById('shootBtn');
+    const shieldBtn = document.getElementById('shieldBtn');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+
+    function addHold(btn, name){
+      btn.addEventListener('touchstart', e=>{ e.preventDefault(); gameState.touchControls[name]=true; });
+      btn.addEventListener('touchend', e=>{ e.preventDefault(); gameState.touchControls[name]=false; });
+      btn.addEventListener('mousedown', e=>{ e.preventDefault(); gameState.touchControls[name]=true; });
+      btn.addEventListener('mouseup', e=>{ e.preventDefault(); gameState.touchControls[name]=false; });
+      btn.addEventListener('mouseleave', e=>{ gameState.touchControls[name]=false; });
+    }
+    addHold(leftBtn, 'left'); addHold(rightBtn,'right'); addHold(shootBtn,'shoot');
+
+    shieldBtn.addEventListener('click', ()=>{ activateShield(); });
+    startBtn.addEventListener('click', ()=>{ startGame(); });
+    restartBtn.addEventListener('click', ()=>{ startGame(); });
+
+    window.addEventListener('keydown', e=>{
+      if (!gameState.gameActive) return;
+      if (e.key==='a' || e.key==='ArrowLeft') gameState.touchControls.left=true;
+      if (e.key==='d' || e.key==='ArrowRight') gameState.touchControls.right=true;
+      if (e.key===' ') gameState.touchControls.shoot=true;
+      if (e.key==='s') activateShield();
+    });
+    window.addEventListener('keyup', e=>{
+      if (e.key==='a' || e.key==='ArrowLeft') gameState.touchControls.left=false;
+      if (e.key==='d' || e.key==='ArrowRight') gameState.touchControls.right=false;
+      if (e.key===' ') gameState.touchControls.shoot=false;
+    });
+  }
+
+  function activateShield(){
+    if (gameState.shieldEnergy >= 25 && !gameState.isShieldActive) {
+      gameState.isShieldActive = true;
+      gameState.shieldEnergy -= 25;
+      // visual sphere
+      const geom = new THREE.SphereGeometry(10, 16,16);
+      const mat = new THREE.MeshBasicMaterial({color:0x00ffff, transparent:true, opacity:0.28, side:THREE.DoubleSide});
+      const s = new THREE.Mesh(geom, mat);
+      ship.add(s);
+      setTimeout(()=>{ ship.remove(s); gameState.isShieldActive=false; }, 3000);
+    }
+  }
+
+  // --------------------------
+  // Инициализация всего и запуск
+  // --------------------------
+  function startGame(){
+    gameState.health=100; gameState.stars=0; gameState.fragments=0; gameState.score=0;
+    gameState.speed=2; gameState.isShieldActive=false; gameState.shieldEnergy=100; gameState.gameActive=true;
+    gameState.upgrades={engine:1,shield:1,weapon:1};
+    gameState.mission={type:Math.random()>0.5?'collect':'destroy', target:5, progress:0, reward:100};
+    if (ship) { ship.position.set(0,0,15); ship.rotation.set(0,0,0); }
+
+    // clear scene objects arrays
+    asteroids.forEach(o=>scene.remove(o)); asteroids=[];
+    enemyShips.forEach(o=>scene.remove(o)); enemyShips=[];
+    starFields.forEach(o=>scene.remove(o)); starFields=[];
+    crystals.forEach(o=>scene.remove(o)); crystals=[];
+    planets.forEach(o=>scene.remove(o)); planets=[];
+    // bullets pool stays
+    // generate new content
+    generateAsteroids(28); generateEnemyShips(12); generateStarFields(18); generateCrystals(12); generatePlanets(4);
+    showScreen('gameScreen');
+  }
+
+  // --------------------------
+  // init and loop
+  // --------------------------
+  function init() {
+    initRenderer(); addLights(); createStarfield(); createNebulas(); createShip();
+    initBulletPool(); setupControls();
+
+    // small delay
+    document.getElementById('loading').style.display='none';
+    showScreen('menuScreen');
+
+    onWindowResize();
+    animate();
+  }
+
+  function onWindowResize(){
+    camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    composer.setSize(window.innerWidth, window.innerHeight);
+  }
+  window.addEventListener('resize', onWindowResize);
+
+  function animate(){
+    requestAnimationFrame(animate);
+    const delta = Math.min(clock.getDelta(), 0.05);
+    // shoot auto if hold
+    if (gameState.touchControls.shoot && gameState.gameActive) {
+      if (!gameState._lastShotTime || performance.now() - gameState._lastShotTime > (300 / (1+ (gameState.upgrades.weapon-1)*0.2))) {
+        shoot();
+        gameState._lastShotTime = performance.now();
+      }
+    }
+    update(delta);
+    composer.render(delta);
+  }
+
+  // запуск
+  window.addEventListener('load', init);
+  </script>
 </body>
 </html>
