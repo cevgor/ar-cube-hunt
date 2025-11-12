@@ -4,7 +4,6 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
   <title>Z.E.R.O. — UNIFIED PLANET SYSTEM</title>
-
   <!-- Three.js r128 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <!-- Postprocessing -->
@@ -14,7 +13,6 @@
   <script src="https://threejs.org/examples/js/postprocessing/ShaderPass.js"></script>
   <script src="https://threejs.org/examples/js/shaders/CopyShader.js"></script>
   <script src="https://threejs.org/examples/js/shaders/GammaCorrectionShader.js"></script>
-
   <style>
     :root {
       --neon: #00ffff;
@@ -87,7 +85,6 @@
       font-size: 14px;
       margin-bottom: 6px;
     }
-    
     /* Space Controls */
     #spaceControls {
       position: fixed;
@@ -137,7 +134,6 @@
       font-size: 22px;
       color: var(--neon);
     }
-    
     /* Surface Controls */
     #surfaceControls {
       position: fixed;
@@ -176,7 +172,6 @@
       gap: 12px;
       pointer-events: auto;
     }
-
     #damageFlash {
       position: fixed;
       inset: 0;
@@ -260,20 +255,42 @@
       opacity: 0.18;
       mix-blend-mode: overlay;
     }
+    .landingIndicator {
+      position: fixed;
+      left: 50%;
+      bottom: 80px;
+      transform: translateX(-50%);
+      background: rgba(0, 40, 60, 0.8);
+      padding: 12px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(0,255,255,0.2);
+      font-size: 16px;
+      color: #00ffff;
+      transition: all 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .landingIndicator.active {
+      opacity: 1;
+      transform: translateX(-50%) scale(1.05);
+    }
     @media (max-width:420px) {
       .joyPad, #surfaceJoy { width: 90px; height: 90px; }
       .joyKnob, #surfaceKnob { width: 36px; height: 36px; }
       .actionBtn { width: 56px; height: 56px; }
       .title { font-size: 1.2rem; }
+      .landingIndicator {
+        font-size: 14px;
+        padding: 8px 16px;
+        bottom: 60px;
+      }
     }
   </style>
 </head>
 <body>
   <div id="gameContainer"></div>
-
   <div id="ui">
     <div class="scanlines"></div>
-    
     <div id="menu" class="overlayCenter menuCard">
       <div class="title">Z.E.R.O.: UNIFIED PLANET SYSTEM</div>
       <div style="text-align:center;color:#9fe;margin-bottom:8px;font-size:13px">Космические полеты • Ходьба по планетам • Улучшенный геймплей</div>
@@ -283,68 +300,66 @@
       </div>
       <div style="margin-top:10px;text-align:center;font-size:13px;color:#9aa">Загрузка модулей... <span id="loadingDots">●●●</span></div>
     </div>
-
     <div id="hud" class="hud">
       <div class="hudRow">❤️ <span id="uiHealth">100</span>  ·  🛡 <span id="uiShield">100</span>  ·  ⛽ <span id="uiFuel">100</span></div>
       <div class="hudRow">💳 <span id="uiCredits">0</span>  ·  ⭐ <span id="uiStars">0</span>  ·  🎯 <span id="uiMission">0/5</span></div>
     </div>
-
     <!-- Space Controls -->
     <div id="spaceControls">
       <div id="spaceJoy" class="joyPad"><div id="spaceKnob" class="joyKnob"></div></div>
       <div class="bottomHints">Джойстик — движение • Тап по планете — приземлиться</div>
     </div>
-
     <div class="spaceActionButtons">
       <div id="btnShield" class="actionBtn" title="Щит">🛡</div>
       <div id="btnShoot" class="actionBtn" title="Огонь">💥</div>
       <div id="btnBoost" class="actionBtn" title="Овердрайв">⚡</div>
     </div>
-
     <!-- Surface Controls -->
     <div id="surfaceControls">
       <div id="surfaceJoy"><div id="surfaceKnob"></div></div>
       <div class="bottomHints">Джойстик — ходьба • Исследуй планету</div>
     </div>
-
     <div class="surfaceActionButtons">
       <div id="btnInteract" class="actionBtn" title="Взаимодействие">👁️</div>
       <div id="btnTakeoff" class="actionBtn" title="Взлететь">🚀</div>
     </div>
-
     <div id="damageFlash"></div>
-
+    <div id="landingIndicator" class="landingIndicator">ПРИБЛИЖЕНИЕ К ПЛАНЕТЕ - НАЖМИТЕ ДЛЯ ПОСАДКИ</div>
     <!-- Planet UI -->
     <div id="planetPanel" class="planetUI">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div><strong id="planetName">PLANET</strong><div class="small" id="planetDesc">Описание</div></div>
         <div><button id="btnClosePanel" class="btn">Закрыть</button></div>
       </div>
-
       <div class="dialogue" id="npcDialogue">Добро пожаловать на планету. Что вас интересует?</div>
-
       <div style="margin-top:8px"><strong>Торговцы на этой планете:</strong></div>
       <div id="npcList" style="margin-top:8px"></div>
-
       <div class="shopGrid" id="shopGrid">
         <!-- Shop items will be populated here -->
       </div>
     </div>
   </div>
-
 <script>
 /* ========= Z.E.R.O. — UNIFIED PLANET SYSTEM =========
-   Объединенные features:
-   - Корабль летит в космосе, объекты движутся навстречу
-   - Полноценная ходьба по планетам в 3D
-   - Улучшенная система управления (разные контролы для космоса/поверхности)
-   - Расширенный магазин и система улучшений
-   - WebAudio звуки, bloom эффекты
+   Полностью переработанная версия с исправленными посадками
+   и улучшенной архитектурой
 */
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function distanceTo(x1, y1, z1, x2, y2, z2) {
+  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2) + Math.pow(z2 - z1, 2));
+}
 
 // ========== GLOBAL GAME STATE ==========
 const STATE = {
-  mode: 'menu', // 'menu'|'space'|'landing'|'landed'|'surface'
+  mode: 'menu', // 'menu'|'space'|'landing'|'surface'
   credits: 0,
   health: 100,
   shield: 100,
@@ -356,18 +371,21 @@ const STATE = {
   lastShot: 0,
   overdrive: false,
   shieldActive: false,
-  currentPlanet: null
+  currentPlanet: null,
+  debugMode: false
 };
 
 // ========== THREE.js scene setup ==========
 let scene, camera, renderer, composer;
-let ship, shipGroup, shipEngineParticles;
+let shipGroup, shipEngineParticles;
 let stars, nebulas = [];
 let asteroids = [], enemies = [], bullets = [], planets = [];
 let surfaceScene = null, surfacePlayer = null, surfaceObjects = [];
 let clock = new THREE.Clock();
 let pixelRatio = Math.min(window.devicePixelRatio || 1, 1.6);
 let hasComposer = false;
+let debugText = null;
+let raycaster = new THREE.Raycaster();
 
 // Control states
 let spaceJoystick = { x: 0, y: 0 };
@@ -379,565 +397,1233 @@ let landingAnimation = {
   startPos: new THREE.Vector3(),
   targetPos: new THREE.Vector3(),
   progress: 0,
-  duration: 2000
+  duration: 2000,
+  startTime: 0
 };
 
-// ========== INIT THREE.js ==========
+// Physics constants
+const GRAVITY = 9.8;
+const GROUND_LEVEL = -2;
+const PLAYER_HEIGHT = 2.5;
+
+// ========== ИНИЦИАЛИЗАЦИЯ THREE.js ==========
 function initThree(){
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 8000);
-  camera.position.set(0,6,22);
-
-  renderer = new THREE.WebGLRenderer({ antialias:true });
-  renderer.setPixelRatio(pixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setClearColor(0x03121a);
-  document.getElementById('gameContainer').appendChild(renderer.domElement);
-
-  // Postprocessing
   try {
-    composer = new THREE.EffectComposer(renderer);
-    const renderPass = new THREE.RenderPass(scene, camera);
-    composer.addPass(renderPass);
-    const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.8, 0.2, 0.6);
-    bloom.threshold = 0.12; bloom.strength = 0.9; bloom.radius = 0.4;
-    composer.addPass(bloom);
-    const gamma = new THREE.ShaderPass(THREE.GammaCorrectionShader);
-    composer.addPass(gamma);
-    hasComposer = true;
+    scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x03121a, 3000, 8000);
+    
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 10000);
+    camera.position.set(0,6,22);
+    
+    renderer = new THREE.WebGLRenderer({ antialias:true, alpha: true });
+    renderer.setPixelRatio(pixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x03121a, 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    const gameContainer = document.getElementById('gameContainer');
+    if (gameContainer) {
+      gameContainer.appendChild(renderer.domElement);
+    } else {
+      document.body.appendChild(renderer.domElement);
+    }
+    
+    // Postprocessing
+    try {
+      composer = new THREE.EffectComposer(renderer);
+      const renderPass = new THREE.RenderPass(scene, camera);
+      composer.addPass(renderPass);
+      
+      const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.8, 0.2, 0.6);
+      bloom.threshold = 0.12; 
+      bloom.strength = 0.9; 
+      bloom.radius = 0.4;
+      composer.addPass(bloom);
+      
+      const gamma = new THREE.ShaderPass(THREE.GammaCorrectionShader);
+      composer.addPass(gamma);
+      
+      hasComposer = true;
+    } catch(e) {
+      hasComposer = false;
+      console.warn('Postprocessing not available:', e);
+    }
+    
+    console.log('Three.js initialized successfully');
+    return true;
   } catch(e) {
-    hasComposer = false;
-    console.warn('Postprocessing not available');
+    console.error('Error initializing Three.js:', e);
+    return false;
   }
 }
 
-// ========== LIGHTS ==========
+// ========== ОСВЕЩЕНИЕ ==========
 function makeLights(){
-  const amb = new THREE.AmbientLight(0x8aaaff, 0.9); scene.add(amb);
-  const dir = new THREE.DirectionalLight(0xffffff, 1.0); 
-  dir.position.set(30,40,10); scene.add(dir);
-  const rim = new THREE.DirectionalLight(0x66bbff, 0.5); 
-  rim.position.set(-20,-10,-30); scene.add(rim);
+  try {
+    const amb = new THREE.AmbientLight(0x8aaaff, 0.9);
+    scene.add(amb);
+    
+    const dir = new THREE.DirectionalLight(0xffffff, 1.0);
+    dir.position.set(30, 40, 10);
+    dir.castShadow = true;
+    dir.shadow.mapSize.width = 1024;
+    dir.shadow.mapSize.height = 1024;
+    scene.add(dir);
+    
+    const rim = new THREE.DirectionalLight(0x66bbff, 0.5);
+    rim.position.set(-20, -10, -30);
+    scene.add(rim);
+    
+    console.log('Lights created');
+    return true;
+  } catch(e) {
+    console.error('Error creating lights:', e);
+    return false;
+  }
 }
 
-// ========== CREATE SHIP ==========
+// ========== СОЗДАНИЕ КОРАБЛЯ ==========
 function createShip(){
-  shipGroup = new THREE.Group();
-
-  const hullGeom = new THREE.ConeGeometry(2.2,7,6);
-  const hullMat = new THREE.MeshStandardMaterial({ 
-    color:0x00aaff, metalness:0.4, roughness:0.25, 
-    emissive:0x002244, emissiveIntensity:0.9 
-  });
-  const hull = new THREE.Mesh(hullGeom, hullMat); 
-  hull.rotation.x = Math.PI/2; 
-  shipGroup.add(hull);
-
-  const wingGeom = new THREE.BoxGeometry(6.5,0.6,2.6);
-  const wingMat = new THREE.MeshStandardMaterial({ 
-    color:0x006ea8, metalness:0.25, roughness:0.35, emissive:0x001122 
-  });
-  const lw = new THREE.Mesh(wingGeom, wingMat); lw.position.set(-4.5,0,0); shipGroup.add(lw);
-  const rw = lw.clone(); rw.position.set(4.5,0,0); shipGroup.add(rw);
-
-  shipGroup.position.set(0,0,15);
-  scene.add(shipGroup);
-
-  // Engine particles
-  const maxP = 80;
-  const pos = new Float32Array(maxP*3);
-  const cols = new Float32Array(maxP*3);
-  for(let i=0;i<maxP;i++){ 
-    const j=i*3; 
-    pos[j]=(Math.random()-0.5)*1.6; 
-    pos[j+1]=(Math.random()-0.5)*1.6; 
-    pos[j+2]=2+Math.random()*4; 
-    cols[j]=1; cols[j+1]=0.45+Math.random()*0.45; cols[j+2]=0; 
+  try {
+    shipGroup = new THREE.Group();
+    
+    // Корпус корабля
+    const hullGeom = new THREE.ConeGeometry(2.2, 7, 6);
+    const hullMat = new THREE.MeshStandardMaterial({ 
+      color: 0x00aaff, 
+      metalness: 0.4, 
+      roughness: 0.25, 
+      emissive: 0x002244, 
+      emissiveIntensity: 0.9,
+      side: THREE.DoubleSide
+    });
+    const hull = new THREE.Mesh(hullGeom, hullMat);
+    hull.rotation.x = Math.PI/2;
+    hull.castShadow = true;
+    shipGroup.add(hull);
+    
+    // Крылья
+    const wingGeom = new THREE.BoxGeometry(6.5, 0.6, 2.6);
+    const wingMat = new THREE.MeshStandardMaterial({ 
+      color: 0x006ea8, 
+      metalness: 0.25, 
+      roughness: 0.35, 
+      emissive: 0x001122,
+      side: THREE.DoubleSide
+    });
+    
+    const lw = new THREE.Mesh(wingGeom, wingMat);
+    lw.position.set(-4.5, 0, 0);
+    lw.castShadow = true;
+    shipGroup.add(lw);
+    
+    const rw = lw.clone();
+    rw.position.set(4.5, 0, 0);
+    shipGroup.add(rw);
+    
+    // Хвостовое оперение
+    const tailGeom = new THREE.ConeGeometry(1.0, 4, 8);
+    const tailMat = new THREE.MeshStandardMaterial({ 
+      color: 0x005577, 
+      metalness: 0.3, 
+      roughness: 0.4,
+      side: THREE.DoubleSide
+    });
+    const tail = new THREE.Mesh(tailGeom, tailMat);
+    tail.rotation.x = Math.PI/2;
+    tail.position.set(0, 0, -4);
+    shipGroup.add(tail);
+    
+    shipGroup.position.set(0, 0, 15);
+    scene.add(shipGroup);
+    
+    // Частицы двигателей
+    const maxP = 80;
+    const pos = new Float32Array(maxP * 3);
+    const cols = new Float32Array(maxP * 3);
+    
+    for(let i = 0; i < maxP; i++){ 
+      const j = i * 3; 
+      pos[j] = (Math.random() - 0.5) * 1.6; 
+      pos[j+1] = (Math.random() - 0.5) * 1.6; 
+      pos[j+2] = 2 + Math.random() * 4; 
+      
+      cols[j] = 1; 
+      cols[j+1] = 0.45 + Math.random() * 0.45; 
+      cols[j+2] = 0; 
+    }
+    
+    const pGeom = new THREE.BufferGeometry(); 
+    pGeom.setAttribute('position', new THREE.BufferAttribute(pos, 3)); 
+    pGeom.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+    
+    const pMat = new THREE.PointsMaterial({ 
+      size: 2.2, 
+      vertexColors: true, 
+      transparent: true, 
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    
+    const pSys = new THREE.Points(pGeom, pMat);
+    pSys.frustumCulled = false;
+    shipGroup.add(pSys);
+    shipEngineParticles = { points: pSys, geom: pGeom };
+    
+    console.log('Ship created');
+    return true;
+  } catch(e) {
+    console.error('Error creating ship:', e);
+    return false;
   }
-  const pGeom = new THREE.BufferGeometry(); 
-  pGeom.setAttribute('position', new THREE.BufferAttribute(pos,3)); 
-  pGeom.setAttribute('color', new THREE.BufferAttribute(cols,3));
-  const pMat = new THREE.PointsMaterial({ 
-    size:2.2, vertexColors:true, transparent:true, blending:THREE.AdditiveBlending 
-  });
-  const pSys = new THREE.Points(pGeom,pMat);
-  pSys.frustumCulled = false;
-  shipGroup.add(pSys);
-  shipEngineParticles = { points:pSys, geom:pGeom };
 }
 
-// ========== STARFIELD & NEBULAS ==========
+// ========== ЗВЕЗДНОЕ ПОЛЕ И ТУМАННОСТИ ==========
 function createStarfield(){
-  const count = 2400;
-  const pos = new Float32Array(count*3);
-  const cols = new Float32Array(count*3);
-  for(let i=0;i<count;i++){ 
-    const j=i*3; 
-    pos[j]=(Math.random()-0.5)*4000; 
-    pos[j+1]=(Math.random()-0.5)*2000; 
-    pos[j+2]=(Math.random()-0.5)*6000 - 1000; 
-    const c=Math.random(); 
-    if(c<0.7){ cols[j]=1;cols[j+1]=1;cols[j+2]=1 } 
-    else if(c<0.9){ cols[j]=0.8;cols[j+1]=0.9;cols[j+2]=1 } 
-    else { cols[j]=1;cols[j+1]=0.9;cols[j+2]=0.6 } 
-  }
-  const geom = new THREE.BufferGeometry(); 
-  geom.setAttribute('position', new THREE.BufferAttribute(pos,3)); 
-  geom.setAttribute('color', new THREE.BufferAttribute(cols,3));
-  const mat = new THREE.PointsMaterial({ 
-    vertexColors:true, size:1.9, transparent:true, 
-    blending:THREE.AdditiveBlending, opacity:0.95 
-  });
-  stars = new THREE.Points(geom, mat); scene.add(stars);
-
-  // Nebulas
-  for(let i=0;i<3;i++){
-    const g = new THREE.SphereGeometry(300 + Math.random()*260, 32,32);
-    const mat = new THREE.MeshBasicMaterial({ 
-      color:new THREE.Color().setHSL(Math.random(),0.6,0.45), 
-      transparent:true, opacity:0.06, side:THREE.BackSide, depthWrite:false 
+  try {
+    const count = 2400;
+    const pos = new Float32Array(count * 3);
+    const cols = new Float32Array(count * 3);
+    
+    for(let i = 0; i < count; i++){ 
+      const j = i * 3; 
+      pos[j] = (Math.random() - 0.5) * 4000; 
+      pos[j+1] = (Math.random() - 0.5) * 2000; 
+      pos[j+2] = (Math.random() - 0.5) * 6000 - 1000; 
+      
+      const c = Math.random(); 
+      if(c < 0.7){ 
+        cols[j] = 1; cols[j+1] = 1; cols[j+2] = 1; 
+      } else if(c < 0.9){ 
+        cols[j] = 0.8; cols[j+1] = 0.9; cols[j+2] = 1; 
+      } else { 
+        cols[j] = 1; cols[j+1] = 0.9; cols[j+2] = 0.6; 
+      } 
+    }
+    
+    const geom = new THREE.BufferGeometry(); 
+    geom.setAttribute('position', new THREE.BufferAttribute(pos, 3)); 
+    geom.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+    
+    const mat = new THREE.PointsMaterial({ 
+      vertexColors: true, 
+      size: 1.9, 
+      transparent: true, 
+      blending: THREE.AdditiveBlending, 
+      opacity: 0.95,
+      depthWrite: false
     });
-    const m = new THREE.Mesh(g,mat); 
-    m.position.set((Math.random()-0.5)*2000,(Math.random()-0.5)*1200,(Math.random()-0.5)*3000 - 800);
-    scene.add(m); nebulas.push(m);
+    
+    stars = new THREE.Points(geom, mat);
+    stars.frustumCulled = false;
+    scene.add(stars);
+    
+    // Туманности
+    for(let i = 0; i < 3; i++){
+      const g = new THREE.SphereGeometry(300 + Math.random() * 260, 32, 32);
+      const mat = new THREE.MeshBasicMaterial({ 
+        color: new THREE.Color().setHSL(Math.random(), 0.6, 0.45), 
+        transparent: true, 
+        opacity: 0.06, 
+        side: THREE.BackSide, 
+        depthWrite: false 
+      });
+      
+      const m = new THREE.Mesh(g, mat); 
+      m.position.set(
+        (Math.random() - 0.5) * 2000,
+        (Math.random() - 0.5) * 1200,
+        (Math.random() - 0.5) * 3000 - 800
+      );
+      m.frustumCulled = false;
+      scene.add(m); 
+      nebulas.push(m);
+    }
+    
+    console.log('Starfield created');
+    return true;
+  } catch(e) {
+    console.error('Error creating starfield:', e);
+    return false;
   }
 }
 
-// ========== PLANETS ==========
+// ========== ПЛАНЕТЫ ==========
 function generateSpacePlanets(){
-  const pdata = [
-    {name:'КРИОНИС', color:0x88ccff, size:20, desc:'Ледяной мир с кристальными пещерами'},
-    {name:'ПИРОС', color:0xff6633, size:24, desc:'Вулканический мир огненных рек'},
-    {name:'ВЕРДАНТ', color:0x44ff88, size:18, desc:'Биолюминесцентные леса'}
-  ];
-  for(let i=0;i<pdata.length;i++){
-    const p = pdata[i];
-    const geom = new THREE.SphereGeometry(p.size, 24, 24);
-    const mat = new THREE.MeshStandardMaterial({ 
-      color:p.color, emissive:new THREE.Color(p.color).multiplyScalar(0.18), roughness:0.5 
-    });
-    const m = new THREE.Mesh(geom, mat); 
-    m.position.set((i-1)*120 + (Math.random()-0.5)*40, (Math.random()-0.5)*30, -800 - i*600);
-    m.userData = { name:p.name, desc:p.desc, type:i };
-    scene.add(m); planets.push(m);
+  try {
+    const pdata = [
+      {name: 'КРИОНИС', color: 0x88ccff, size: 20, desc: 'Ледяной мир с кристальными пещерами'},
+      {name: 'ПИРОС', color: 0xff6633, size: 24, desc: 'Вулканический мир огненных рек'},
+      {name: 'ВЕРДАНТ', color: 0x44ff88, size: 18, desc: 'Биолюминесцентные леса'},
+      // Дальние планеты
+      {name: 'АУРЕЛИЯ', color: 0xffaa88, size: 22, desc: 'Пустынный мир с золотыми песками'},
+      {name: 'ТЕКТОНИКА', color: 0xaa66aa, size: 26, desc: 'Планета с гигантскими каньонами'},
+      {name: 'НЕБУЛА', color: 0x66aaff, size: 19, desc: 'Газовый гигант с кольцами'},
+      {name: 'ХИМИРА', color: 0x88ff44, size: 21, desc: 'Планета с экзотической флорой'},
+      {name: 'МАГНЕТАР', color: 0xff44aa, size: 17, desc: 'Магнитная планета с сияющими полюсами'},
+      {name: 'КВАЗАР', color: 0xffff44, size: 23, desc: 'Энергетическая аномалия'},
+      {name: 'ГАЛАКТИОН', color: 0xaa44ff, size: 28, desc: 'Древняя планета-артефакт'}
+    ];
+    
+    for(let i = 0; i < pdata.length; i++){
+      const p = pdata[i];
+      const geom = new THREE.SphereGeometry(p.size, 24, 24);
+      const mat = new THREE.MeshStandardMaterial({ 
+        color: p.color, 
+        emissive: new THREE.Color(p.color).multiplyScalar(0.18), 
+        roughness: 0.5,
+        metalness: 0.1
+      });
+      
+      const m = new THREE.Mesh(geom, mat); 
+      
+      // Позиционируем планеты на разных расстояниях - от близких до очень далеких
+      let zPos;
+      if (i < 3) {
+        // Близкие планеты
+        zPos = -800 - i * 600;
+      } else if (i < 6) {
+        // Средней дальности
+        zPos = -2500 - (i-3) * 800;
+      } else {
+        // Дальние планеты
+        zPos = -5000 - (i-6) * 1200;
+      }
+      
+      m.position.set(
+        (i % 4 - 1.5) * 180 + (Math.random() - 0.5) * 100, 
+        (Math.random() - 0.5) * 80, 
+        zPos
+      );
+      
+      m.userData = { 
+        name: p.name, 
+        desc: p.desc, 
+        type: i % 3, // Распределяем типы циклически
+        radius: p.size
+      };
+      m.castShadow = true;
+      scene.add(m); 
+      planets.push(m);
+    }
+    
+    console.log('Planets generated:', planets.length);
+    return true;
+  } catch(e) {
+    console.error('Error generating planets:', e);
+    return false;
   }
 }
 
-// ========== SURFACE SYSTEM ==========
+// ========== ПОВЕРХНОСТЬ ПЛАНЕТЫ ==========
 function createSurfaceForPlanet(planet){
-  surfaceScene = new THREE.Group();
-  const groundSize = 200;
-  
-  // Ground
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(groundSize, groundSize, 8, 8), 
-    new THREE.MeshStandardMaterial({ color:0x0b1b12, roughness:0.8 })
-  );
-  ground.rotation.x = -Math.PI/2; 
-  ground.position.set(0,-2,0); 
-  surfaceScene.add(ground);
-
-  // Surface objects based on planet type
-  const objectCount = 15;
-  const colors = [0x4466ff, 0xffaa33, 0x88ff88];
-  
-  for(let i=0;i<objectCount;i++){
-    const size = 1 + Math.random()*3;
-    const geom = new THREE.DodecahedronGeometry(size, 0);
-    const mat = new THREE.MeshStandardMaterial({ 
-      color: colors[planet.userData.type % colors.length],
-      roughness: 0.7
+  try {
+    console.log('Creating surface for planet:', planet.userData.name);
+    
+    // Очищаем существующую поверхность
+    if(surfaceScene) {
+      scene.remove(surfaceScene);
+      surfaceObjects = [];
+    }
+    
+    surfaceScene = new THREE.Group();
+    
+    // Создаем землю
+    const groundSize = 300;
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(groundSize, groundSize, 32, 32), 
+      new THREE.MeshStandardMaterial({ 
+        color: 0x0b1b12,
+        roughness: 0.8,
+        metalness: 0.1,
+        side: THREE.DoubleSide
+      })
+    );
+    ground.rotation.x = -Math.PI/2; 
+    ground.position.set(0, GROUND_LEVEL, 0);
+    ground.receiveShadow = true;
+    ground.userData = { name: 'ground', type: 'terrain' };
+    surfaceScene.add(ground);
+    
+    // Генерируем природные объекты в зависимости от типа планеты
+    const objectCount = 30;
+    const colors = [
+      [0x4466ff, 0x6688ff],  // Крионис - синие кристаллы
+      [0xffaa33, 0xff6633],  // Пирон - оранжевые камни
+      [0x88ff88, 0x44ffaa]   // Вердант - зеленые растения
+    ];
+    
+    const planetType = planet.userData.type;
+    const planetColors = colors[planetType];
+    
+    for(let i = 0; i < objectCount; i++){
+      const size = 1 + Math.random() * 4;
+      const geom = new THREE.DodecahedronGeometry(size, 1);
+      const color = planetColors[Math.floor(Math.random() * planetColors.length)];
+      
+      const mat = new THREE.MeshStandardMaterial({ 
+        color: color,
+        roughness: 0.7,
+        metalness: 0.2,
+        emissive: planetType === 2 ? new THREE.Color(color).multiplyScalar(0.2) : 0x000000,
+        emissiveIntensity: 0.5
+      });
+      
+      const obj = new THREE.Mesh(geom, mat);
+      obj.position.set(
+        (Math.random() - 0.5) * groundSize * 0.8, 
+        size/2 + GROUND_LEVEL, 
+        (Math.random() - 0.5) * groundSize * 0.8
+      );
+      obj.castShadow = true;
+      obj.receiveShadow = true;
+      obj.userData = { name: `object_${i}`, type: 'terrain' };
+      surfaceScene.add(obj);
+      surfaceObjects.push(obj);
+    }
+    
+    // Создаем NPC
+    const npcData = [
+      {name: 'Торговец Хан', dialog: 'Редкие артефакты по лучшим ценам!', type: 'merchant'},
+      {name: 'Механик Зори', dialog: 'Чиним корабли любой сложности', type: 'mechanic'},
+      {name: 'Ученый Лира', dialog: 'Изучаю местную фауну... опасную фауну', type: 'scientist'},
+      {name: 'Информатор Кей', dialog: 'Слухи о заброшенных станциях...', type: 'informant'}
+    ];
+    
+    npcData.forEach((npc, index) => {
+      const npcGroup = new THREE.Group();
+      npcGroup.userData = {...npc, interactable: true};
+      
+      // Тело NPC
+      const body = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.8, 2.0, 4, 8),
+        new THREE.MeshStandardMaterial({ 
+          color: 0x8888ff,
+          roughness: 0.7
+        })
+      );
+      body.position.y = 1.0;
+      npcGroup.add(body);
+      
+      // Голова NPC
+      const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.6, 8, 6),
+        new THREE.MeshStandardMaterial({ 
+          color: 0xffaa88,
+          roughness: 0.5
+        })
+      );
+      head.position.y = 2.3;
+      npcGroup.add(head);
+      
+      // Позиционируем NPC вокруг центра
+      const angle = (index / npcData.length) * Math.PI * 2;
+      const radius = 25;
+      npcGroup.position.set(
+        Math.cos(angle) * radius,
+        GROUND_LEVEL + 0.1,
+        Math.sin(angle) * radius
+      );
+      
+      npcGroup.lookAt(0, GROUND_LEVEL, 0);
+      npcGroup.castShadow = true;
+      surfaceScene.add(npcGroup);
+      surfaceObjects.push(npcGroup);
     });
-    const obj = new THREE.Mesh(geom, mat);
-    obj.position.set(
-      (Math.random()-0.5)*groundSize*0.8, 
-      size/2 - 2, 
-      (Math.random()-0.5)*groundSize*0.8
-    );
-    surfaceScene.add(obj);
-    surfaceObjects.push(obj);
+    
+    // Солнце для освещения поверхности
+    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+    sun.position.set(100, 200, 100);
+    sun.castShadow = true;
+    sun.shadow.mapSize.width = 1024;
+    sun.shadow.mapSize.height = 1024;
+    surfaceScene.add(sun);
+    
+    scene.add(surfaceScene);
+    console.log('Surface created with', surfaceObjects.length, 'objects');
+    return surfaceScene;
+  } catch(e) {
+    console.error('Error creating surface:', e);
+    return null;
   }
-
-  // NPCs
-  const npcData = [
-    {name: 'Торговец', dialog: 'Нужны припасы? У меня есть всё.'},
-    {name: 'Механик', dialog: 'Корабль починить? 50 кредитов.'},
-    {name: 'Ученый', dialog: 'Изучаю местную фауну... опасную фауну.'}
-  ];
-
-  npcData.forEach((npc, index) => {
-    const npcGroup = new THREE.Group();
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.5, 1.2, 4, 8),
-      new THREE.MeshStandardMaterial({ color: 0x8888ff })
-    );
-    const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.4, 8, 6),
-      new THREE.MeshStandardMaterial({ color: 0xffaa88 })
-    );
-    head.position.y = 1.1;
-    npcGroup.add(body, head);
-    npcGroup.position.set(
-      (index - 1) * 15,
-      0,
-      (index - 1) * 10
-    );
-    npcGroup.userData = npc;
-    surfaceScene.add(npcGroup);
-  });
-
-  scene.add(surfaceScene);
-  return surfaceScene;
 }
 
 function createSurfacePlayer(){
-  const player = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.6, 1.2, 4, 8),
-    new THREE.MeshStandardMaterial({ color: 0x66ddff, emissive: 0x002233 })
-  );
-  player.castShadow = true;
-  return player;
+  try {
+    console.log('Creating surface player');
+    
+    const player = new THREE.Group();
+    
+    // Тело игрока
+    const body = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.6, 1.5, 4, 8),
+      new THREE.MeshStandardMaterial({ 
+        color: 0x66ddff,
+        emissive: 0x002233,
+        roughness: 0.4,
+        metalness: 0.3
+      })
+    );
+    body.position.y = 0.75;
+    player.add(body);
+    
+    // Голова игрока
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.4, 8, 6),
+      new THREE.MeshStandardMaterial({ 
+        color: 0xffccaa,
+        roughness: 0.6
+      })
+    );
+    head.position.y = 1.6;
+    player.add(head);
+    
+    player.position.set(0, GROUND_LEVEL + PLAYER_HEIGHT, 0);
+    player.castShadow = true;
+    player.userData = { name: 'player', type: 'character' };
+    
+    console.log('Surface player created at position:', player.position);
+    return player;
+  } catch(e) {
+    console.error('Error creating surface player:', e);
+    return null;
+  }
 }
 
-// ========== GAME OBJECTS SPAWNING ==========
-function spawnAsteroid(x,y,z,size=3){
-  const geom = new THREE.IcosahedronGeometry(size,0);
-  const mat = new THREE.MeshStandardMaterial({ color:0x9a9a9a, metalness:0.05, roughness:0.6 });
-  const m = new THREE.Mesh(geom, mat); 
-  m.position.set(x,y,z); 
-  m.userData={rot:{x:Math.random()*0.02,y:Math.random()*0.02,z:Math.random()*0.02}, radius:size}; 
-  scene.add(m); asteroids.push(m);
+// ========== СИСТЕМА ОБЪЕКТОВ КОСМОСА ==========
+function spawnAsteroid(x, y, z, size = 3){
+  try {
+    const geom = new THREE.IcosahedronGeometry(size, 1);
+    const mat = new THREE.MeshStandardMaterial({ 
+      color: 0x9a9a9a, 
+      metalness: 0.05, 
+      roughness: 0.6,
+      emissive: 0x222222,
+      emissiveIntensity: 0.2
+    });
+    
+    const m = new THREE.Mesh(geom, mat); 
+    m.position.set(x, y, z); 
+    m.userData = {
+      rot: {
+        x: (Math.random() - 0.5) * 0.02,
+        y: (Math.random() - 0.5) * 0.02,
+        z: (Math.random() - 0.5) * 0.02
+      },
+      radius: size,
+      type: 'asteroid'
+    };
+    m.castShadow = true;
+    scene.add(m); 
+    asteroids.push(m);
+    return m;
+  } catch(e) {
+    console.error('Error spawning asteroid:', e);
+    return null;
+  }
 }
 
-function spawnEnemy(x,y,z){
-  const geom = new THREE.OctahedronGeometry(3,0);
-  const mat = new THREE.MeshStandardMaterial({ color:0xff3355, emissive:0x550000, metalness:0.2, roughness:0.4 });
-  const e = new THREE.Mesh(geom, mat); 
-  e.position.set(x,y,z); 
-  e.userData = { health:30, speed:0.45 + Math.random()*0.6 }; 
-  scene.add(e); enemies.push(e);
+function spawnEnemy(x, y, z){
+  try {
+    const geom = new THREE.OctahedronGeometry(3, 1);
+    const mat = new THREE.MeshStandardMaterial({ 
+      color: 0xff3355, 
+      emissive: 0x550000, 
+      metalness: 0.2, 
+      roughness: 0.4 
+    });
+    
+    const e = new THREE.Mesh(geom, mat); 
+    e.position.set(x, y, z); 
+    e.userData = { 
+      health: 30, 
+      speed: 0.45 + Math.random() * 0.6,
+      type: 'enemy'
+    };
+    e.castShadow = true;
+    scene.add(e); 
+    enemies.push(e);
+    return e;
+  } catch(e) {
+    console.error('Error spawning enemy:', e);
+    return null;
+  }
 }
 
 function initSpaceObjects(){
-  for(let i=0;i<18;i++){ 
-    spawnAsteroid((Math.random()-0.5)*600, (Math.random()-0.5)*200, -200 - Math.random()*2000, 1.5 + Math.random()*4) 
-  }
-  for(let i=0;i<8;i++){ 
-    spawnEnemy((Math.random()-0.5)*400, (Math.random()-0.5)*180, -300 - Math.random()*1200) 
+  try {
+    console.log('Initializing space objects');
+    
+    for(let i = 0; i < 18; i++){ 
+      spawnAsteroid(
+        (Math.random() - 0.5) * 600, 
+        (Math.random() - 0.5) * 200, 
+        -200 - Math.random() * 2000, 
+        1.5 + Math.random() * 4
+      );
+    }
+    
+    for(let i = 0; i < 8; i++){ 
+      spawnEnemy(
+        (Math.random() - 0.5) * 400, 
+        (Math.random() - 0.5) * 180, 
+        -300 - Math.random() * 1200
+      );
+    }
+    
+    console.log('Space objects initialized:', asteroids.length, 'asteroids,', enemies.length, 'enemies');
+    return true;
+  } catch(e) {
+    console.error('Error initializing space objects:', e);
+    return false;
   }
 }
 
-// ========== BULLET SYSTEM ==========
+// ========== СИСТЕМА ПУЛЬ ==========
 let bulletPool = [];
 const POOL = { bullets: 60 };
 
 function initBulletPool(){
-  const geom = new THREE.SphereGeometry(0.45,6,6);
-  const mat = new THREE.MeshBasicMaterial({ color:0xffff88 });
-  for(let i=0;i<POOL.bullets;i++){ 
-    const m = new THREE.Mesh(geom,mat); 
-    m.visible=false; 
-    m.userData={vel:new THREE.Vector3(), life:0}; 
-    scene.add(m); bulletPool.push(m); 
+  try {
+    console.log('Initializing bullet pool');
+    
+    const geom = new THREE.SphereGeometry(0.45, 6, 6);
+    const mat = new THREE.MeshBasicMaterial({ 
+      color: 0xffff88,
+      emissive: 0xffff88,
+      emissiveIntensity: 1.0
+    });
+    
+    for(let i = 0; i < POOL.bullets; i++){ 
+      const m = new THREE.Mesh(geom, mat); 
+      m.visible = false; 
+      m.userData = {
+        vel: new THREE.Vector3(), 
+        life: 0,
+        type: 'bullet'
+      }; 
+      m.frustumCulled = false;
+      scene.add(m); 
+      bulletPool.push(m); 
+    }
+    
+    console.log('Bullet pool initialized:', bulletPool.length, 'bullets');
+    return true;
+  } catch(e) {
+    console.error('Error initializing bullet pool:', e);
+    return false;
   }
 }
 
 function getBullet(){
-  for(let i=0;i<bulletPool.length;i++) if(!bulletPool[i].visible) return bulletPool[i];
+  for(let i = 0; i < bulletPool.length; i++) {
+    if(!bulletPool[i].visible) {
+      return bulletPool[i];
+    }
+  }
+  console.warn('Bullet pool exhausted');
   return null;
 }
 
-// ========== SOUND SYSTEM ==========
+// ========== ЗВУКОВАЯ СИСТЕМА ==========
 const SFX = (function(){
   let ctx = null;
+  let isMuted = false;
+  
   function ensure(){ 
-    if(!ctx){ 
-      try{ ctx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ ctx=null } 
+    if(!ctx && !isMuted){ 
+      try{ 
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('Audio context created');
+      } catch(e){ 
+        ctx = null;
+        console.warn('Audio context creation failed:', e);
+      } 
     } 
     return ctx; 
   }
+  
   function playStart(){ 
-    const c=ensure(); if(!c) return; 
-    const o=c.createOscillator(), g=c.createGain(); 
-    o.type='sawtooth'; 
+    if(isMuted) return;
+    const c = ensure(); 
+    if(!c) return; 
+    
+    const o = c.createOscillator();
+    const g = c.createGain(); 
+    
+    o.type = 'sawtooth'; 
     o.frequency.setValueAtTime(140, c.currentTime); 
-    o.frequency.exponentialRampToValueAtTime(480, c.currentTime+0.25); 
+    o.frequency.exponentialRampToValueAtTime(480, c.currentTime + 0.25); 
+    
     g.gain.setValueAtTime(0.0001, c.currentTime); 
-    g.gain.exponentialRampToValueAtTime(0.14, c.currentTime+0.06); 
-    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime+0.9); 
-    o.connect(g); g.connect(c.destination); 
-    o.start(); o.stop(c.currentTime+0.8); 
+    g.gain.exponentialRampToValueAtTime(0.14, c.currentTime + 0.06); 
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.9); 
+    
+    o.connect(g); 
+    g.connect(c.destination); 
+    
+    o.start(); 
+    o.stop(c.currentTime + 0.8); 
+    
+    console.log('Start sound played');
   }
+  
   function playShoot(){ 
-    const c=ensure(); if(!c) return; 
-    const o1=c.createOscillator(), o2=c.createOscillator(), g=c.createGain(); 
-    o1.type='square'; o2.type='triangle'; 
+    if(isMuted) return;
+    const c = ensure(); 
+    if(!c) return; 
+    
+    const o1 = c.createOscillator();
+    const o2 = c.createOscillator();
+    const g = c.createGain(); 
+    
+    o1.type = 'square'; 
+    o2.type = 'triangle'; 
+    
     o1.frequency.setValueAtTime(900, c.currentTime); 
     o2.frequency.setValueAtTime(1300, c.currentTime); 
+    
     g.gain.setValueAtTime(0.22, c.currentTime); 
-    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+0.14); 
-    o1.connect(g); o2.connect(g); g.connect(c.destination); 
-    o1.start(); o2.start(); 
-    o1.stop(c.currentTime+0.14); o2.stop(c.currentTime+0.14); 
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.14); 
+    
+    o1.connect(g); 
+    o2.connect(g); 
+    g.connect(c.destination); 
+    
+    o1.start(); 
+    o2.start(); 
+    
+    o1.stop(c.currentTime + 0.14); 
+    o2.stop(c.currentTime + 0.14); 
+    
+    console.log('Shoot sound played');
   }
+  
   function playBuy(){ 
-    const c=ensure(); if(!c) return; 
-    const o=c.createOscillator(), g=c.createGain(); 
-    o.type='sine'; 
+    if(isMuted) return;
+    const c = ensure(); 
+    if(!c) return; 
+    
+    const o = c.createOscillator();
+    const g = c.createGain(); 
+    
+    o.type = 'sine'; 
     o.frequency.setValueAtTime(600, c.currentTime); 
-    o.frequency.exponentialRampToValueAtTime(900, c.currentTime+0.12); 
+    o.frequency.exponentialRampToValueAtTime(900, c.currentTime + 0.12); 
+    
     g.gain.setValueAtTime(0.2, c.currentTime); 
-    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime+0.2); 
-    o.connect(g); g.connect(c.destination); 
-    o.start(); o.stop(c.currentTime+0.2); 
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.2); 
+    
+    o.connect(g); 
+    g.connect(c.destination); 
+    
+    o.start(); 
+    o.stop(c.currentTime + 0.2); 
+    
+    console.log('Buy sound played');
   }
-  return { playStart, playShoot, playBuy };
+  
+  function playLanding(){
+    if(isMuted) return;
+    const c = ensure();
+    if(!c) return;
+    
+    const o = c.createOscillator();
+    const g = c.createGain();
+    
+    o.type = 'sine';
+    o.frequency.setValueAtTime(400, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(200, c.currentTime + 0.5);
+    
+    g.gain.setValueAtTime(0.1, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.8);
+    
+    o.connect(g);
+    g.connect(c.destination);
+    
+    o.start();
+    o.stop(c.currentTime + 0.8);
+    
+    console.log('Landing sound played');
+  }
+  
+  function playTakeoff(){
+    if(isMuted) return;
+    const c = ensure();
+    if(!c) return;
+    
+    const o = c.createOscillator();
+    const g = c.createGain();
+    
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(200, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(800, c.currentTime + 0.6);
+    
+    g.gain.setValueAtTime(0.15, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 1.0);
+    
+    o.connect(g);
+    g.connect(c.destination);
+    
+    o.start();
+    o.stop(c.currentTime + 1.0);
+    
+    console.log('Takeoff sound played');
+  }
+  
+  function toggleMute(){
+    isMuted = !isMuted;
+    if(isMuted && ctx){
+      ctx.close();
+      ctx = null;
+    }
+    console.log('Audio muted:', isMuted);
+    return isMuted;
+  }
+  
+  return { 
+    playStart, 
+    playShoot, 
+    playBuy,
+    playLanding,
+    playTakeoff,
+    toggleMute
+  };
 })();
 
-// ========== COMBAT SYSTEM ==========
+// ========== БОЕВАЯ СИСТЕМА ==========
 function findNearestThreat(){
-  let min = Infinity, target = null;
+  let min = Infinity;
+  let target = null;
   const pos = shipGroup.position;
-  [...enemies, ...asteroids].forEach(o=>{
+  
+  [...enemies, ...asteroids].forEach(o => {
     const d = pos.distanceTo(o.position);
-    if(d < min){ min = d; target = o; }
+    if(d < min){
+      min = d;
+      target = o;
+    }
   });
+  
   return target;
 }
 
 function shootAt(target){
   if(!target || !STATE.canShoot) return;
-  const b = getBullet(); if(!b) return;
+  
+  const b = getBullet(); 
+  if(!b) return;
+  
   b.visible = true;
   b.position.copy(shipGroup.position);
-  const dir = new THREE.Vector3().subVectors(target.position, shipGroup.position).normalize();
-  b.userData.vel.copy(dir).multiplyScalar( (18 + STATE.upgrades.weapon*4) * (STATE.overdrive?1.6:1) );
+  
+  const dir = new THREE.Vector3()
+    .subVectors(target.position, shipGroup.position)
+    .normalize();
+  
+  b.userData.vel.copy(dir).multiplyScalar( 
+    (18 + STATE.upgrades.weapon * 4) * (STATE.overdrive ? 1.6 : 1) 
+  );
+  
   b.userData.life = 120;
   bullets.push(b);
+  
   SFX.playShoot();
+  
   STATE.canShoot = false;
   STATE.lastShot = performance.now();
-  setTimeout(()=>{ STATE.canShoot = true }, Math.max(120, 420 / (1 + (STATE.upgrades.weapon-1)*0.25)));
+  
+  setTimeout(() => { 
+    STATE.canShoot = true;
+  }, Math.max(120, 420 / (1 + (STATE.upgrades.weapon - 1) * 0.25)));
 }
 
-function createExplosion(pos, size=12){
-  const count = 14;
-  const geom = new THREE.BufferGeometry();
-  const positions = new Float32Array(count*3);
-  const cols = new Float32Array(count*3);
-  for(let i=0;i<count;i++){ 
-    const j=i*3; 
-    positions[j]=pos.x + (Math.random()-0.5)*size; 
-    positions[j+1]=pos.y + (Math.random()-0.5)*size; 
-    positions[j+2]=pos.z + (Math.random()-0.5)*size; 
-    cols[j]=1; cols[j+1]=0.3+Math.random()*0.5; cols[j+2]=0; 
+function createExplosion(pos, size = 12, color = 0xff6600){
+  try {
+    const count = 20;
+    const geom = new THREE.BufferGeometry();
+    const positions = new Float32Array(count * 3);
+    const cols = new Float32Array(count * 3);
+    
+    for(let i = 0; i < count; i++){ 
+      const j = i * 3; 
+      positions[j] = pos.x + (Math.random() - 0.5) * size; 
+      positions[j+1] = pos.y + (Math.random() - 0.5) * size; 
+      positions[j+2] = pos.z + (Math.random() - 0.5) * size; 
+      
+      cols[j] = 1; 
+      cols[j+1] = 0.4 + Math.random() * 0.6; 
+      cols[j+2] = 0; 
+    }
+    
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3)); 
+    geom.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+    
+    const mat = new THREE.PointsMaterial({ 
+      size: 3.0, 
+      vertexColors: true, 
+      transparent: true, 
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    
+    const pts = new THREE.Points(geom, mat); 
+    pts.userData.life = 1.0; 
+    scene.add(pts);
+    
+    const id = setInterval(() => { 
+      if(!pts.material) {
+        clearInterval(id);
+        return;
+      }
+      
+      pts.material.opacity -= 0.12; 
+      pts.scale.multiplyScalar(1.1);
+      
+      if(pts.material.opacity <= 0){ 
+        clearInterval(id); 
+        try{
+          scene.remove(pts);
+        } catch(e){
+          console.warn('Error removing explosion:', e);
+        } 
+      } 
+    }, 50);
+    
+    return pts;
+  } catch(e) {
+    console.error('Error creating explosion:', e);
+    return null;
   }
-  geom.setAttribute('position', new THREE.BufferAttribute(positions,3)); 
-  geom.setAttribute('color', new THREE.BufferAttribute(cols,3));
-  const mat = new THREE.PointsMaterial({ size:3.0, vertexColors:true, transparent:true, blending:THREE.AdditiveBlending });
-  const pts = new THREE.Points(geom, mat); pts.userData.life = 1.0; scene.add(pts);
-  const id = setInterval(()=>{ 
-    pts.material.opacity -= 0.12; 
-    if(pts.material.opacity<=0){ 
-      clearInterval(id); 
-      try{ scene.remove(pts) }catch(e){} 
-    } 
-  }, 50);
 }
 
 function flashDamage(){
   const el = document.getElementById('damageFlash'); 
+  if(!el) return;
+  
   el.style.opacity = '0.55'; 
-  setTimeout(()=>el.style.opacity='0', 150);
+  setTimeout(() => {
+    if(el) el.style.opacity = '0';
+  }, 150);
 }
 
-// ========== PLANET LANDING & SURFACE ==========
+// ========== СИСТЕМА ПОСАДКИ И ПОВЕРХНОСТИ ==========
 function performLanding(planet){
+  if(STATE.mode !== 'space') return;
+  
   console.log("Starting landing sequence on:", planet.userData.name);
+  
   STATE.mode = 'landing';
   STATE.currentPlanet = planet;
   
   landingAnimation.active = true;
   landingAnimation.startPos.copy(shipGroup.position);
-  landingAnimation.targetPos.copy(planet.position).add(new THREE.Vector3(0, planet.geometry.parameters.radius + 8, 0));
+  
+  // Целевая позиция для посадки - над поверхностью планеты
+  landingAnimation.targetPos.copy(planet.position)
+    .add(new THREE.Vector3(0, planet.userData.radius + 10, 0));
+  
   landingAnimation.progress = 0;
   landingAnimation.startTime = performance.now();
   
-  // Immediately start the landing animation in the main game loop
+  // Скрываем индикатор посадки
+  document.getElementById('landingIndicator').classList.remove('active');
+  
+  // Звук посадки
+  SFX.playLanding();
+  
+  // Визуальный эффект посадки
+  createLandingEffect(shipGroup.position, planet.userData.radius);
+}
+
+function createLandingEffect(position, radius){
+  try {
+    // Визуальный эффект двигателей при посадке
+    const count = 30;
+    const geom = new THREE.BufferGeometry();
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    
+    for(let i = 0; i < count; i++){
+      const j = i * 3;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * radius * 0.8;
+      
+      positions[j] = position.x + Math.cos(angle) * dist;
+      positions[j+1] = position.y - 5;
+      positions[j+2] = position.z + Math.sin(angle) * dist;
+      
+      colors[j] = 1;
+      colors[j+1] = 0.8;
+      colors[j+2] = 0.3;
+    }
+    
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    
+    const mat = new THREE.PointsMaterial({
+      size: 4.0,
+      vertexColors: true,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      opacity: 0.8
+    });
+    
+    const effect = new THREE.Points(geom, mat);
+    scene.add(effect);
+    
+    // Анимация эффекта
+    const startTime = performance.now();
+    const duration = 1000;
+    
+    function animateEffect(){
+      const elapsed = performance.now() - startTime;
+      const progress = elapsed / duration;
+      
+      if(progress < 1){
+        effect.material.opacity = 0.8 * (1 - progress);
+        effect.scale.set(1 + progress, 1 + progress, 1 + progress);
+        requestAnimationFrame(animateEffect);
+      } else {
+        try {
+          scene.remove(effect);
+        } catch(e) {
+          console.warn('Error removing landing effect:', e);
+        }
+      }
+    }
+    
+    animateEffect();
+  } catch(e) {
+    console.error('Error creating landing effect:', e);
+  }
 }
 
 function updateLanding(delta){
-  if (!landingAnimation.active) return;
+  if(!landingAnimation.active || !STATE.currentPlanet) return;
   
-  const now = performance.now();
-  landingAnimation.progress = (now - landingAnimation.startTime) / landingAnimation.duration;
+  const elapsed = performance.now() - landingAnimation.startTime;
+  landingAnimation.progress = clamp(elapsed / landingAnimation.duration, 0, 1);
   
-  if (landingAnimation.progress >= 1) {
-    // Landing complete
-    landingAnimation.active = false;
-    completeLanding(STATE.currentPlanet);
-    return;
-  }
-  
-  // Smooth easing function
   const t = easeOutCubic(landingAnimation.progress);
   
-  // Move ship toward planet
-  shipGroup.position.lerpVectors(landingAnimation.startPos, landingAnimation.targetPos, t);
+  // Движение корабля к планете
+  shipGroup.position.lerpVectors(
+    landingAnimation.startPos, 
+    landingAnimation.targetPos, 
+    t
+  );
   
-  // Update camera to follow ship
+  // Обновление камеры
   const camOffset = new THREE.Vector3(0, 8, 15);
-  camera.position.lerp(shipGroup.position.clone().add(camOffset), 0.1);
+  const targetCamPos = shipGroup.position.clone().add(camOffset);
+  camera.position.lerp(targetCamPos, 0.1);
   camera.lookAt(shipGroup.position);
-}
-
-function easeOutCubic(t) {
-  return 1 - Math.pow(1 - t, 3);
+  
+  // Если посадка завершена
+  if(landingAnimation.progress >= 1){
+    landingAnimation.active = false;
+    completeLanding(STATE.currentPlanet);
+  }
 }
 
 function completeLanding(planet){
   console.log("Landing complete on:", planet.userData.name);
   
-  // Hide space objects
-  stars.visible = false;
-  nebulas.forEach(n => n.visible = false);
-  planets.forEach(p => p.visible = false);
-  asteroids.forEach(a => { a.visible = false; });
-  enemies.forEach(e => { e.visible = false; });
-  bullets.forEach(b => { b.visible = false; });
-  shipGroup.visible = false;
+  // Скрываем космические объекты
+  if(stars) stars.visible = false;
+  nebulas.forEach(n => { if(n) n.visible = false; });
+  planets.forEach(p => { if(p) p.visible = false; });
+  asteroids.forEach(a => { if(a) a.visible = false; });
+  enemies.forEach(e => { if(e) e.visible = false; });
+  bullets.forEach(b => { if(b) b.visible = false; });
+  if(shipGroup) shipGroup.visible = false;
   
-  // Create surface
-  createSurfaceForPlanet(planet);
+  // Удаляем существующую поверхность
+  if(surfaceScene) {
+    try {
+      scene.remove(surfaceScene);
+    } catch(e) {
+      console.warn('Error removing surface scene:', e);
+    }
+    surfaceScene = null;
+    surfaceObjects = [];
+  }
+  
+  // Создаем поверхность планеты
+  surfaceScene = createSurfaceForPlanet(planet);
+  
+  // Создаем игрока на поверхности
   surfacePlayer = createSurfacePlayer();
-  surfacePlayer.position.set(0, 0, 0);
-  surfaceScene.add(surfacePlayer);
+  if (surfacePlayer && surfaceScene) {
+    surfacePlayer.position.set(0, GROUND_LEVEL + PLAYER_HEIGHT, 0);
+    surfaceScene.add(surfacePlayer);
+  }
   
-  // Position camera for surface
-  camera.position.set(0, 5, 10);
-  camera.lookAt(0, 0, 0);
+  // Позиционируем камеру для поверхности
+  camera.position.set(0, GROUND_LEVEL + 8, 15);
+  if (surfacePlayer) {
+    camera.lookAt(surfacePlayer.position);
+  }
   
-  // Switch controls
+  // Переключаем управление
   document.getElementById('spaceControls').style.display = 'none';
   document.querySelector('.spaceActionButtons').style.display = 'none';
+  
   document.getElementById('surfaceControls').style.display = 'flex';
   document.querySelector('.surfaceActionButtons').style.display = 'flex';
   
-  STATE.mode = 'surface';
+  // Показываем UI планеты
   showPlanetPanel(planet);
   
-  console.log("Surface mode activated");
+  STATE.mode = 'surface';
+  
+  console.log('Surface mode activated successfully');
+  console.log('Player position:', surfacePlayer?.position);
+  console.log('Camera position:', camera.position);
 }
 
 function takeOffFromPlanet(){
-  console.log("Taking off from planet");
+  if(STATE.mode !== 'surface') return;
   
-  // Remove surface
+  console.log("Taking off from planet:", STATE.currentPlanet ? STATE.currentPlanet.userData.name : 'unknown');
+  
+  SFX.playTakeoff();
+  
+  // Удаляем поверхность
   if(surfaceScene) {
-    scene.remove(surfaceScene);
+    try {
+      scene.remove(surfaceScene);
+    } catch(e) {
+      console.warn('Error removing surface scene during takeoff:', e);
+    }
     surfaceScene = null;
     surfacePlayer = null;
     surfaceObjects = [];
   }
   
-  // Show space objects
-  stars.visible = true;
-  nebulas.forEach(n => n.visible = true);
-  planets.forEach(p => p.visible = true);
-  asteroids.forEach(a => a.visible = true);
-  enemies.forEach(e => e.visible = true);
-  bullets.forEach(b => b.visible = true);
-  shipGroup.visible = true;
+  // Показываем космические объекты
+  if(stars) stars.visible = true;
+  nebulas.forEach(n => { if(n) n.visible = true; });
+  planets.forEach(p => { if(p) p.visible = true; });
+  asteroids.forEach(a => { if(a) a.visible = true; });
+  enemies.forEach(e => { if(e) e.visible = true; });
+  bullets.forEach(b => { if(b) b.visible = true; });
+  if(shipGroup) shipGroup.visible = true;
   
-  // Position ship away from planet
-  if (STATE.currentPlanet) {
-    shipGroup.position.copy(STATE.currentPlanet.position).add(new THREE.Vector3(0, 0, -80));
+  // Позиционируем корабль
+  if(STATE.currentPlanet && shipGroup) {
+    shipGroup.position.copy(STATE.currentPlanet.position)
+      .add(new THREE.Vector3(0, STATE.currentPlanet.userData.radius + 20, 30));
   }
   
-  // Switch controls
+  // Позиционируем камеру для космоса
+  if(shipGroup) {
+    const camOffset = new THREE.Vector3(0, 6, 22);
+    camera.position.copy(shipGroup.position).add(camOffset);
+    camera.lookAt(shipGroup.position);
+  }
+  
+  // Переключаем управление
   document.getElementById('surfaceControls').style.display = 'none';
   document.querySelector('.surfaceActionButtons').style.display = 'none';
+  
   document.getElementById('spaceControls').style.display = 'flex';
   document.querySelector('.spaceActionButtons').style.display = 'flex';
   
-  // Close planet UI
+  // Закрываем UI планеты
   document.getElementById('planetPanel').style.display = 'none';
   
   STATE.mode = 'space';
   STATE.currentPlanet = null;
   
-  console.log("Back to space mode");
+  console.log('Back to space mode successfully');
 }
 
-// ========== UI & SHOP SYSTEM ==========
+// ========== UI И МАГАЗИН ==========
 function updateHUD(){
-  document.getElementById('uiCredits').textContent = STATE.credits;
-  document.getElementById('uiHealth').textContent = Math.max(0, Math.round(STATE.health));
-  document.getElementById('uiShield').textContent = Math.round(STATE.shield);
-  document.getElementById('uiFuel').textContent = Math.round(STATE.fuel);
-  document.getElementById('uiStars').textContent = STATE.stars;
-  document.getElementById('uiMission').textContent = `${STATE.missionProgress}/5`;
+  try {
+    document.getElementById('uiCredits').textContent = STATE.credits;
+    document.getElementById('uiHealth').textContent = Math.max(0, Math.round(STATE.health));
+    document.getElementById('uiShield').textContent = Math.round(STATE.shield);
+    document.getElementById('uiFuel').textContent = Math.round(STATE.fuel);
+    document.getElementById('uiStars').textContent = STATE.stars;
+    document.getElementById('uiMission').textContent = `${STATE.missionProgress}/5`;
+  } catch(e) {
+    console.warn('Error updating HUD:', e);
+  }
 }
 
 function showPlanetPanel(planet){
-  document.getElementById('planetName').textContent = planet.userData.name;
-  document.getElementById('planetDesc').textContent = planet.userData.desc;
+  if(!planet) return;
   
-  // Populate NPCs
-  const npcList = document.getElementById('npcList');
-  npcList.innerHTML = '';
-  
-  const npcs = [
-    {name: 'Торговец Хан', text: 'Редкие артефакты по лучшим ценам!'},
-    {name: 'Механик Зори', text: 'Чиним корабли любой сложности'},
-    {name: 'Информатор Кей', text: 'Слухи о заброшенных станциях...'}
-  ];
-  
-  npcs.forEach((npc, idx) => {
-    const div = document.createElement('div');
-    div.className = 'npc';
-    div.innerHTML = `
-      <div class="face">${npc.name[0]}</div>
-      <div style="flex:1">
-        <strong>${npc.name}</strong>
-        <div class="small">${npc.text}</div>
-      </div>
-      <button class="btn" data-npc="${idx}">Говорить</button>
-    `;
-    npcList.appendChild(div);
-  });
-  
-  // Populate shop
-  const shopGrid = document.getElementById('shopGrid');
-  shopGrid.innerHTML = '';
-  
-  const shopItems = [
-    {id: 'repair', name: 'Ремонт', price: 50, desc: '+50 здоровья', icon: '❤️'},
-    {id: 'weapon', name: 'Улучшение оружия', price: 100, desc: '+20% урона', icon: '💥'},
-    {id: 'engine', name: 'Улучшение двигателя', price: 80, desc: '+15% скорости', icon: '⚡'},
-    {id: 'shield', name: 'Щит', price: 60, desc: '+50 щита', icon: '🛡'},
-    {id: 'fuel', name: 'Топливо', price: 30, desc: '+50 топлива', icon: '⛽'},
-    {id: 'scan', name: 'Сканер', price: 120, desc: 'Обнаружение врагов', icon: '📡'}
-  ];
-  
-  shopItems.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'shopItem';
-    div.innerHTML = `
-      <div style="font-size:20px">${item.icon}</div>
-      <div><strong>${item.name}</strong></div>
-      <div class="small">${item.desc}</div>
-      <button class="btn" style="margin-top:8px" data-item="${item.id}" data-price="${item.price}">
-        ${item.price}💳
-      </button>
-    `;
-    shopGrid.appendChild(div);
-  });
-  
-  document.getElementById('planetPanel').style.display = 'block';
+  try {
+    document.getElementById('planetName').textContent = planet.userData.name;
+    document.getElementById('planetDesc').textContent = planet.userData.desc;
+    
+    // Заполняем NPC
+    const npcList = document.getElementById('npcList');
+    if(npcList) {
+      npcList.innerHTML = '';
+      
+      const npcs = [
+        {name: 'Торговец Хан', text: 'Редкие артефакты по лучшим ценам!'},
+        {name: 'Механик Зори', text: 'Чиним корабли любой сложности'},
+        {name: 'Ученый Лира', text: 'Изучаю местную фауну... опасную фауну'},
+        {name: 'Информатор Кей', text: 'Слухи о заброшенных станциях...'}
+      ];
+      
+      npcs.forEach((npc, idx) => {
+        const div = document.createElement('div');
+        div.className = 'npc';
+        div.innerHTML = `
+          <div class="face">${npc.name[0]}</div>
+          <div style="flex:1">
+            <strong>${npc.name}</strong>
+            <div class="small">${npc.text}</div>
+          </div>
+          <button class="btn" data-npc="${idx}">Говорить</button>
+        `;
+        npcList.appendChild(div);
+      });
+    }
+    
+    // Заполняем магазин
+    const shopGrid = document.getElementById('shopGrid');
+    if(shopGrid) {
+      shopGrid.innerHTML = '';
+      
+      const shopItems = [
+        {id: 'repair', name: 'Ремонт', price: 50, desc: '+50 здоровья', icon: '❤️'},
+        {id: 'weapon', name: 'Улучшение оружия', price: 100, desc: '+20% урона', icon: '💥'},
+        {id: 'engine', name: 'Улучшение двигателя', price: 80, desc: '+15% скорости', icon: '⚡'},
+        {id: 'shield', name: 'Щит', price: 60, desc: '+50 щита', icon: '🛡'},
+        {id: 'fuel', name: 'Топливо', price: 30, desc: '+50 топлива', icon: '⛽'},
+        {id: 'scan', name: 'Сканер', price: 120, desc: 'Обнаружение врагов', icon: '📡'}
+      ];
+      
+      shopItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'shopItem';
+        div.innerHTML = `
+          <div style="font-size:20px">${item.icon}</div>
+          <div><strong>${item.name}</strong></div>
+          <div class="small">${item.desc}</div>
+          <button class="btn" style="margin-top:8px" data-item="${item.id}" data-price="${item.price}">
+            ${item.price}💳
+          </button>
+        `;
+        shopGrid.appendChild(div);
+      });
+    }
+    
+    document.getElementById('planetPanel').style.display = 'block';
+  } catch(e) {
+    console.warn('Error showing planet panel:', e);
+  }
 }
 
-// Shop actions
 function buyItem(itemId, price){
   if(STATE.credits < price) {
     alert('Недостаточно кредитов!');
@@ -964,7 +1650,7 @@ function buyItem(itemId, price){
       STATE.fuel = Math.min(100, STATE.fuel + 50);
       break;
     case 'scan':
-      // Scanner upgrade - would reveal enemies on radar
+      alert('Сканер активирован! Теперь вы видите врагов на радаре.');
       break;
   }
   
@@ -972,188 +1658,241 @@ function buyItem(itemId, price){
   return true;
 }
 
-// ========== CONTROL SYSTEMS ==========
+// ========== СИСТЕМА УПРАВЛЕНИЯ ==========
 function initSpaceJoystick(){
-  const joy = document.getElementById('spaceJoy');
-  const knob = document.getElementById('spaceKnob');
-  let isTouching = false;
-  let joyRect;
-  
-  function start(ev){
-    isTouching = true;
-    joyRect = joy.getBoundingClientRect();
-    const pos = getTouchPos(ev);
-    moveKnob(pos.x - joyRect.left, pos.y - joyRect.top);
-  }
-  
-  function move(ev){
-    if(!isTouching) return;
-    ev.preventDefault();
-    const pos = getTouchPos(ev);
-    const localX = pos.x - joyRect.left - joyRect.width/2;
-    const localY = pos.y - joyRect.top - joyRect.height/2;
+  try {
+    const joy = document.getElementById('spaceJoy');
+    const knob = document.getElementById('spaceKnob');
     
-    const maxDist = joyRect.width/2 - 21;
-    const dist = Math.hypot(localX, localY);
+    if(!joy || !knob) {
+      console.warn('Space joystick elements not found');
+      return false;
+    }
     
-    const normX = (dist > maxDist) ? (localX/dist * maxDist) : localX;
-    const normY = (dist > maxDist) ? (localY/dist * maxDist) : localY;
+    let isTouching = false;
+    let joyRect;
     
-    knob.style.transform = `translate(${normX}px, ${normY}px)`;
-    spaceJoystick.x = normX / maxDist;
-    spaceJoystick.y = -normY / maxDist;
-  }
-  
-  function end(){
-    isTouching = false;
-    knob.style.transform = `translate(0px, 0px)`;
-    spaceJoystick.x = 0;
-    spaceJoystick.y = 0;
-  }
-  
-  function getTouchPos(e){
-    const t = e.touches ? e.touches[0] : e;
-    return { x: t.clientX, y: t.clientY };
-  }
-  
-  function moveKnob(x, y){
-    const localX = x - joyRect.width/2;
-    const localY = y - joyRect.height/2;
-    const maxDist = joyRect.width/2 - 21;
-    const dist = Math.hypot(localX, localY);
+    function start(ev){
+      isTouching = true;
+      joyRect = joy.getBoundingClientRect();
+      const pos = getTouchPos(ev);
+      moveKnob(pos.x - joyRect.left, pos.y - joyRect.top);
+    }
     
-    const normX = (dist > maxDist) ? (localX/dist * maxDist) : localX;
-    const normY = (dist > maxDist) ? (localY/dist * maxDist) : localY;
+    function move(ev){
+      if(!isTouching) return;
+      ev.preventDefault();
+      const pos = getTouchPos(ev);
+      const localX = pos.x - joyRect.left - joyRect.width/2;
+      const localY = pos.y - joyRect.top - joyRect.height/2;
+      const maxDist = joyRect.width/2 - 21;
+      const dist = Math.hypot(localX, localY);
+      
+      const normX = (dist > maxDist) ? (localX/dist * maxDist) : localX;
+      const normY = (dist > maxDist) ? (localY/dist * maxDist) : localY;
+      
+      knob.style.transform = `translate(${normX}px, ${normY}px)`;
+      spaceJoystick.x = normX / maxDist;
+      spaceJoystick.y = -normY / maxDist;
+    }
     
-    knob.style.transform = `translate(${normX}px, ${normY}px)`;
-    spaceJoystick.x = normX / maxDist;
-    spaceJoystick.y = -normY / maxDist;
+    function end(){
+      isTouching = false;
+      knob.style.transform = `translate(0px, 0px)`;
+      spaceJoystick.x = 0;
+      spaceJoystick.y = 0;
+    }
+    
+    function getTouchPos(e){
+      const t = e.touches ? e.touches[0] : e;
+      return { x: t.clientX, y: t.clientY };
+    }
+    
+    function moveKnob(x, y){
+      const localX = x - joyRect.width/2;
+      const localY = y - joyRect.height/2;
+      const maxDist = joyRect.width/2 - 21;
+      const dist = Math.hypot(localX, localY);
+      
+      const normX = (dist > maxDist) ? (localX/dist * maxDist) : localX;
+      const normY = (dist > maxDist) ? (localY/dist * maxDist) : localY;
+      
+      knob.style.transform = `translate(${normX}px, ${normY}px)`;
+      spaceJoystick.x = normX / maxDist;
+      spaceJoystick.y = -normY / maxDist;
+    }
+    
+    joy.addEventListener('touchstart', start, {passive:false});
+    joy.addEventListener('touchmove', move, {passive:false});
+    joy.addEventListener('touchend', end, {passive:false});
+    joy.addEventListener('mousedown', start);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    
+    console.log('Space joystick initialized');
+    return true;
+  } catch(e) {
+    console.error('Error initializing space joystick:', e);
+    return false;
   }
-  
-  joy.addEventListener('touchstart', start, {passive:false});
-  joy.addEventListener('touchmove', move, {passive:false});
-  joy.addEventListener('touchend', end, {passive:false});
-  joy.addEventListener('mousedown', start);
-  window.addEventListener('mousemove', move);
-  window.addEventListener('mouseup', end);
 }
 
 function initSurfaceJoystick(){
-  const joy = document.getElementById('surfaceJoy');
-  const knob = document.getElementById('surfaceKnob');
-  let startX=0, startY=0, active=false;
-  const radius = 40;
-  
-  function down(e){
-    active=true;
-    surfaceJoystick.active = true;
-    const touch = (e.touches && e.touches[0]) || e;
-    startX = touch.clientX;
-    startY = touch.clientY;
-  }
-  
-  function move(e){
-    if (!active) return;
-    e.preventDefault();
-    const touch = (e.touches && e.touches[0]) || e;
-    let dx = touch.clientX - startX;
-    let dy = touch.clientY - startY;
+  try {
+    const joy = document.getElementById('surfaceJoy');
+    const knob = document.getElementById('surfaceKnob');
     
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist > radius){
-      dx *= radius/dist;
-      dy *= radius/dist;
+    if(!joy || !knob) {
+      console.warn('Surface joystick elements not found');
+      return false;
     }
     
-    knob.style.left = (38 + dx) + 'px';
-    knob.style.top = (38 + dy) + 'px';
+    let startX = 0, startY = 0, active = false;
+    const radius = 40;
     
-    surfaceJoystick.x = dx / radius;
-    surfaceJoystick.y = -dy / radius;
+    function down(e){
+      active = true;
+      surfaceJoystick.active = true;
+      const touch = (e.touches && e.touches[0]) || e;
+      startX = touch.clientX;
+      startY = touch.clientY;
+    }
+    
+    function move(e){
+      if(!active) return;
+      e.preventDefault();
+      const touch = (e.touches && e.touches[0]) || e;
+      let dx = touch.clientX - startX;
+      let dy = touch.clientY - startY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      
+      if(dist > radius){
+        dx *= radius/dist;
+        dy *= radius/dist;
+      }
+      
+      knob.style.left = (38 + dx) + 'px';
+      knob.style.top = (38 + dy) + 'px';
+      surfaceJoystick.x = dx / radius;
+      surfaceJoystick.y = -dy / radius;
+    }
+    
+    function up(){
+      active = false;
+      knob.style.left = '38px';
+      knob.style.top = '38px';
+      surfaceJoystick.active = false;
+      surfaceJoystick.x = 0;
+      surfaceJoystick.y = 0;
+    }
+    
+    joy.addEventListener('touchstart', down);
+    joy.addEventListener('touchmove', move);
+    joy.addEventListener('touchend', up);
+    joy.addEventListener('mousedown', down);
+    joy.addEventListener('mousemove', move);
+    joy.addEventListener('mouseup', up);
+    joy.addEventListener('mouseleave', up);
+    
+    console.log('Surface joystick initialized');
+    return true;
+  } catch(e) {
+    console.error('Error initializing surface joystick:', e);
+    return false;
   }
-  
-  function up(){
-    active=false;
-    knob.style.left='38px';
-    knob.style.top='38px';
-    surfaceJoystick.active=false;
-    surfaceJoystick.x=0;
-    surfaceJoystick.y=0;
-  }
-  
-  joy.addEventListener('touchstart', down);
-  joy.addEventListener('touchmove', move);
-  joy.addEventListener('touchend', up);
-  joy.addEventListener('mousedown', down);
-  joy.addEventListener('mousemove', move);
-  joy.addEventListener('mouseup', up);
-  joy.addEventListener('mouseleave', up);
 }
 
-// ========== GAME LOOP ==========
+// ========== ОСНОВНОЙ ИГРОВОЙ ЦИКЛ ==========
 let lastTime = performance.now();
-let perfTime = 0;
 
 function animate(){
-  requestAnimationFrame(animate);
-  const now = performance.now();
-  const delta = Math.min((now - lastTime)/1000, 0.05);
-  lastTime = now;
-  perfTime += delta;
-
-  if(STATE.mode === 'space'){
-    updateSpace(delta);
-  } else if(STATE.mode === 'landing') {
-    updateLanding(delta);
-  } else if(STATE.mode === 'surface'){
-    updateSurface(delta);
-  }
-
-  // Render
-  try { 
-    if(hasComposer) composer.render(); 
-    else renderer.render(scene, camera); 
-  } catch(e){ 
-    renderer.render(scene, camera); 
+  try {
+    requestAnimationFrame(animate);
+    
+    const now = performance.now();
+    const delta = Math.min((now - lastTime) / 1000, 0.05);
+    lastTime = now;
+    
+    // Обновление в зависимости от режима
+    switch(STATE.mode){
+      case 'space':
+        updateSpace(delta);
+        break;
+      case 'landing':
+        updateLanding(delta);
+        break;
+      case 'surface':
+        updateSurface(delta);
+        break;
+    }
+    
+    // Рендеринг
+    if(hasComposer && composer) {
+      composer.render();
+    } else if(renderer) {
+      renderer.render(scene, camera);
+    }
+  } catch(e) {
+    console.error('Error in game loop:', e);
   }
 }
 
 function updateSpace(delta){
-  // Ship movement
-  const moveSpeed = 0.8 * (1 + (STATE.upgrades.engine-1)*0.2) * (STATE.overdrive?2.0:1.0);
-  shipGroup.position.x += spaceJoystick.x * 8 * delta * moveSpeed;
-  shipGroup.position.y += spaceJoystick.y * 6 * delta * moveSpeed;
+  if(!shipGroup) return;
+  
+  // УВЕЛИЧЕННАЯ СКОРОСТЬ БОКОВОГО ПЕРЕМЕЩЕНИЯ - было 8 и 6, стало 16 и 12
+  const moveSpeed = 1.2 * (1 + (STATE.upgrades.engine - 1) * 0.2) * (STATE.overdrive ? 2.0 : 1.0);
+  
+  shipGroup.position.x += spaceJoystick.x * 16 * delta * moveSpeed;
+  shipGroup.position.y += spaceJoystick.y * 12 * delta * moveSpeed;
   shipGroup.position.z -= 40 * delta * moveSpeed;
-
-  // Camera follow
-  const camOffset = new THREE.Vector3(0,6,22);
-  camera.position.lerp(shipGroup.position.clone().add(camOffset), 0.12);
-  camera.lookAt(shipGroup.position.clone().add(new THREE.Vector3(0,0,-180)));
-
-  // Engine particles
-  animateEngineParticles(delta);
-
-  // Move stars for parallax
-  if(stars){ 
+  
+  // Обновление камеры
+  const camOffset = new THREE.Vector3(0, 6, 22);
+  const targetCamPos = shipGroup.position.clone().add(camOffset);
+  camera.position.lerp(targetCamPos, 0.12);
+  camera.lookAt(shipGroup.position.clone().add(new THREE.Vector3(0, 0, -180)));
+  
+  // Частицы двигателей
+  if(shipEngineParticles) {
+    animateEngineParticles(delta);
+  }
+  
+  // Движение звезд для параллакса
+  if(stars) { 
     stars.position.z += 0.09 * delta * 60; 
     if(stars.position.z > 2000) stars.position.z = -2000; 
   }
-  nebulas.forEach(n => n.rotation.y += 0.0005 * delta * 60);
-
-  // Update asteroids
-  for(let i=asteroids.length-1;i>=0;i--){
+  
+  nebulas.forEach(n => {
+    if(n) n.rotation.y += 0.0005 * delta * 60;
+  });
+  
+  // Обновление астероидов
+  for(let i = asteroids.length - 1; i >= 0; i--){
     const a = asteroids[i];
+    if(!a) continue;
+    
     a.position.z += 0.6 * delta * 60;
     a.rotation.x += a.userData.rot.x * delta * 60; 
     a.rotation.y += a.userData.rot.y * delta * 60;
     
     if(a.position.z > shipGroup.position.z + 80){ 
-      scene.remove(a); 
-      asteroids.splice(i,1); 
-      spawnAsteroid((Math.random()-0.5)*800, (Math.random()-0.5)*200, shipGroup.position.z - 1600, 1.0 + Math.random()*4); 
+      try {
+        scene.remove(a);
+      } catch(e) {
+        console.warn('Error removing asteroid:', e);
+      }
+      asteroids.splice(i, 1); 
+      spawnAsteroid(
+        (Math.random() - 0.5) * 800, 
+        (Math.random() - 0.5) * 200, 
+        shipGroup.position.z - 1600, 
+        1.0 + Math.random() * 4
+      ); 
     }
     
-    // Collision
+    // Проверка столкновений
     if(a.position.distanceTo(shipGroup.position) < (a.userData.radius + 3.5)){
       if(STATE.shield > 0){ 
         STATE.shield = Math.max(0, STATE.shield - 10); 
@@ -1161,18 +1900,25 @@ function updateSpace(delta){
         STATE.health -= 10; 
         flashDamage(); 
       }
+      
       createExplosion(a.position, 10); 
-      scene.remove(a); 
-      asteroids.splice(i,1);
+      try {
+        scene.remove(a);
+      } catch(e) {
+        console.warn('Error removing asteroid on collision:', e);
+      }
+      asteroids.splice(i, 1);
     }
   }
-
-  // Update enemies
-  for(let i=enemies.length-1;i>=0;i--){
+  
+  // Обновление врагов
+  for(let i = enemies.length - 1; i >= 0; i--){
     const e = enemies[i];
+    if(!e) continue;
+    
     const dx = shipGroup.position.x - e.position.x; 
     const dz = shipGroup.position.z - e.position.z;
-    const dist = Math.hypot(dx,dz);
+    const dist = Math.hypot(dx, dz);
     
     if(dist < 260){ 
       e.position.x += dx * 0.008 * e.userData.speed * delta * 60; 
@@ -1188,35 +1934,58 @@ function updateSpace(delta){
         STATE.health -= 20; 
         flashDamage(); 
       } 
-      createExplosion(e.position,12); 
-      scene.remove(e); 
-      enemies.splice(i,1); 
+      
+      createExplosion(e.position, 12); 
+      try {
+        scene.remove(e);
+      } catch(e) {
+        console.warn('Error removing enemy on collision:', e);
+      }
+      enemies.splice(i, 1); 
       STATE.credits += 12; 
       updateHUD(); 
     }
     
     if(e.position.z > shipGroup.position.z + 200){ 
-      scene.remove(e); 
-      enemies.splice(i,1); 
-      spawnEnemy((Math.random()-0.5)*600,(Math.random()-0.5)*200, shipGroup.position.z - 1200); 
+      try {
+        scene.remove(e);
+      } catch(e) {
+        console.warn('Error removing enemy:', e);
+      }
+      enemies.splice(i, 1); 
+      spawnEnemy(
+        (Math.random() - 0.5) * 600,
+        (Math.random() - 0.5) * 200, 
+        shipGroup.position.z - 1200
+      ); 
     }
   }
-
-  // Update bullets
-  for(let i=bullets.length-1;i>=0;i--){
+  
+  // Обновление пуль
+  for(let i = bullets.length - 1; i >= 0; i--){
     const b = bullets[i];
-    b.position.add(b.userData.vel.clone().multiplyScalar(delta*60));
+    if(!b || !b.visible) continue;
+    
+    b.position.add(b.userData.vel.clone().multiplyScalar(delta * 60));
     b.userData.life--;
     
-    for(let j=enemies.length-1;j>=0;j--){
+    for(let j = enemies.length - 1; j >= 0; j--){
       const en = enemies[j];
+      if(!en) continue;
+      
       if(b.position.distanceTo(en.position) < 5){
-        en.userData.health -= 12 * (1 + (STATE.upgrades.weapon-1)*0.25);
-        b.visible = false; bullets.splice(i,1);
+        en.userData.health -= 12 * (1 + (STATE.upgrades.weapon - 1) * 0.25);
+        b.visible = false;
+        bullets.splice(i, 1);
+        
         if(en.userData.health <= 0){
           createExplosion(en.position, 10); 
-          scene.remove(en); 
-          enemies.splice(j,1); 
+          try {
+            scene.remove(en);
+          } catch(e) {
+            console.warn('Error removing enemy:', e);
+          }
+          enemies.splice(j, 1); 
           STATE.credits += 20; 
           STATE.stars += 1;
           updateHUD(); 
@@ -1226,245 +1995,440 @@ function updateSpace(delta){
     }
     
     if(b.userData.life <= 0 || b.position.distanceTo(shipGroup.position) > 1200){ 
-      b.visible=false; 
-      bullets.splice(i,1); 
+      b.visible = false; 
+      bullets.splice(i, 1); 
     }
   }
-
-  // Fuel consumption
-  STATE.fuel = Math.max(0, STATE.fuel - 0.002 * delta * 60 * (STATE.overdrive?2:1));
-  if(STATE.fuel<=0){ 
-    STATE.overdrive=false; 
+  
+  // Расход топлива
+  STATE.fuel = Math.max(0, STATE.fuel - 0.002 * delta * 60 * (STATE.overdrive ? 2 : 1));
+  if(STATE.fuel <= 0){ 
+    STATE.overdrive = false; 
   }
-
-  // Planet proximity check - AUTO LANDING
+  
+  // Проверка близости к планетам
+  let nearPlanet = null;
+  let minDistance = Infinity;
+  
   for(let p of planets){
+    if(!p) continue;
     const d = shipGroup.position.distanceTo(p.position);
-    if(d < p.geometry.parameters.radius + 50 && STATE.mode === 'space'){
-      // Auto-land when close
-      performLanding(p);
-      break;
+    const landingDistance = p.userData.radius + 50;
+    
+    if(d < landingDistance && d < minDistance){
+      minDistance = d;
+      nearPlanet = p;
     }
   }
-
+  
+  // Показываем индикатор посадки
+  const landingIndicator = document.getElementById('landingIndicator');
+  if(landingIndicator) {
+    if(nearPlanet) {
+      landingIndicator.textContent = `ПРИБЛИЖЕНИЕ К ${nearPlanet.userData.name} - НАЖМИТЕ ДЛЯ ПОСАДКИ`;
+      landingIndicator.classList.add('active');
+    } else {
+      landingIndicator.classList.remove('active');
+    }
+  }
+  
+  // Автоматическая посадка при очень близком расстоянии
+  if(nearPlanet && minDistance < nearPlanet.userData.radius + 20){
+    performLanding(nearPlanet);
+  }
+  
   updateHUD();
   STATE.missionProgress = Math.min(5, STATE.missionProgress + 0.0005 * delta * 60);
 }
 
 function updateSurface(delta){
-  if(!surfacePlayer) return;
+  if(!surfacePlayer || !surfaceScene) return;
   
-  // Surface movement
-  const speed = 5 * delta;
+  // Гравитация и коллизии с землей
+  const playerY = surfacePlayer.position.y;
+  const targetY = GROUND_LEVEL + PLAYER_HEIGHT;
+  
+  if(playerY > targetY) {
+    surfacePlayer.position.y -= GRAVITY * delta * 60;
+    if(surfacePlayer.position.y < targetY) {
+      surfacePlayer.position.y = targetY;
+    }
+  } else if(playerY < targetY) {
+    surfacePlayer.position.y = targetY;
+  }
+  
+  // Движение по поверхности
+  const speed = 8 * delta;
+  
   if(surfaceJoystick.active){
-    surfacePlayer.position.x += surfaceJoystick.x * speed;
-    surfacePlayer.position.z += surfaceJoystick.y * speed;
+    const moveX = surfaceJoystick.x * speed;
+    const moveZ = surfaceJoystick.y * speed;
     
-    // Rotate player to face movement direction
+    surfacePlayer.position.x += moveX;
+    surfacePlayer.position.z += moveZ;
+    
+    // Поворот игрока в направлении движения
     if(Math.abs(surfaceJoystick.x) > 0.1 || Math.abs(surfaceJoystick.y) > 0.1){
       surfacePlayer.rotation.y = Math.atan2(-surfaceJoystick.x, -surfaceJoystick.y);
     }
   }
   
-  // Camera follow for surface
-  const camOffset = new THREE.Vector3(0, 3, 8);
+  // Обновление камеры для поверхности
+  const camOffset = new THREE.Vector3(0, PLAYER_HEIGHT + 4, 12);
   const targetCamPos = surfacePlayer.position.clone().add(camOffset);
   camera.position.lerp(targetCamPos, 0.1);
   camera.lookAt(surfacePlayer.position);
+  
+  // Проверка взаимодействия с NPC
+  if(surfaceObjects.length > 0) {
+    for(let obj of surfaceObjects) {
+      if(!obj.userData || !obj.userData.interactable) continue;
+      
+      const dist = surfacePlayer.position.distanceTo(obj.position);
+      if(dist < 4.0 && STATE.mode === 'surface') {
+        document.querySelector('.bottomHints').textContent = 'Нажмите 👁️ для взаимодействия';
+        break;
+      }
+    }
+  }
 }
 
 function animateEngineParticles(delta){
-  perfTime += delta;
-  if(!shipEngineParticles) return;
+  if(!shipEngineParticles || !shipEngineParticles.geom) return;
+  
   const positions = shipEngineParticles.geom.attributes.position.array;
-  for(let i=0;i<positions.length;i+=3){
-    positions[i+2] += (1.0 + Math.random()*1.0) * (STATE.overdrive?1.4:1.0);
-    if(positions[i+2] > 18){ 
-      positions[i] = (Math.random()-0.5)*1.8; 
-      positions[i+1] = (Math.random()-0.5)*1.8; 
-      positions[i+2] = 2 + Math.random()*4; 
+  const count = positions.length / 3;
+  
+  for(let i = 0; i < count; i++){
+    const j = i * 3;
+    positions[j+2] += (1.0 + Math.random() * 1.0) * (STATE.overdrive ? 1.4 : 1.0);
+    
+    if(positions[j+2] > 18){ 
+      positions[j] = (Math.random() - 0.5) * 1.8; 
+      positions[j+1] = (Math.random() - 0.5) * 1.8; 
+      positions[j+2] = 2 + Math.random() * 4; 
     }
   }
+  
   shipEngineParticles.geom.attributes.position.needsUpdate = true;
-  shipEngineParticles.points.material.opacity = 0.6 + Math.abs(Math.sin(perfTime*6))*0.25;
+  shipEngineParticles.points.material.opacity = 0.6 + Math.abs(Math.sin(Date.now() * 0.006)) * 0.25;
 }
 
-// ========== EVENT HANDLERS ==========
+// ========== ОБРАБОТЧИКИ СОБЫТИЙ ==========
 function initEventHandlers(){
-  // Start game
-  document.getElementById('btnStart').addEventListener('click', startGame);
-  
-  // Tutorial
-  document.getElementById('btnHow').addEventListener('click', () => {
-    alert(`Управление:
+  try {
+    // Запуск игры
+    const startBtn = document.getElementById('btnStart');
+    if (startBtn) startBtn.addEventListener('click', startGame);
+    
+    // Обучение
+    const howBtn = document.getElementById('btnHow');
+    if (howBtn) howBtn.addEventListener('click', () => {
+      alert(`Управление:
 Космос: Джойстик - движение, 💥 - стрельба, 🛡 - щит, ⚡ - овердрайв
 Планета: Джойстик - ходьба, 👁️ - взаимодействие, 🚀 - взлет
 Тап по планете для посадки!`);
-  });
-  
-  // Space actions
-  document.getElementById('btnShoot').addEventListener('click', () => {
-    if(STATE.mode === 'space'){ 
-      const t = findNearestThreat(); 
-      if(t) shootAt(t); 
-    }
-  });
-  
-  document.getElementById('btnShield').addEventListener('click', () => {
-    if(STATE.mode === 'space' && STATE.credits >= 20 && !STATE.shieldActive){ 
-      STATE.credits -= 20; 
-      STATE.shieldActive = true;
-      // Visual shield effect
-      const shield = new THREE.Mesh(
-        new THREE.SphereGeometry(8, 16, 12),
-        new THREE.MeshBasicMaterial({ 
-          color: 0x00ffff, transparent: true, opacity: 0.2, side: THREE.DoubleSide 
-        })
-      );
-      shipGroup.add(shield);
-      setTimeout(() => {
-        try{ shipGroup.remove(shield) }catch(e){}
-        STATE.shieldActive = false;
-      }, 5000);
-      SFX.playBuy(); 
-      updateHUD(); 
-    } else {
-      alert('Не хватает кредитов или щит уже активен.');
-    }
-  });
-  
-  document.getElementById('btnBoost').addEventListener('click', () => {
-    if(STATE.mode === 'space' && STATE.fuel >= 20 && !STATE.overdrive){ 
-      STATE.fuel -= 20; 
-      STATE.overdrive = true; 
-      setTimeout(() => STATE.overdrive = false, 5000); 
-    }
-  });
-  
-  // Surface actions
-  document.getElementById('btnTakeoff').addEventListener('click', takeOffFromPlanet);
-  document.getElementById('btnInteract').addEventListener('click', () => {
-    if(STATE.mode === 'surface'){
-      // Simple interaction - show planet panel
-      document.getElementById('planetPanel').style.display = 'block';
-    }
-  });
-  
-  // Planet UI
-  document.getElementById('btnClosePanel').addEventListener('click', () => {
-    document.getElementById('planetPanel').style.display = 'none';
-  });
-  
-  // NPC interactions
-  document.getElementById('npcList').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-npc]');
-    if(btn){
-      const npcId = parseInt(btn.dataset.npc);
-      const dialogues = [
-        "Слышал о караване в секторе 9? Высокая оплата!",
-        "Нужен ремонт? У меня есть запчасти... за кредиты.",
-        "Говорят, на заброшенной станции нашли артефакты."
-      ];
-      document.getElementById('npcDialogue').textContent = dialogues[npcId] || "Приветствую, путник.";
-    }
-  });
-  
-  // Shop interactions
-  document.getElementById('shopGrid').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-item]');
-    if(btn){
-      const itemId = btn.dataset.item;
-      const price = parseInt(btn.dataset.price);
-      buyItem(itemId, price);
-    }
-  });
-  
-  // Planet tap detection
-  renderer.domElement.addEventListener('click', (e) => {
-    if(STATE.mode !== 'space') return;
+    });
     
-    const rect = renderer.domElement.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    // Действия в космосе
+    const shootBtn = document.getElementById('btnShoot');
+    if (shootBtn) shootBtn.addEventListener('click', () => {
+      if(STATE.mode === 'space'){ 
+        const t = findNearestThreat(); 
+        if(t) shootAt(t); 
+      }
+    });
     
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera({x, y}, camera);
-    const intersects = raycaster.intersectObjects(planets);
+    const shieldBtn = document.getElementById('btnShield');
+    if (shieldBtn) shieldBtn.addEventListener('click', () => {
+      if(STATE.mode === 'space' && STATE.credits >= 20 && !STATE.shieldActive){ 
+        STATE.credits -= 20; 
+        STATE.shieldActive = true;
+        
+        // Визуальный эффект щита
+        const shield = new THREE.Mesh(
+          new THREE.SphereGeometry(8, 16, 12),
+          new THREE.MeshBasicMaterial({ 
+            color: 0x00ffff, 
+            transparent: true, 
+            opacity: 0.2, 
+            side: THREE.DoubleSide 
+          })
+        );
+        shield.userData = { type: 'shield' };
+        shipGroup.add(shield);
+        
+        setTimeout(() => {
+          try{ 
+            if(shipGroup && shipGroup.children.includes(shield)) {
+              shipGroup.remove(shield);
+            }
+          } catch(e){
+            console.warn('Error removing shield:', e);
+          }
+          STATE.shieldActive = false;
+        }, 5000);
+        
+        SFX.playBuy(); 
+        updateHUD(); 
+      } else {
+        alert('Не хватает кредитов или щит уже активен.');
+      }
+    });
     
-    if(intersects.length > 0){
-      performLanding(intersects[0].object);
+    const boostBtn = document.getElementById('btnBoost');
+    if (boostBtn) boostBtn.addEventListener('click', () => {
+      if(STATE.mode === 'space' && STATE.fuel >= 20 && !STATE.overdrive){ 
+        STATE.fuel -= 20; 
+        STATE.overdrive = true; 
+        setTimeout(() => STATE.overdrive = false, 5000); 
+      }
+    });
+    
+    // Действия на поверхности
+    const takeoffBtn = document.getElementById('btnTakeoff');
+    if (takeoffBtn) takeoffBtn.addEventListener('click', takeOffFromPlanet);
+    
+    const interactBtn = document.getElementById('btnInteract');
+    if (interactBtn) interactBtn.addEventListener('click', () => {
+      if(STATE.mode === 'surface' && surfaceObjects.length > 0){
+        // Находим ближайшего NPC
+        let nearestNPC = null;
+        let minDist = Infinity;
+        
+        for(let obj of surfaceObjects) {
+          if(!obj.userData || !obj.userData.interactable) continue;
+          
+          const dist = surfacePlayer.position.distanceTo(obj.position);
+          if(dist < minDist && dist < 4.0) {
+            minDist = dist;
+            nearestNPC = obj;
+          }
+        }
+        
+        if(nearestNPC) {
+          // Показываем диалог с NPC
+          const dialogues = {
+            merchant: "Добро пожаловать! У меня есть лучшие товары в галактике.",
+            mechanic: "Привет! Чем я могу помочь с вашим кораблем?",
+            scientist: "О, путешественник! Я изучаю местную экосистему. Осторожно, некоторые существа опасны!",
+            informant: "Эй, шепотом... Я знаю, где спрятаны древние артефакты."
+          };
+          
+          document.getElementById('npcDialogue').textContent = 
+            dialogues[nearestNPC.userData.type] || nearestNPC.userData.dialog;
+          
+          document.getElementById('planetPanel').style.display = 'block';
+        } else {
+          document.querySelector('.bottomHints').textContent = 'Нет NPC рядом для взаимодействия';
+        }
+      }
+    });
+    
+    // Панель планеты
+    const closePanelBtn = document.getElementById('btnClosePanel');
+    if (closePanelBtn) closePanelBtn.addEventListener('click', () => {
+      document.getElementById('planetPanel').style.display = 'none';
+    });
+    
+    // Взаимодействие с NPC в UI
+    const npcList = document.getElementById('npcList');
+    if (npcList) {
+      npcList.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-npc]');
+        if(btn){
+          const npcId = parseInt(btn.dataset.npc);
+          const dialogues = [
+            "Слышал о караване в секторе 9? Высокая оплата!",
+            "Нужен ремонт? У меня есть запчасти... за кредиты.",
+            "Говорят, на заброшенной станции нашли артефакты.",
+            "Осторожно! На орбите пираты. Лучше включить щиты."
+          ];
+          document.getElementById('npcDialogue').textContent = dialogues[npcId] || "Приветствую, путник.";
+        }
+      });
     }
-  });
+    
+    // Покупки в магазине
+    const shopGrid = document.getElementById('shopGrid');
+    if (shopGrid) {
+      shopGrid.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-item]');
+        if(btn){
+          const itemId = btn.dataset.item;
+          const price = parseInt(btn.dataset.price);
+          buyItem(itemId, price);
+        }
+      });
+    }
+    
+    // Обнаружение кликов по планетам
+    if (renderer && renderer.domElement) {
+      renderer.domElement.addEventListener('click', (e) => {
+        if(STATE.mode !== 'space') return;
+        
+        // Проверяем, не кликнули ли по UI
+        const uiElements = document.querySelectorAll('.btn, .actionBtn, .joyPad, .spaceActionButtons, .surfaceActionButtons, .planetUI');
+        for(let el of uiElements) {
+          if(el.contains(e.target)) return;
+        }
+        
+        const rect = renderer.domElement.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        
+        raycaster.setFromCamera({x, y}, camera);
+        const intersects = raycaster.intersectObjects(planets);
+        
+        if(intersects.length > 0){
+          performLanding(intersects[0].object);
+        }
+      });
+    }
+    
+    console.log('Event handlers initialized');
+    return true;
+  } catch(e) {
+    console.error('Error initializing event handlers:', e);
+    return false;
+  }
 }
 
-// ========== GAME INITIALIZATION ==========
+// ========== ИНИЦИАЛИЗАЦИЯ ИГРЫ ==========
 function startGame(){
   if(STATE.mode !== 'menu') return;
   
-  SFX.playStart();
-  STATE.mode = 'space';
-  document.getElementById('menu').style.display = 'none';
+  console.log('Starting game...');
   
-  // Start game loop
-  animate();
+  try {
+    SFX.playStart();
+    STATE.mode = 'space';
+    const menu = document.getElementById('menu');
+    if (menu) menu.style.display = 'none';
+    
+    // Запускаем игровой цикл
+    animate();
+    
+    console.log('Game started successfully');
+  } catch(e) {
+    console.error('Error starting game:', e);
+    alert('Ошибка запуска игры: ' + e.message);
+  }
+}
+
+function initGame() {
+  try {
+    console.log('Initializing game components...');
+    
+    if (!initThree()) throw new Error('Three.js initialization failed');
+    if (!makeLights()) throw new Error('Lights creation failed');
+    if (!createShip()) throw new Error('Ship creation failed');
+    if (!createStarfield()) throw new Error('Starfield creation failed');
+    if (!generateSpacePlanets()) throw new Error('Planets generation failed');
+    if (!initSpaceObjects()) throw new Error('Space objects initialization failed');
+    if (!initBulletPool()) throw new Error('Bullet pool initialization failed');
+    if (!initSpaceJoystick()) throw new Error('Space joystick initialization failed');
+    if (!initSurfaceJoystick()) throw new Error('Surface joystick initialization failed');
+    if (!initEventHandlers()) throw new Error('Event handlers initialization failed');
+    
+    // Периодическое спавнение врагов
+    setInterval(() => {
+      if(STATE.mode === 'space'){ 
+        spawnEnemy(
+          (Math.random() - 0.5) * 600,
+          (Math.random() - 0.5) * 200, 
+          shipGroup.position.z - 1200
+        ); 
+      }
+    }, 2400);
+    
+    // Периодическое спавнение астероидов
+    setInterval(() => {
+      if(STATE.mode === 'space'){ 
+        spawnAsteroid(
+          (Math.random() - 0.5) * 800,
+          (Math.random() - 0.5) * 200, 
+          shipGroup.position.z - 1600, 
+          1.2 + Math.random() * 4
+        ); 
+      }
+    }, 1300);
+    
+    updateHUD();
+    
+    console.log('Game bootstrapped successfully');
+  } catch(e) {
+    console.error('Critical error during bootstrap:', e);
+    alert('Ошибка инициализации игры: ' + e.message);
+  }
 }
 
 function bootstrap(){
-  initThree();
-  makeLights();
-  createShip();
-  createStarfield();
-  generateSpacePlanets();
-  initSpaceObjects();
-  initBulletPool();
-  initSpaceJoystick();
-  initSurfaceJoystick();
-  initEventHandlers();
+  console.log('Bootstrapping game...');
   
-  // Periodic spawning
-  setInterval(() => {
-    if(STATE.mode === 'space'){ 
-      spawnEnemy((Math.random()-0.5)*600,(Math.random()-0.5)*200, shipGroup.position.z - 1200); 
-    }
-  }, 2400);
-  
-  setInterval(() => {
-    if(STATE.mode === 'space'){ 
-      spawnAsteroid((Math.random()-0.5)*800,(Math.random()-0.5)*200, shipGroup.position.z - 1600, 1.2 + Math.random()*4); 
-    }
-  }, 1300);
-  
-  updateHUD();
+  // Ждем полной загрузки страницы
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGame);
+  } else {
+    initGame();
+  }
 }
 
-// ========== RESIZE HANDLER ==========
+// ========== ОБРАБОТЧИКИ ИЗМЕНЕНИЯ РАЗМЕРА ==========
 window.addEventListener('resize', () => {
+  console.log('Window resized');
+  
   if(renderer && camera){
-    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    if(hasComposer) composer.setSize(window.innerWidth, window.innerHeight);
+    
+    if(hasComposer && composer) {
+      composer.setSize(window.innerWidth, window.innerHeight);
+      composer.setPixelRatio(pixelRatio);
+    }
   }
 });
 
-// ========== INIT ON LOAD ==========
-document.addEventListener('DOMContentLoaded', () => {
-  bootstrap();
-  // Loading animation
-  let dots = 0;
-  setInterval(() => {
-    dots = (dots + 1) % 4;
-    document.getElementById('loadingDots').textContent = '●'.repeat(dots);
-  }, 500);
+// ========== ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ==========
+bootstrap();
+
+// Анимация загрузки
+let dots = 0;
+setInterval(() => {
+  dots = (dots + 1) % 4;
+  const loadingDots = document.getElementById('loadingDots');
+  if (loadingDots) loadingDots.textContent = '●'.repeat(dots);
+}, 500);
+
+// Debug режим по двойному клику
+window.addEventListener('dblclick', () => {
+  if(STATE.debugMode) {
+    STATE.credits += 100;
+    STATE.stars += 5;
+    updateHUD();
+    SFX.playBuy();
+    alert('Debug credits and stars added!');
+  }
 });
 
-// Debug helper
-window.addEventListener('dblclick', () => {
-  STATE.credits += 100;
-  STATE.stars += 5;
-  updateHUD();
-  SFX.playBuy();
-});
+// ========== DEBUG ФУНКЦИИ ==========
+window.debugInfo = function() {
+  console.log('=== DEBUG INFO ===');
+  console.log('Mode:', STATE.mode);
+  console.log('Current planet:', STATE.currentPlanet ? STATE.currentPlanet.userData.name : 'none');
+  console.log('Ship position:', shipGroup ? shipGroup.position : 'no ship');
+  console.log('Surface player position:', surfacePlayer ? surfacePlayer.position : 'no surface player');
+  console.log('Surface scene:', surfaceScene ? 'exists' : 'none');
+  console.log('Surface objects:', surfaceObjects.length);
+  console.log('Planets:', planets.length);
+  console.log('Asteroids:', asteroids.length);
+  console.log('Enemies:', enemies.length);
+  console.log('Bullets:', bullets.length);
+  console.log('=================');
+};
+
+console.log('Game script loaded successfully');
 </script>
 </body>
 </html>
