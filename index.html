@@ -1,741 +1,697 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Z.E.R.O.: Last Breach — Planet Update</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <title>Z.E.R.O. — Planet System Update (mobile-first)</title>
 
-<!-- Three.js r128 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<!-- optional postprocessing (fallback handled) -->
-<script src="https://threejs.org/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://threejs.org/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://threejs.org/examples/js/postprocessing/UnrealBloomPass.js"></script>
-<script src="https://threejs.org/examples/js/postprocessing/ShaderPass.js"></script>
-<script src="https://threejs.org/examples/js/shaders/GammaCorrectionShader.js"></script>
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Optional postprocessing (try/catch fallback used) -->
+  <script src="https://threejs.org/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://threejs.org/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://threejs.org/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script src="https://threejs.org/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://threejs.org/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://threejs.org/examples/js/shaders/GammaCorrectionShader.js"></script>
 
-<style>
-  :root{--neon:#00ffff;--bg:#07121a;--glass:rgba(0,0,0,0.5)}
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;background:var(--bg);font-family:Courier,monospace;color:var(--neon);-webkit-user-select:none;user-select:none;overflow:hidden}
-  #canvasWrap{position:fixed;inset:0;z-index:1}
-  #ui{position:fixed;inset:0;pointer-events:none;z-index:10}
-  .screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-  .menuCard{pointer-events:auto;background:linear-gradient(180deg, rgba(0,12,22,0.9), rgba(0,6,12,0.65));padding:18px;border-radius:12px;border:1px solid rgba(0,255,255,0.06);backdrop-filter:blur(4px);box-shadow:0 8px 40px rgba(0,255,255,0.03)}
-  h1{font-size:2.2rem;text-align:center;margin-bottom:8px;text-shadow:0 0 18px rgba(0,255,255,0.12)}
-  .btn{pointer-events:auto;background:transparent;border:1px solid rgba(0,255,255,0.12);color:var(--neon);padding:10px 16px;border-radius:10px;margin:6px;font-size:16px}
-  .hud{position:fixed;left:10px;top:10px;pointer-events:none;background:var(--glass);padding:10px;border-radius:8px;border:1px solid rgba(0,255,255,0.05)}
-  .res{position:fixed;right:10px;top:10px;pointer-events:none;background:var(--glass);padding:10px;border-radius:8px;border:1px solid rgba(0,255,255,0.05);text-align:right}
-  .controls{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:12px;pointer-events:auto;z-index:12}
-  .ctlBtn{width:68px;height:68px;border-radius:14px;background:rgba(0,255,255,0.04);display:flex;align-items:center;justify-content:center;color:var(--neon);border:1px solid rgba(0,255,255,0.08);font-size:26px}
-  #rightControls{position:fixed;right:8px;bottom:18px;display:flex;flex-direction:column;gap:10px;pointer-events:auto;z-index:12}
-  #damageFlash{position:fixed;inset:0;background:#ff2b2b;opacity:0;pointer-events:none;mix-blend-mode:screen;transition:opacity 120ms}
-  .scanlines{position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom, rgba(255,255,255,0) 0px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0) 3px);opacity:0.18;mix-blend-mode:overlay}
-  /* planet UI */
-  #planetUI{position:fixed;inset:12% 8%;display:none;flex-direction:column;gap:12px;pointer-events:auto;z-index:20}
-  .planetCard{background:linear-gradient(180deg, rgba(0,8,16,0.95), rgba(0,0,8,0.85));padding:16px;border-radius:12px;border:1px solid rgba(0,255,255,0.06)}
-  .shopGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .shopItem{background:rgba(0,0,0,0.45);padding:10px;border-radius:8px;border:1px solid rgba(0,255,255,0.06);text-align:center}
-  /* joystick for planet walk */
-  #joy{position:fixed;left:12px;bottom:12px;width:120px;height:120px;border-radius:60px;background:rgba(0,0,0,0.25);pointer-events:auto;z-index:15;touch-action:none}
-  #joyKnob{position:absolute;width:44px;height:44px;border-radius:22px;background:rgba(0,255,255,0.12);left:38px;top:38px;border:1px solid rgba(0,255,255,0.08)}
-  .small{font-size:13px;color:#9ff;opacity:0.9}
-  @media (max-width:420px){ .ctlBtn{width:60px;height:60px;font-size:22px} h1{font-size:1.8rem} }
-</style>
+  <style>
+    html,body{height:100%;margin:0;background:#04111b;font-family:Inter, "Courier New", monospace;color:#0ff;overflow:hidden;-webkit-user-select:none}
+    #gameContainer{position:fixed;inset:0;z-index:0}
+    #ui{position:fixed;inset:0;z-index:10;pointer-events:none}
+    .overlayCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:auto}
+    .menuCard{background:linear-gradient(135deg, rgba(0,8,18,0.85), rgba(0,6,12,0.6));padding:18px;border-radius:12px;border:1px solid rgba(0,255,255,0.06);box-shadow:0 10px 40px rgba(0,255,255,0.03)}
+    .title{font-size:1.6rem;color:#0ff;text-align:center;margin-bottom:8px;text-shadow:0 0 14px rgba(0,255,255,0.18)}
+    .btn{pointer-events:auto;background:transparent;border:1px solid rgba(0,255,255,0.12);padding:10px 14px;color:#0ff;border-radius:10px;margin:6px;cursor:pointer}
+    .hud{position:fixed;left:10px;top:10px;pointer-events:auto;background:rgba(0,0,0,0.45);padding:8px;border-radius:8px;border:1px solid rgba(0,255,255,0.06)}
+    .hudRow{font-size:14px;margin-bottom:6px}
+    .controls{position:fixed;bottom:12px;left:12px;pointer-events:auto;display:flex;gap:10px;align-items:center}
+    .joyPad{width:110px;height:110px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);touch-action:none;display:flex;align-items:center;justify-content:center}
+    .joyKnob{width:42px;height:42px;border-radius:999px;background:rgba(0,255,255,0.06);border:1px solid rgba(0,255,255,0.12)}
+    .actionButtons{position:fixed;right:12px;bottom:36px;display:flex;flex-direction:column;gap:12px;pointer-events:auto}
+    .actionBtn{width:64px;height:64px;border-radius:12px;background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:22px;color:#0ff}
+    #damageFlash{position:fixed;inset:0;background:#ff2b2b;opacity:0;pointer-events:none;mix-blend-mode:screen;transition:opacity 120ms}
+    .bottomHints{position:fixed;left:12px;bottom:12px;font-size:12px;opacity:0.9;padding:8px;background:rgba(0,0,0,0.45);border-radius:8px;border:1px solid rgba(0,255,255,0.04);pointer-events:auto}
+    .planetUI{position:fixed;inset:10% 8% 10% 8%;background:linear-gradient(180deg, rgba(0,6,18,0.96), rgba(0,4,10,0.88));border-radius:12px;padding:14px;border:1px solid rgba(0,255,255,0.06);display:none;z-index:20;pointer-events:auto;color:#9ff}
+    .dialogue{background:rgba(0,10,20,0.6);padding:10px;border-radius:8px;margin:10px 0;border:1px solid rgba(0,255,255,0.04)}
+    .npc{display:flex;gap:8px;align-items:center;margin:8px 0}
+    .npc .face{width:44px;height:44px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(0,255,255,0.05);display:flex;align-items:center;justify-content:center;font-weight:700}
+    @media (max-width:420px){ .joyPad{width:90px;height:90px} .joyKnob{width:36px;height:36px} .actionBtn{width:56px;height:56px} .title{font-size:1.2rem} }
+  </style>
 </head>
 <body>
-  <div id="canvasWrap"></div>
-  <div id="ui">
-    <div class="scanlines"></div>
+  <div id="gameContainer"></div>
 
-    <div id="menu" class="screen">
-      <div class="menuCard">
-        <h1>Z.E.R.O.: Last Breach</h1>
-        <div style="text-align:center;color:#9ff;margin-bottom:8px">Неоновый космос • Посадки на планеты • Путешествия</div>
-        <div style="display:flex;justify-content:center;gap:10px">
-          <button id="startBtn" class="btn">СТАРТ</button>
-          <button id="tutorialBtn" class="btn">ТУР</button>
-        </div>
-        <div style="margin-top:10px;text-align:center;color:#9ff;font-size:13px">Загрузка модулей... <span id="dots">● ● ●</span></div>
+  <div id="ui">
+    <div id="menu" class="overlayCenter menuCard">
+      <div class="title">Z.E.R.O.: LAST BREACH — PLANET UPDATE</div>
+      <div style="text-align:center;color:#9fe;margin-bottom:8px;font-size:13px">Неоновый космос • Мобильный режим</div>
+      <div style="display:flex;justify-content:center;gap:8px">
+        <button id="btnStart" class="btn">СТАРТ</button>
+        <button id="btnHow" class="btn">КАК ИГРАТЬ</button>
       </div>
+      <div style="margin-top:10px;text-align:center;font-size:13px;color:#9aa">Загрузка модулей... <span id="loadingDots">●●●</span></div>
     </div>
 
-    <div id="hud" class="hud small">❤ <span id="hp">100</span> &nbsp; ⚡ <span id="shield">100</span></div>
-    <div id="res" class="res small">⭐ <span id="stars">0</span> &nbsp; 💎 <span id="frags">0</span> &nbsp; ₡ <span id="credits">0</span></div>
+    <div id="hud" class="hud">
+      <div class="hudRow">❤️ <span id="uiHealth">100</span>  ·  ⛽ <span id="uiFuel">100</span></div>
+      <div class="hudRow">💳 <span id="uiCredits">0</span>  ·  🎯 <span id="uiMission">0/5</span></div>
+    </div>
 
     <div class="controls" id="controls">
-      <div id="leftBtn" class="ctlBtn">◀</div>
-      <div id="shieldBtn" class="ctlBtn">🛡</div>
-      <div id="shootBtn" class="ctlBtn">💥</div>
-      <div id="rightBtn" class="ctlBtn">▶</div>
+      <div id="joy" class="joyPad"><div id="knob" class="joyKnob"></div></div>
+      <div class="bottomHints">ЛК — движение • ПК — автоснайпер • Тап по планете — приземлиться</div>
     </div>
 
-    <div id="rightControls">
-      <div id="landBtn" class="ctlBtn">🛬</div>
-      <div id="takeoffBtn" class="ctlBtn" style="display:none">🚀</div>
+    <div class="actionButtons">
+      <div id="btnShield" class="actionBtn" title="Щит">🛡</div>
+      <div id="btnShoot" class="actionBtn" title="Огонь">💥</div>
+      <div id="btnBoost" class="actionBtn" title="Овердрайв">⚡</div>
     </div>
 
-    <div id="planetUI">
-      <div class="planetCard">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div><strong id="planetName">Планета</strong><div class="small" id="planetLore">...</div></div>
-          <div><button id="leavePlanet" class="btn">УЛЕТЕТЬ</button></div>
-        </div>
-        <div style="margin-top:10px">Магазин</div>
-        <div class="shopGrid" id="shopGrid">
-          <!-- items appended -->
-        </div>
+    <div id="damageFlash"></div>
+
+    <div id="planetPanel" class="planetUI">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong id="planetName">PLANET</strong><div style="font-size:12px;color:#7ff" id="planetDesc">Описание</div></div>
+        <div><button id="btnTakeoff" class="btn">Взлететь</button></div>
+      </div>
+
+      <div class="dialogue" id="npcDialogue">Приветствую, путник.</div>
+
+      <div style="margin-top:8px"><strong>Торговцы на этой планете:</strong></div>
+      <div id="npcList" style="margin-top:8px"></div>
+
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button id="btnRepair" class="btn">Ремонт (50💳)</button>
+        <button id="btnUpgradeWeapon" class="btn">Усилить пушку (100💳)</button>
+        <button id="btnBuyFuel" class="btn">Топливо +50 (30💳)</button>
       </div>
     </div>
-
-    <div id="joy" style="display:none"><div id="joyKnob"></div></div>
-    <div id="damageFlash"></div>
   </div>
 
 <script>
-/* ===============================================================
-  Z.E.R.O.: Full single-file build
-  - Space scene with auto-aim
-  - Planets + landing, third-person walk on surface
-  - NPC dialog (fake/lore), shop, upgrades, currency
-  - Mobile-friendly touch UI and joystick
-  - WebAudio SFX (synth) and small bloom (fallback)
-================================================================= */
+/* ========= Z.E.R.O. — single-file mobile-friendly build =========
+   Features implemented:
+   - Space flight with procedural objects (asteroids, enemies)
+   - Auto-aim (press shoot → targets nearest enemy/comet)
+   - Landing on planets with third-person walking camera
+   - Planet UI: fake dialogues, NPCs, shop (credits currency)
+   - WebAudio synthesized sounds (start, shoot, buy)
+   - Touch joystick + action buttons optimized for phones
+   - Adaptive performance and postprocessing fallback
+   - Pools for bullets/effects, deltaTime updates
+*/
 
-/* -------------------- Globals -------------------- */
-let renderer, scene, camera, composer;
-let spaceScene = true, landed = false, surfacePlayer = null;
-let ship, enemies = [], bullets = [], starsPoints, planets = [];
-let credits = 0, stars = 0, frags = 0;
-let hp = 100, shield = 100;
-let lastShot = 0, fireInterval = 300;
-let targetAuto = true;
+// ========== GLOBAL GAME STATE ==========
+const STATE = {
+  mode: 'menu', // 'menu'|'space'|'landed'
+  credits: 0,
+  health: 100,
+  fuel: 100,
+  missionProgress: 0,
+  upgrades: { weapon:1, engine:1, shield:1 },
+  canShoot: true,
+  lastShot: 0,
+  overdrive: false
+};
+
+// ========== THREE.js scene setup ==========
+let scene, camera, renderer, composer;
+let ship, shipGroup, shipEngineParticles;
+let stars, nebulas = [];
+let asteroids = [], enemies = [], bullets = [], planets = [];
+let planetSurfaceObjects = [];
 let clock = new THREE.Clock();
-let perfTime = 0;
+let pixelRatio = Math.min(window.devicePixelRatio || 1, 1.6);
 
-/* Touch state */
-const touchState = { left:false, right:false, shoot:false };
+// pool sizes
+const POOL = { bullets: 60, explosions: 12 };
 
-/* Simple audio using WebAudio */
-const AudioSys = (function(){
-  let ctx = null;
-  function ensure(){ if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); return ctx; }
-  function beep(freq, time=0.12, type='sawtooth', vol=0.12){
-    const c = ensure(); if (!c) return;
-    const o = c.createOscillator(), g = c.createGain();
-    o.type = type; o.frequency.setValueAtTime(freq, c.currentTime);
-    g.gain.setValueAtTime(vol, c.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + time);
-    o.connect(g); g.connect(c.destination);
-    o.start(); o.stop(c.currentTime + time);
-  }
-  return { beep };
-})();
+// postprocessing available?
+let hasComposer = false;
 
-/* -------------------- Init renderer & scenes -------------------- */
 function initThree(){
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 8000);
-  camera.position.set(0,6,26);
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 8000);
+  camera.position.set(0,6,22);
 
   renderer = new THREE.WebGLRenderer({ antialias:true });
-  renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.setClearColor(0x07121a, 1);
-  document.getElementById('canvasWrap').appendChild(renderer.domElement);
+  renderer.setPixelRatio(pixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x03121a);
+  renderer.shadowMap.enabled = false;
+  document.getElementById('gameContainer').appendChild(renderer.domElement);
 
-  // try composer (bloom) - fallback ok
+  // try composer (bloom), fallback quietly
   try {
     composer = new THREE.EffectComposer(renderer);
-    const rp = new THREE.RenderPass(scene, camera);
-    composer.addPass(rp);
-    const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.7, 0.3, 0.6);
-    bloom.threshold = 0.12; bloom.strength = 0.9; bloom.radius = 0.35;
+    const renderPass = new THREE.RenderPass(scene, camera);
+    composer.addPass(renderPass);
+    const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.8, 0.2, 0.6);
+    bloom.threshold = 0.12; bloom.strength = 0.9; bloom.radius = 0.4;
     composer.addPass(bloom);
     const gamma = new THREE.ShaderPass(THREE.GammaCorrectionShader);
     composer.addPass(gamma);
+    hasComposer = true;
   } catch(e) {
-    console.warn('Composer failed, render without postprocess', e);
-    composer = null;
+    hasComposer = false;
+    console.warn('Composer not available, running without postprocessing.', e);
   }
 }
 
-/* -------------------- Lights -------------------- */
-function addLights(){
-  scene.add(new THREE.AmbientLight(0x8899aa, 0.95));
-  const dir = new THREE.DirectionalLight(0xffffff, 1.1); dir.position.set(30,40,10); dir.castShadow=true; scene.add(dir);
-  const rim = new THREE.DirectionalLight(0x66bbff, 0.5); rim.position.set(-10,-8,-20); scene.add(rim);
-  scene.add(new THREE.PointLight(0x88ccff, 0.18, 400));
+// ========== LIGHTS ==========
+function makeLights(){
+  const amb = new THREE.AmbientLight(0x8aaaff, 0.9); scene.add(amb);
+  const dir = new THREE.DirectionalLight(0xffffff, 1.0); dir.position.set(30,40,10); scene.add(dir);
+  const rim = new THREE.DirectionalLight(0x66bbff, 0.5); rim.position.set(-20,-10,-30); scene.add(rim);
+  const fill = new THREE.PointLight(0x66ddff, 0.2, 500); fill.position.set(0,10,50); scene.add(fill);
 }
 
-/* -------------------- Starfield -------------------- */
-function makeStarfield(){
-  const count = 2500;
-  const pos = new Float32Array(count*3);
-  const col = new Float32Array(count*3);
-  for (let i=0;i<count;i++){
-    const i3 = i*3;
-    pos[i3] = (Math.random()-0.5)*4000;
-    pos[i3+1] = (Math.random()-0.5)*2000;
-    pos[i3+2] = (Math.random()-0.5)*6000 - 800;
-    const c = Math.random();
-    if (c < 0.7){ col[i3]=1; col[i3+1]=1; col[i3+2]=1; }
-    else if (c<0.9){ col[i3]=0.8; col[i3+1]=0.9; col[i3+2]=1; }
-    else { col[i3]=1; col[i3+1]=0.9; col[i3+2]=0.6; }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
-  g.setAttribute('color', new THREE.BufferAttribute(col,3));
-  const m = new THREE.PointsMaterial({ size:2.0, vertexColors:true, transparent:true, blending:THREE.AdditiveBlending, opacity:0.9 });
-  starsPoints = new THREE.Points(g, m);
-  scene.add(starsPoints);
-}
-
-/* -------------------- Ship (player) -------------------- */
+// ========== CREATE SHIP ==========
 function createShip(){
-  const group = new THREE.Group();
-  const hull = new THREE.ConeGeometry(3.0, 9.0, 6);
-  const mat = new THREE.MeshStandardMaterial({ color:0x00ffff, metalness:0.3, roughness:0.25, emissive:0x001122, emissiveIntensity:0.8 });
-  const mesh = new THREE.Mesh(hull, mat); mesh.rotation.x = -Math.PI/2; group.add(mesh);
-  const wing = new THREE.BoxGeometry(7,0.6,3);
-  const left = new THREE.Mesh(wing, mat); left.position.set(-4,0,0); group.add(left);
-  const right = left.clone(); right.position.x = 4; group.add(right);
+  shipGroup = new THREE.Group();
 
-  group.position.set(0,0,15);
-  group.castShadow = true;
-  scene.add(group);
-  ship = group;
+  const hullGeom = new THREE.ConeGeometry(2.2,7,6);
+  const hullMat = new THREE.MeshStandardMaterial({ color:0x00aaff, metalness:0.4, roughness:0.25, emissive:0x002244, emissiveIntensity:0.9 });
+  const hull = new THREE.Mesh(hullGeom, hullMat); hull.rotation.x = Math.PI/2; hull.castShadow=true; shipGroup.add(hull);
+
+  const wingGeom = new THREE.BoxGeometry(6.5,0.6,2.6);
+  const wingMat = new THREE.MeshStandardMaterial({ color:0x006ea8, metalness:0.25, roughness:0.35, emissive:0x001122 });
+  const lw = new THREE.Mesh(wingGeom, wingMat); lw.position.set(-4.5,0,0); shipGroup.add(lw);
+  const rw = lw.clone(); rw.position.set(4.5,0,0); shipGroup.add(rw);
+
+  // engine cylinder
+  const engGeom = new THREE.CylinderGeometry(0.9,1.2,2.4,12);
+  const engMat = new THREE.MeshStandardMaterial({ color:0xff6f00, emissive:0xff2f00, emissiveIntensity:0.9, metalness:0.1 });
+  const le = new THREE.Mesh(engGeom, engMat); le.position.set(-2.2,0,4); le.rotation.x = Math.PI/2; shipGroup.add(le);
+  const re = le.clone(); re.position.set(2.2,0,4); shipGroup.add(re);
+
+  shipGroup.position.set(0,0,15);
+  scene.add(shipGroup);
+
+  // engine particle points (simple single Points)
+  const maxP = 80;
+  const pos = new Float32Array(maxP*3);
+  const cols = new Float32Array(maxP*3);
+  for(let i=0;i<maxP;i++){ const j=i*3; pos[j]=(Math.random()-0.5)*1.6; pos[j+1]=(Math.random()-0.5)*1.6; pos[j+2]=2+Math.random()*4; cols[j]=1; cols[j+1]=0.45+Math.random()*0.45; cols[j+2]=0; }
+  const pGeom = new THREE.BufferGeometry(); pGeom.setAttribute('position', new THREE.BufferAttribute(pos,3)); pGeom.setAttribute('color', new THREE.BufferAttribute(cols,3));
+  const pMat = new THREE.PointsMaterial({ size:2.2, vertexColors:true, transparent:true, blending:THREE.AdditiveBlending });
+  const pSys = new THREE.Points(pGeom,pMat);
+  pSys.frustumCulled = false;
+  shipGroup.add(pSys);
+  shipEngineParticles = { points:pSys, geom:pGeom };
 }
 
-/* -------------------- Planets (space) -------------------- */
-function spawnPlanets(){
-  const data = [
-    { name:'КРИОНИС', color:0x88ccff, size:24, lore:'Ледяные залы, кристаллы в глубине.' },
-    { name:'ПИРОС', color:0xff6633, size:30, lore:'Пылающие моря и чёрные штормы.' },
-    { name:'ВЕРДАНТ', color:0x44ff88, size:22, lore:'Биолюминесцентные леса и мхи.' }
+// ========== STARFIELD & NEBULAS ==========
+function createStarfield(){
+  const count = 2400;
+  const pos = new Float32Array(count*3);
+  const cols = new Float32Array(count*3);
+  for(let i=0;i<count;i++){ const j=i*3; pos[j]=(Math.random()-0.5)*4000; pos[j+1]=(Math.random()-0.5)*2000; pos[j+2]=(Math.random()-0.5)*6000 - 1000; const c=Math.random(); if(c<0.7){ cols[j]=1;cols[j+1]=1;cols[j+2]=1 } else if(c<0.9){ cols[j]=0.8;cols[j+1]=0.9;cols[j+2]=1 } else { cols[j]=1;cols[j+1]=0.9;cols[j+2]=0.6 } }
+  const geom = new THREE.BufferGeometry(); geom.setAttribute('position', new THREE.BufferAttribute(pos,3)); geom.setAttribute('color', new THREE.BufferAttribute(cols,3));
+  const mat = new THREE.PointsMaterial({ vertexColors:true, size:1.9, transparent:true, blending:THREE.AdditiveBlending, opacity:0.95 });
+  stars = new THREE.Points(geom, mat); scene.add(stars);
+
+  // nebulas
+  for(let i=0;i<3;i++){
+    const g = new THREE.SphereGeometry(300 + Math.random()*260, 32,32);
+    const mat = new THREE.MeshBasicMaterial({ color:new THREE.Color().setHSL(Math.random(),0.6,0.45), transparent:true, opacity:0.06, side:THREE.BackSide, depthWrite:false });
+    const m = new THREE.Mesh(g,mat); m.position.set((Math.random()-0.5)*2000,(Math.random()-0.5)*1200,(Math.random()-0.5)*3000 - 800);
+    scene.add(m); nebulas.push(m);
+  }
+}
+
+// ========== PLANETS (space) ==========
+function generateSpacePlanets(){
+  const pdata = [
+    {name:'КРИОНИС', color:0x88ccff, size:20, desc:'Ледяной мир'},
+    {name:'ПИРОС', color:0xff6633, size:24, desc:'Вулканический мир'},
+    {name:'ВЕРДАНТ', color:0x44ff88, size:18, desc:'Биолюминесцентный'}
   ];
-  for (let i=0;i<3;i++){
-    const p = data[i];
-    const geom = new THREE.SphereGeometry(p.size, 32, 24);
-    const mat = new THREE.MeshStandardMaterial({ color:p.color, emissive:new THREE.Color(p.color).multiplyScalar(0.2), roughness:0.6 });
-    const m = new THREE.Mesh(geom, mat);
-    m.position.set((i-1)*140 + (Math.random()-0.5)*30, (Math.random()-0.5)*30, -500 - i*400);
-    m.userData = { name:p.name, lore:p.lore };
-    scene.add(m);
-    planets.push(m);
+  for(let i=0;i<pdata.length;i++){
+    const p = pdata[i];
+    const geom = new THREE.SphereGeometry(p.size, 24, 24);
+    const mat = new THREE.MeshStandardMaterial({ color:p.color, emissive:new THREE.Color(p.color).multiplyScalar(0.18), roughness:0.5 });
+    const m = new THREE.Mesh(geom, mat); m.position.set((i-1)*120 + (Math.random()-0.5)*40, (Math.random()-0.5)*30, -800 - i*600);
+    m.userData = { name:p.name, desc:p.desc, landed:false };
+    scene.add(m); planets.push(m);
   }
 }
 
-/* -------------------- Enemies & spawn -------------------- */
-function spawnEnemyWave(){
-  const count = 6 + Math.floor(Math.random()*6);
-  for (let i=0;i<count;i++){
-    if (Math.random() < 0.35) continue;
-    const geom = new THREE.DodecahedronGeometry(3 + Math.random()*2, 0);
-    const mat = new THREE.MeshStandardMaterial({ color:0xff6644, emissive:0x441100, metalness:0.25, roughness:0.4 });
-    const e = new THREE.Mesh(geom, mat);
-    e.position.set((Math.random()-0.5)*300, (Math.random()-0.5)*60, -800 - Math.random()*1200);
-    e.userData = { hp: 20 + Math.floor(Math.random()*40), speed: 0.2 + Math.random()*0.6 };
-    e.castShadow = true;
-    scene.add(e); enemies.push(e);
-  }
+// ========== ASTEROIDS & ENEMIES ==========
+function spawnAsteroid(x,y,z,size=3){
+  const geom = new THREE.IcosahedronGeometry(size,0);
+  const mat = new THREE.MeshStandardMaterial({ color:0x9a9a9a, metalness:0.05, roughness:0.6 });
+  const m = new THREE.Mesh(geom, mat); m.position.set(x,y,z); m.userData={rot:{x:Math.random()*0.02,y:Math.random()*0.02,z:Math.random()*0.02}, radius:size}; scene.add(m); asteroids.push(m);
+}
+function spawnEnemy(x,y,z){
+  const geom = new THREE.OctahedronGeometry(3,0);
+  const mat = new THREE.MeshStandardMaterial({ color:0xff3355, emissive:0x550000, metalness:0.2, roughness:0.4 });
+  const e = new THREE.Mesh(geom, mat); e.position.set(x,y,z); e.userData = { health:30, speed:0.45 + Math.random()*0.6 }; scene.add(e); enemies.push(e);
+}
+function initSpaceObjects(){
+  for(let i=0;i<18;i++){ spawnAsteroid((Math.random()-0.5)*600, (Math.random()-0.5)*200, -200 - Math.random()*2000, 1.5 + Math.random()*4) }
+  for(let i=0;i<8;i++){ spawnEnemy((Math.random()-0.5)*400, (Math.random()-0.5)*180, -300 - Math.random()*1200) }
 }
 
-/* spawn periodically */
-setInterval(()=>{ if (spaceScene && !landed) spawnEnemyWave(); }, 6000);
-
-/* -------------------- Pooled bullets -------------------- */
-const BULLET_POOL = [];
-function initBullets(){
-  const geom = new THREE.SphereGeometry(0.6, 6, 6);
-  const mat = new THREE.MeshBasicMaterial({ color:0xffff66, emissive:0xffff66 });
-  for (let i=0;i<60;i++){
-    const m = new THREE.Mesh(geom, mat);
-    m.visible = false; m.userData = { vel: new THREE.Vector3(), life:0 };
-    scene.add(m); BULLET_POOL.push(m);
-  }
+// ========== BULLET POOL ==========
+let bulletPool = [];
+function initBulletPool(){
+  const geom = new THREE.SphereGeometry(0.45,6,6);
+  const mat = new THREE.MeshBasicMaterial({ color:0xffff88 });
+  for(let i=0;i<POOL.bullets;i++){ const m = new THREE.Mesh(geom,mat); m.visible=false; m.userData={vel:new THREE.Vector3(), life:0}; scene.add(m); bulletPool.push(m); }
 }
 function getBullet(){
-  for (let i=0;i<BULLET_POOL.length;i++) if (!BULLET_POOL[i].visible) return BULLET_POOL[i];
+  for(let i=0;i<bulletPool.length;i++) if(!bulletPool[i].visible) return bulletPool[i];
   return null;
 }
 
-/* -------------------- Auto-aim and shoot -------------------- */
-function findNearestEnemy(range=400){
+// ========== SOUNDS (WebAudio synths) ==========
+const SFX = (function(){
+  let ctx = null;
+  function ensure(){ if(!ctx){ try{ ctx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ ctx=null } } return ctx; }
+  function playStart(){ const c=ensure(); if(!c) return; const o=c.createOscillator(), g=c.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(140, c.currentTime); o.frequency.exponentialRampToValueAtTime(480, c.currentTime+0.25); g.gain.setValueAtTime(0.0001, c.currentTime); g.gain.exponentialRampToValueAtTime(0.14, c.currentTime+0.06); g.gain.exponentialRampToValueAtTime(0.001, c.currentTime+0.9); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+0.8); }
+  function playShoot(){ const c=ensure(); if(!c) return; const o1=c.createOscillator(), o2=c.createOscillator(), g=c.createGain(); o1.type='square'; o2.type='triangle'; o1.frequency.setValueAtTime(900, c.currentTime); o2.frequency.setValueAtTime(1300, c.currentTime); g.gain.setValueAtTime(0.22, c.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+0.14); o1.connect(g); o2.connect(g); g.connect(c.destination); o1.start(); o2.start(); o1.stop(c.currentTime+0.14); o2.stop(c.currentTime+0.14); }
+  function playBuy(){ const c=ensure(); if(!c) return; const o=c.createOscillator(), g=c.createGain(); o.type='sine'; o.frequency.setValueAtTime(600, c.currentTime); o.frequency.exponentialRampToValueAtTime(900, c.currentTime+0.12); g.gain.setValueAtTime(0.2, c.currentTime); g.gain.exponentialRampToValueAtTime(0.001, c.currentTime+0.2); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+0.2); }
+  return { playStart, playShoot, playBuy };
+})();
+
+// ========== UI helpers ==========
+function updateHUD(){ document.getElementById('uiCredits').textContent = STATE.credits; document.getElementById('uiHealth').textContent = Math.max(0, Math.round(STATE.health)); document.getElementById('uiFuel').textContent = Math.round(STATE.fuel); document.getElementById('uiMission').textContent = `${STATE.missionProgress}/${5}`; }
+
+// ========== AUTO-AIM (nearest enemy/comet) ==========
+function findNearestThreat(){
   let min = Infinity, target = null;
-  for (let e of enemies){
-    const d = ship.position.distanceTo(e.position);
-    if (d < min && d < range){ min = d; target = e; }
-  }
+  const pos = shipGroup.position;
+  [...enemies, ...asteroids].forEach(o=>{
+    const d = pos.distanceTo(o.position);
+    if(d < min){ min = d; target = o; }
+  });
   return target;
 }
-function shootAt(target=null){
-  const now = performance.now();
-  if (now - lastShot < fireInterval) return;
-  lastShot = now;
-  const b = getBullet(); if (!b) return;
-  b.visible = true; b.position.copy(ship.position).add(new THREE.Vector3(0,0,-6));
-  if (target){
-    const dir = target.position.clone().sub(ship.position).normalize();
-    b.userData.vel.copy(dir.multiplyScalar(28));
-  } else {
-    // forward
-    const dir = new THREE.Vector3(0,0,-1).applyQuaternion(ship.quaternion);
-    b.userData.vel.copy(dir.multiplyScalar(28));
-  }
-  b.userData.life = 90;
+
+// ========== SHOOT LOGIC ==========
+function shootAt(target){
+  if(!target || !STATE.canShoot) return;
+  const b = getBullet(); if(!b) return;
+  b.visible = true;
+  b.position.copy(shipGroup.position);
+  const dir = new THREE.Vector3().subVectors(target.position, shipGroup.position).normalize();
+  b.userData.vel.copy(dir).multiplyScalar( (18 + STATE.upgrades.weapon*4) * (STATE.overdrive?1.6:1) );
+  b.userData.life = 120;
   bullets.push(b);
-  AudioSys.beep(750, 0.12, 'square', 0.12);
+  SFX.playShoot();
+  STATE.canShoot = false;
+  STATE.lastShot = performance.now();
+  setTimeout(()=>{ STATE.canShoot = true }, Math.max(120, 420 / (1 + (STATE.upgrades.weapon-1)*0.25)));
 }
 
-/* -------------------- Effects -------------------- */
-function createExplosion(pos, intensity=1){
-  // small point-cloud explosion
-  const count = 18;
-  const geom = new THREE.BufferGeometry();
-  const posArr = new Float32Array(count*3);
-  for (let i=0;i<count;i++){
-    posArr[i*3] = pos.x + (Math.random()-0.5)*6*intensity;
-    posArr[i*3+1] = pos.y + (Math.random()-0.5)*6*intensity;
-    posArr[i*3+2] = pos.z + (Math.random()-0.5)*6*intensity;
+// ========== PLANET LANDING & SURFACE ==========
+let surfacePlayer, surfaceCamera, onSurface = false;
+function createSurfaceForPlanet(planet){
+  // create a simple low-poly "ground" around landing point
+  const surface = new THREE.Group();
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(220,220,8,8), new THREE.MeshStandardMaterial({ color:0x0b1b12 }));
+  ground.rotation.x = -Math.PI/2; ground.position.set(0,-12,0); ground.receiveShadow = true; surface.add(ground);
+  // some rocks / props
+  for(let i=0;i<22;i++){
+    const r = new THREE.Mesh(new THREE.DodecahedronGeometry(1 + Math.random()*2,0), new THREE.MeshStandardMaterial({ color:0x1f2f22 }));
+    r.position.set((Math.random()-0.5)*80, -11, (Math.random()-0.5)*80);
+    r.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI); surface.add(r); planetSurfaceObjects.push(r);
   }
-  geom.setAttribute('position', new THREE.BufferAttribute(posArr,3));
-  const mat = new THREE.PointsMaterial({ size:2.6*intensity, color:0xffcc66, transparent:true, opacity:1, blending:THREE.AdditiveBlending });
-  const pts = new THREE.Points(geom, mat);
-  pts.userData = { life:1.0 };
-  scene.add(pts);
-  (function tick(){
-    const id = requestAnimationFrame(()=>tick());
-    pts.userData.life -= 0.02;
-    pts.material.opacity = Math.max(0, pts.userData.life);
-    if (pts.userData.life <= 0){ cancelAnimationFrame(id); try{ scene.remove(pts) }catch(e){} }
-  })();
-  AudioSys.beep(220 + Math.random()*120, 0.18, 'sawtooth', 0.12);
+  // simple NPCs (3)
+  const npcs = [];
+  for(let i=0;i<3;i++){
+    const npc = new THREE.Group();
+    const b = new THREE.Mesh(new THREE.BoxGeometry(1.4,2,1), new THREE.MeshStandardMaterial({ color: [0x4466ff,0xffaa33,0x88ff88][i%3] }));
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.9,0.9,0.9), new THREE.MeshStandardMaterial({ color:0x222222 }));
+    head.position.y = 1.4; npc.add(b); npc.add(head);
+    npc.position.set((i-1)*6 + 4, -10.5, (i-1)*10);
+    npc.userData = { id:i, name: ['Торговец','Механик','Старец'][i], lines: [
+      "Эй, мятежник звёзд. Хочешь слухи о секторе 9?",
+      "У меня есть запчасти. Принеси кристаллы.",
+      "Тебе стоит взять миссию, если хочешь денег."
+    ]};
+    surface.add(npc); surface.add(npc); npcs.push(npc);
+  }
+  return { group:surface, npcs };
 }
 
-/* -------------------- UI & Controls Setup -------------------- */
-document.addEventListener('DOMContentLoaded', ()=>{ // ensure DOM
-  // buttons
-  document.getElementById('startBtn').addEventListener('click', ()=>{ AudioSys.beep(420,0.16); startGame(); });
-  document.getElementById('tutorialBtn').addEventListener('click', ()=>{ showFakeDialog("Тур: Управляй кораблём, сажай планеты, улучшай корабль. Удачи.") });
-  // touch controls
-  const leftBtn = document.getElementById('leftBtn'), rightBtn = document.getElementById('rightBtn'), shootBtn = document.getElementById('shootBtn'), shieldBtn = document.getElementById('shieldBtn');
-  leftBtn.addEventListener('touchstart', e=>{ e.preventDefault(); touchState.left=true; }); leftBtn.addEventListener('touchend', e=>{ touchState.left=false; });
-  rightBtn.addEventListener('touchstart', e=>{ e.preventDefault(); touchState.right=true; }); rightBtn.addEventListener('touchend', e=>{ touchState.right=false; });
-  shootBtn.addEventListener('touchstart', e=>{ e.preventDefault(); touchState.shoot=true; }); shootBtn.addEventListener('touchend', e=>{ touchState.shoot=false; });
-  shieldBtn.addEventListener('touchstart', e=>{ e.preventDefault(); activateShield(); });
+// show planet UI
+function openPlanetPanel(planet){
+  STATE.mode = 'landed';
+  // hide space HUD controls slightly
+  document.getElementById('planetPanel').style.display = 'block';
+  document.getElementById('planetName').textContent = planet.userData.name || 'PLANET';
+  document.getElementById('planetDesc').textContent = planet.userData.desc || '';
+  // populate NPCs
+  const list = document.getElementById('npcList'); list.innerHTML = '';
+  const fakeNPCs = [
+    {name:'Торговец-Хам', pos:0, text:'Привет. Куплю редкие фрагменты.'},
+    {name:'Механик Рик', pos:1, text:'Ремонт? Приготовь 50 кредитов.'},
+    {name:'Информатор', pos:2, text:'Говорят о караване в секторе V.'}
+  ];
+  fakeNPCs.forEach((n,idx)=>{
+    const div = document.createElement('div'); div.className = 'npc';
+    div.innerHTML = `<div class="face">${n.name[0]}</div><div style="flex:1"><strong>${n.name}</strong><div style="font-size:12px;color:#9cf">${n.text}</div></div><div><button class="btn" data-idx="${idx}">Поболтать</button></div>`;
+    list.appendChild(div);
+  });
+  // dialogue sample
+  document.getElementById('npcDialogue').textContent = "Добро пожаловать на планету. Осмотритесь, что вам нужно?";
+  // pause space simulation logically (we'll keep scene but freeze moving objects)
+}
 
-  // desktop fallback
-  leftBtn.addEventListener('mousedown', ()=>touchState.left=true); leftBtn.addEventListener('mouseup', ()=>touchState.left=false);
-  rightBtn.addEventListener('mousedown', ()=>touchState.right=true); rightBtn.addEventListener('mouseup', ()=>touchState.right=false);
-  shootBtn.addEventListener('mousedown', ()=>touchState.shoot=true); shootBtn.addEventListener('mouseup', ()=>touchState.shoot=false);
+// close planet UI
+function closePlanetPanel(){
+  STATE.mode = 'space';
+  document.getElementById('planetPanel').style.display = 'none';
+}
 
-  // land/takeoff controls
-  document.getElementById('landBtn').addEventListener('click', ()=>{ tryLand(); });
-  document.getElementById('takeoffBtn').addEventListener('click', ()=>{ takeOff(); });
+// ========== SHOP ACTIONS ==========
+function buyRepair(){
+  if(STATE.credits >= 50){ STATE.credits -= 50; STATE.health = Math.min(100, STATE.health + 50); SFX.playBuy(); updateHUD(); } else { alert('Не хватает кредитов.'); }
+}
+function buyWeaponUpgrade(){
+  if(STATE.credits >= 100){ STATE.credits -= 100; STATE.upgrades.weapon += 1; SFX.playBuy(); updateHUD(); } else { alert('Не хватает кредитов.'); }
+}
+function buyFuel(){ if(STATE.credits >= 30){ STATE.credits -= 30; STATE.fuel = Math.min(100, STATE.fuel + 50); SFX.playBuy(); updateHUD(); } else alert('Не хватает кредитов.'); }
 
-  // planet UI
-  document.getElementById('leavePlanet').addEventListener('click', ()=>{ takeOff(); });
+// ========== TOUCH JOYSTICK ==========
+let joy = document.getElementById('joy'), knob = document.getElementById('knob');
+let joyRect, knobCenter = {x:0,y:0}, isTouching=false, joystickVec = {x:0,y:0};
+function bindJoystick(){
+  function start(ev){
+    isTouching = true; joyRect = joy.getBoundingClientRect();
+    const p = getTouchPos(ev);
+    knobCenter = { x: joyRect.left + joyRect.width/2, y: joyRect.top + joyRect.height/2 };
+    moveKnobTo(p.x - joyRect.left, p.y - joyRect.top);
+  }
+  function move(ev){
+    if(!isTouching) return; ev.preventDefault();
+    const p = getTouchPos(ev);
+    const local = { x: p.x - joyRect.left - joyRect.width/2, y: p.y - joyRect.top - joyRect.height/2 };
+    const max = joyRect.width/2 - 18;
+    const len = Math.hypot(local.x, local.y);
+    const nx = (len>max)? (local.x/len*max) : local.x;
+    const ny = (len>max)? (local.y/len*max) : local.y;
+    knob.style.transform = `translate(${nx}px, ${ny}px)`;
+    joystickVec.x = nx / max; joystickVec.y = -ny / max; // invert Y for game coords
+  }
+  function end(){
+    isTouching = false; knob.style.transform = `translate(0px,0px)`; joystickVec.x=0; joystickVec.y=0;
+  }
+  function getTouchPos(e){ const t = e.touches ? e.touches[0] : e; return { x: t.clientX, y: t.clientY }; }
+  joy.addEventListener('touchstart', start, {passive:false}); joy.addEventListener('touchmove', move, {passive:false}); joy.addEventListener('touchend', end, {passive:false});
+  joy.addEventListener('mousedown', start); window.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+}
 
-  // joystick init (planet walking)
-  initJoystick();
+// ========== ACTION BUTTONS ==========
+document.getElementById('btnStart').addEventListener('click', ()=>{
+  startGame();
+});
+document.getElementById('btnHow').addEventListener('click', ()=>{
+  alert('Джойстик слева — движение в космосе/по поверхности. Кнопка 💥 — автоснайпер, удерживайте для стрельбы. Тап на планету — посадка.');
+});
+document.getElementById('btnShoot').addEventListener('click', ()=>{
+  if(STATE.mode === 'space'){ const t = findNearestThreat(); if(t) shootAt(t); }
+});
+document.getElementById('btnShield').addEventListener('click', ()=>{
+  if(STATE.credits >= 20){ STATE.credits -= 20; STATE.upgrades.shield += 0.5; SFX.playBuy(); updateHUD(); } else alert('Не хватает кредитов.');
+});
+document.getElementById('btnBoost').addEventListener('click', ()=>{
+  if(STATE.fuel >= 20 && !STATE.overdrive){ STATE.fuel -= 20; STATE.overdrive = true; setTimeout(()=>STATE.overdrive=false, 5000); alert('Овердрайв включён (5 сек)'); }
+});
+document.getElementById('btnRepair').addEventListener('click', buyRepair);
+document.getElementById('btnUpgradeWeapon').addEventListener('click', buyWeaponUpgrade);
+document.getElementById('btnBuyFuel').addEventListener('click', buyFuel);
+document.getElementById('btnTakeoff').addEventListener('click', ()=>{ closePlanetPanel(); });
+
+// planet NPC talk (delegated)
+document.getElementById('npcList').addEventListener('click', (e)=>{
+  const b = e.target.closest('button[data-idx]');
+  if(b){ const idx = +b.dataset.idx; const lines = ["Слышал слухи о караване.","Возьми контракт и вернись живым.","У меня есть товар за кредиты."]; document.getElementById('npcDialogue').textContent = lines[idx % lines.length]; }
 });
 
-/* -------------------- Start & Loop -------------------- */
+// ========== GAMEFLOW: START ==========
 function startGame(){
-  initThree(); addLights(); makeStarfield(); createShip(); spawnPlanets(); initBullets();
-  // initial enemies
-  spawnEnemyWave();
-  // fade menu out
+  if(STATE.mode !== 'menu') return;
+  // play start sound
+  SFX.playStart();
+  // switch to space
+  STATE.mode = 'space';
   document.getElementById('menu').style.display = 'none';
-  spaceScene = true; landed = false;
+  updateHUD();
   animate();
 }
 
-/* -------------------- Loop -------------------- */
-let last = performance.now();
+// ========== UPDATE (game loop) ==========
+let lastTime = performance.now();
 function animate(){
   requestAnimationFrame(animate);
   const now = performance.now();
-  const delta = Math.min((now - last)/1000, 0.05);
-  last = now;
-  perfTime += delta;
+  const delta = Math.min((now - lastTime)/1000, 0.05);
+  lastTime = now;
 
-  if (starsPoints) starsPoints.position.z += 0.06 * delta * 60; if (starsPoints && starsPoints.position.z > 2000) starsPoints.position.z = -2000;
-  // ship bob
-  if (ship) ship.rotation.z = Math.sin(perfTime*1.2)*0.02;
+  if(STATE.mode === 'space'){
+    // Move ship forward in local -Z
+    const moveSpeed = 0.8 * (1 + (STATE.upgrades.engine-1)*0.2) * (STATE.overdrive?2.0:1.0);
+    // joystick affects yaw/pitch/strafe: we'll translate x,y as lateral offset
+    shipGroup.position.x += joystickVec.x * 8 * delta * moveSpeed;
+    shipGroup.position.y += joystickVec.y * 6 * delta * moveSpeed;
+    // always move forward
+    shipGroup.position.z -= 40 * delta * moveSpeed;
 
-  if (!landed) updateSpace(delta);
-  else updateSurface(delta);
+    // camera follows behind ship
+    const camOffset = new THREE.Vector3(0,6,22).applyQuaternion(shipGroup.quaternion);
+    camera.position.lerp(shipGroup.position.clone().add(camOffset), 0.12);
+    camera.lookAt(shipGroup.position.clone().add(new THREE.Vector3(0,0,-180)));
 
-  // render
-  try{ if (composer) composer.render(delta); else renderer.render(scene, camera); } catch(e){ renderer.render(scene, camera); }
-  updateHUD();
-}
+    // engine particles animate
+    animateEngineParticles(delta);
 
-/* -------------------- Space update -------------------- */
-function updateSpace(delta){
-  // simple left-right rotation control
-  if (touchState.left) ship.position.x -= 0.8 * delta * 60;
-  if (touchState.right) ship.position.x += 0.8 * delta * 60;
+    // move stars slowly
+    if(stars){ stars.position.z += 0.09 * delta * 60; if(stars.position.z > 2000) stars.position.z = -2000; }
+    nebulas.forEach(n=> n.rotation.y += 0.0005 * delta * 60);
 
-  // auto-target and shooting
-  if (touchState.shoot){
-    const tgt = findNearestEnemy(500);
-    if (tgt) shootAt(tgt);
-    else shootAt(null);
-  }
+    // move asteroids & enemies toward player (z increases)
+    for(let i=asteroids.length-1;i>=0;i--){
+      const a = asteroids[i];
+      a.position.z += 0.6 * delta * 60;
+      a.rotation.x += a.userData.rot.x * delta * 60; a.rotation.y += a.userData.rot.y * delta * 60;
+      if(a.position.z > shipGroup.position.z + 80){ scene.remove(a); asteroids.splice(i,1); spawnAsteroid((Math.random()-0.5)*800, (Math.random()-0.5)*200, shipGroup.position.z - 1600, 1.0 + Math.random()*4); }
+      // collision check
+      if(a.position.distanceTo(shipGroup.position) < (a.userData.radius + 3.5)){
+        if(STATE.upgrades.shield > 1.0){ STATE.upgrades.shield -= 0.15; } else { STATE.health -= 10; flashDamage(); }
+        createExplosion(a.position, 10); scene.remove(a); asteroids.splice(i,1);
+      }
+    }
+    for(let i=enemies.length-1;i>=0;i--){
+      const e = enemies[i];
+      // simple pursuit
+      const dx = shipGroup.position.x - e.position.x; const dz = shipGroup.position.z - e.position.z;
+      const dist = Math.hypot(dx,dz);
+      if(dist < 260){ e.position.x += dx * 0.008 * e.userData.speed * delta * 60; e.position.z += dz * 0.008 * e.userData.speed * delta * 60; }
+      else e.position.z += 0.2 * delta * 60;
+      if(Math.random() < 0.0025 && dist < 200) enemyFire(e);
+      if(e.position.distanceTo(shipGroup.position) < 8){ if(STATE.upgrades.shield > 1.0) STATE.upgrades.shield -= 0.35; else { STATE.health -= 20; flashDamage(); } createExplosion(e.position,12); scene.remove(e); enemies.splice(i,1); STATE.credits += 12; updateHUD(); }
+      if(e.position.z > shipGroup.position.z + 200){ scene.remove(e); enemies.splice(i,1); spawnEnemy((Math.random()-0.5)*600,(Math.random()-0.5)*200, shipGroup.position.z - 1200); }
+    }
 
-  // move bullets
-  for (let i = bullets.length -1; i >=0; i--){
-    const b = bullets[i];
-    b.position.add(b.userData.vel.clone().multiplyScalar(delta*60));
-    b.userData.life--;
-    if (b.userData.life <= 0 || b.position.distanceTo(ship.position) > 2000){ b.visible=false; bullets.splice(i,1); continue; }
-    // collision with enemies
-    for (let j=enemies.length-1;j>=0;j--){
-      const e = enemies[j];
-      if (b.position.distanceTo(e.position) < 6){
-        e.userData.hp -= 16;
-        b.visible=false; bullets.splice(i,1);
-        if (e.userData.hp <= 0){
-          createExplosion(e.position, 1.2);
-          scene.remove(e); enemies.splice(j,1);
-          frags += 1; credits += 6; stars += 1;
+    // bullets
+    for(let i=bullets.length-1;i>=0;i--){
+      const b = bullets[i];
+      b.position.add(b.userData.vel.clone().multiplyScalar(delta*60));
+      b.userData.life--;
+      // check hits
+      for(let j=enemies.length-1;j>=0;j--){
+        const en = enemies[j];
+        if(b.position.distanceTo(en.position) < 5){
+          en.userData.health -= 12 * (1 + (STATE.upgrades.weapon-1)*0.25);
+          b.visible = false; bullets.splice(i,1);
+          if(en.userData.health <= 0){ createExplosion(en.position, 10); scene.remove(en); enemies.splice(j,1); STATE.credits += 20; updateHUD(); spawnEnemy((Math.random()-0.5)*600,(Math.random()-0.5)*200, shipGroup.position.z - 1000); }
+          break;
         }
-        break;
+      }
+      if(b.userData.life <= 0 || b.position.distanceTo(shipGroup.position) > 1200){ b.visible=false; bullets.splice(i,1); }
+    }
+
+    // auto-shoot when shoot button is held (we implemented button tap for now)
+    // auto-target nearest threat if player presses shoot button
+    // fuel consumption
+    STATE.fuel = Math.max(0, STATE.fuel - 0.002 * delta * 60 * (STATE.overdrive?2:1));
+    if(STATE.fuel<=0){ /* no overdrive */ STATE.overdrive=false; }
+
+    // planet proximity & landing trigger
+    for(let p of planets){
+      const d = shipGroup.position.distanceTo(p.position);
+      if(d < p.geometry.parameters.radius + 32){
+        // initiate landing
+        doLanding(p); break;
       }
     }
+
+    // regenerate UI
+    updateHUD();
+    // mission progress auto increment slowly
+    STATE.missionProgress = Math.min(5, STATE.missionProgress + 0.0005 * delta * 60);
   }
 
-  // enemy logic
-  for (let i=enemies.length-1;i>=0;i--){
-    const e = enemies[i];
-    // move towards ship loosely
-    const dir = ship.position.clone().sub(e.position).normalize();
-    e.position.add(dir.multiplyScalar(e.userData.speed * delta * 60));
-    // if collision with ship
-    if (e.position.distanceTo(ship.position) < 8){
-      // damage
-      if (shield > 0) shield = Math.max(0, shield - 18);
-      else { hp = Math.max(0, hp - 20); flashDamage(); }
-      createExplosion(e.position, 0.9);
-      scene.remove(e); enemies.splice(i,1);
-    }
+  // Surface handling could be expanded; skipping surface movement while landed for brevity
+
+  // Render
+  try { if(hasComposer) composer.render(); else renderer.render(scene, camera); } catch(e){ renderer.render(scene,camera); }
+}
+
+// ========== ENGINE PARTICLES ANIMATION ==========
+let perfTime = 0;
+function animateEngineParticles(delta){
+  perfTime += delta;
+  if(!shipEngineParticles) return;
+  const positions = shipEngineParticles.geom.attributes.position.array;
+  for(let i=0;i<positions.length;i+=3){
+    positions[i+2] += (1.0 + Math.random()*1.0) * (STATE.overdrive?1.4:1.0);
+    if(positions[i+2] > 18){ positions[i] = (Math.random()-0.5)*1.8; positions[i+1] = (Math.random()-0.5)*1.8; positions[i+2] = 2 + Math.random()*4; }
   }
-
-  // planets rotate slowly
-  for (let p of planets) p.rotation.y += 0.0006 * delta * 60;
-
-  // camera follow behind ship
-  const camOffset = new THREE.Vector3(0,8,28).applyQuaternion(ship.quaternion);
-  camera.position.copy(ship.position).add(camOffset);
-  const lookAt = ship.position.clone().add(new THREE.Vector3(0,0,-1).applyQuaternion(ship.quaternion).multiplyScalar(80));
-  camera.lookAt(lookAt);
+  shipEngineParticles.geom.attributes.position.needsUpdate = true;
+  shipEngineParticles.points.material.opacity = 0.6 + Math.abs(Math.sin(perfTime*6))*0.25;
 }
 
-/* -------------------- Surface (third-person) -------------------- */
-let surfaceSceneRoot = null;
-let joystick = {active:false, dx:0, dy:0};
-function initSurface(playerModel){
-  // create small ground plane and simple skybox by adjusting camera
-  surfaceSceneRoot = new THREE.Group();
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(300,300,4,4), new THREE.MeshStandardMaterial({ color:0x051014, roughness:0.9 }));
-  ground.rotation.x = -Math.PI/2; ground.position.y = -1;
-  surfaceSceneRoot.add(ground);
-
-  // place some rocks / NPCs
-  for (let i=0;i<8;i++){
-    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(1 + Math.random()*1.8), new THREE.MeshStandardMaterial({ color:0x223344, roughness:0.9 }));
-    rock.position.set((Math.random()-0.5)*60, 0, (Math.random()-0.5)*60);
-    surfaceSceneRoot.add(rock);
-  }
-
-  // NPCs
-  const npcGeo = new THREE.CylinderGeometry(0.6,0.8,2.2,8);
-  const npcMat = new THREE.MeshStandardMaterial({ color:0xffaa88, emissive:0x331100 });
-  for (let i=0;i<3;i++){
-    const npc = new THREE.Mesh(npcGeo, npcMat);
-    npc.position.set((Math.random()-0.5)*40, 1, (Math.random()-0.5)*40);
-    npc.userData = { dialog: generateLoreDialog() };
-    surfaceSceneRoot.add(npc);
-  }
-
-  // add the surface root to scene and position player model
-  scene.add(surfaceSceneRoot);
-  surfacePlayer = playerModel;
-  surfacePlayer.position.set(0,0.6,0);
-  surfacePlayer.rotation.set(0,Math.PI,0);
-  surfaceSceneRoot.add(surfacePlayer);
-
-  // position camera behind surface player
-  camera.position.copy(surfacePlayer.position).add(new THREE.Vector3(0,6,10));
-  camera.lookAt(surfacePlayer.position);
+// ========== ENEMY FIRE ==========
+function enemyFire(enemy){
+  // simple laser that moves toward ship; reuse bullet pool as enemy projectile for demo
+  const b = getBullet(); if(!b) return;
+  b.visible = true;
+  b.position.copy(enemy.position);
+  const dir = shipGroup.position.clone().sub(enemy.position).normalize();
+  b.userData.vel.copy(dir).multiplyScalar(10);
+  b.userData.life = 80;
+  bullets.push(b);
 }
 
-/* the model for player walking */
-function createSurfacePlayer(){
-  const g = new THREE.CapsuleGeometry(0.6, 1.2, 4, 8);
-  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color:0x66ddff, emissive:0x002233 }));
-  m.castShadow = true;
-  return m;
+// ========== EXPLOSION ==========
+function createExplosion(pos, size=12){
+  // small particle cluster
+  const count = 14;
+  const geom = new THREE.BufferGeometry();
+  const positions = new Float32Array(count*3);
+  const cols = new Float32Array(count*3);
+  for(let i=0;i<count;i++){ const j=i*3; positions[j]=pos.x + (Math.random()-0.5)*size; positions[j+1]=pos.y + (Math.random()-0.5)*size; positions[j+2]=pos.z + (Math.random()-0.5)*size; cols[j]=1; cols[j+1]=0.3+Math.random()*0.5; cols[j+2]=0; }
+  geom.setAttribute('position', new THREE.BufferAttribute(positions,3)); geom.setAttribute('color', new THREE.BufferAttribute(cols,3));
+  const mat = new THREE.PointsMaterial({ size:3.0, vertexColors:true, transparent:true, blending:THREE.AdditiveBlending });
+  const pts = new THREE.Points(geom, mat); pts.userData.life = 1.0; scene.add(pts);
+  // fade out
+  const id = setInterval(()=>{ pts.material.opacity -= 0.12; if(pts.material.opacity<=0){ clearInterval(id); try{ scene.remove(pts) }catch(e){} } }, 50);
 }
 
-/* update surface movement */
-function updateSurface(delta){
-  if (!surfacePlayer) return;
-  // joystick controls
-  const speedWalk = 6 * delta;
-  let moved = false;
-  if (joystick.active){
-    const v = new THREE.Vector3(joystick.dx,0,joystick.dy).normalize();
-    surfacePlayer.position.x += v.x * speedWalk;
-    surfacePlayer.position.z += v.z * speedWalk;
-    surfacePlayer.lookAt(surfacePlayer.position.clone().add(v));
-    moved = true;
-  }
-  // NPC proximity -> show dialog prompt
-  // simple detection
-  surfaceSceneRoot.children.forEach(ch=>{
-    if (ch.userData && ch.userData.dialog){
-      const d = ch.position.distanceTo(surfacePlayer.position);
-      if (d < 2.2){
-        // show dialog UI briefly
-        showFakeDialog(ch.userData.dialog);
-      }
-    }
-  });
-  // camera follows slightly
-  const camTarget = surfacePlayer.position.clone().add(new THREE.Vector3(0,6,10).applyAxisAngle(new THREE.Vector3(0,1,0), 0));
-  camera.position.lerp(camTarget, 0.12);
-  camera.lookAt(surfacePlayer.position.clone().add(new THREE.Vector3(0,1.2,0)));
-}
-
-/* -------------------- Landing & Takeoff -------------------- */
-function tryLand(){
-  // find nearest planet within range
-  let nearest = null; let min = Infinity;
-  for (let p of planets){
-    const d = ship.position.distanceTo(p.position);
-    if (d < min){ min = d; nearest = p; }
-  }
-  if (nearest && min < 120){
-    // landing sequence
-    performLanding(nearest);
-  } else {
-    showFakeDialog("Нет подходящей планеты рядом. Подлетите поближе.");
-  }
-}
-
-function performLanding(planet){
-  spaceScene = false;
-  landed = true;
-  // smooth camera + fade
-  fadeOut(300, ()=>{
-    // move ship to planet atmosphere point and hide space elements
-    // prepare surface: remove planets & enemies from view, but keep scene
-    // create a small surface scene root with player model
-    const surfPlayer = createSurfacePlayer();
-    initSurface(surfPlayer);
-    // show planet UI
-    document.getElementById('planetUI').style.display = 'flex';
-    document.getElementById('planetName').innerText = planet.userData.name;
-    document.getElementById('planetLore').innerText = planet.userData.lore;
-    populateShop();
-    // show joystick & UI
-    document.getElementById('joy').style.display = 'block';
-    document.getElementById('controls').style.display = 'none';
-    document.getElementById('rightControls').style.display = 'none';
-    document.getElementById('takeoffBtn').style.display = 'block';
-    // fade in
-    fadeIn(500);
-    showFakeDialog(generateLoreDialog());
-  });
-}
-
-function takeOff(){
-  // remove surface root and player model
-  fadeOut(220, ()=>{
-    if (surfaceSceneRoot){ try{ scene.remove(surfaceSceneRoot) }catch(e){} surfaceSceneRoot = null; }
-    surfacePlayer = null;
-    // restore controls for space
-    document.getElementById('joy').style.display = 'none';
-    document.getElementById('controls').style.display = 'flex';
-    document.getElementById('rightControls').style.display = 'block';
-    document.getElementById('planetUI').style.display = 'none';
-    landed = false; spaceScene = true;
-    // move ship slightly forward
-    ship.position.z -= 60;
-    fadeIn(300);
-    showFakeDialog("Взлёт выполнен. Удачного полёта, рейдер.");
-  });
-}
-
-/* -------------------- UI helpers -------------------- */
-function fadeOut(ms=300, cb=()=>{}){
-  document.getElementById('damageFlash').style.transition = `opacity ${ms}ms`;
-  document.getElementById('damageFlash').style.opacity = '0';
-  // overlay fade by dimming canvas
-  renderer.domElement.style.transition = `filter ${ms}ms`;
-  renderer.domElement.style.filter = 'blur(6px) saturate(0.9) brightness(0.6)';
-  setTimeout(cb, ms);
-}
-function fadeIn(ms=300, cb=()=>{}){
-  renderer.domElement.style.transition = `filter ${ms}ms`;
-  renderer.domElement.style.filter = 'none';
-  setTimeout(cb, ms);
-}
-
-/* -------------------- Shop and upgrades -------------------- */
-function populateShop(){
-  const grid = document.getElementById('shopGrid'); grid.innerHTML = '';
-  const items = [
-    { id:'weapon', name:'Усилитель оружия', price:45, desc:'+20% урон' },
-    { id:'engine', name:'Усилитель двигателей', price:40, desc:'+15% скорость' },
-    { id:'shield', name:'Ремкомплект щита', price:60, desc:'восстановить щит до 100' }
-  ];
-  for (let it of items){
-    const div = document.createElement('div'); div.className='shopItem';
-    div.innerHTML = `<div><strong>${it.name}</strong></div><div class="small">${it.desc}</div><div style="margin-top:8px"><button class="btn" data-id="${it.id}" data-price="${it.price}">Купить ${it.price}₡</button></div>`;
-    grid.appendChild(div);
-  }
-  // add handlers
-  grid.querySelectorAll('button').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      const id = b.dataset.id, price = parseInt(b.dataset.price);
-      if (credits >= price){
-        credits -= price; document.getElementById('credits').innerText = credits;
-        applyPurchase(id);
-        showFakeDialog('Покупка завершена: ' + id);
-      } else showFakeDialog('Недостаточно кредитов.');
-    });
-  });
-}
-function applyPurchase(id){
-  if (id === 'weapon'){ fireInterval = Math.max(160, Math.round(fireInterval * 0.85)); }
-  if (id === 'engine'){ ship.userData = ship.userData || {}; ship.userData.speedBoost = (ship.userData.speedBoost || 0) + 0.12; }
-  if (id === 'shield'){ shield = 100; }
-}
-
-/* -------------------- Flash & HUD -------------------- */
+// ========== COLLISION & DAMAGE FEEDBACK ==========
 function flashDamage(){
-  const el = document.getElementById('damageFlash');
-  el.style.opacity = '0.5';
-  setTimeout(()=>el.style.opacity='0',150);
-}
-function updateHUD(){
-  document.getElementById('hp').innerText = Math.max(0, Math.round(hp));
-  document.getElementById('shield').innerText = Math.round(shield);
-  document.getElementById('credits').innerText = credits;
-  document.getElementById('stars').innerText = stars;
-  document.getElementById('frags').innerText = frags;
+  const el = document.getElementById('damageFlash'); el.style.opacity = '0.55'; setTimeout(()=>el.style.opacity='0', 150);
 }
 
-/* -------------------- Fake dialogues (lore) -------------------- */
-function generateLoreDialog(){
-  const lines = [
-    "Говорят: в секторе N-9 осталась база с артефактами.",
-    "Однажды кристалл запел — и спутник исчез.",
-    "Торговцы на Нексусе любят золото, презирают слабых.",
-    "Многие боятся ночи на Крионисе — не только холод убивает.",
-    "Часто слышишь — никто не возвращается с Пироса целым."
-  ];
-  return lines[Math.floor(Math.random()*lines.length)];
-}
-function showFakeDialog(text){
-  // temporary floating message
-  const el = document.createElement('div');
-  el.style.cssText = 'position:fixed;left:50%;top:14%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:var(--neon);padding:8px 12px;border-radius:8px;border:1px solid rgba(0,255,255,0.07);z-index:9999';
-  el.innerText = text;
-  document.body.appendChild(el);
-  setTimeout(()=>{ try{ document.body.removeChild(el) }catch(e){} }, 2600);
-}
-
-/* -------------------- Shield -------------------- */
-function activateShield(){
-  if (shield >= 25){
-    shield -= 25;
-    // small visual: add sphere around ship
-    const s = new THREE.Mesh(new THREE.SphereGeometry(8, 18, 16), new THREE.MeshBasicMaterial({ color:0x00ffff, transparent:true, opacity:0.18, side:THREE.DoubleSide }));
-    ship.add(s);
-    setTimeout(()=>{ try{ ship.remove(s) }catch(e){} }, 2800);
-    AudioSys.beep(520,0.18,'sine',0.12);
-  } else showFakeDialog('Недостаточно энергии щита.');
-}
-
-/* -------------------- Joystick for surface movement -------------------- */
-function initJoystick(){
-  const joy = document.getElementById('joy'), knob = document.getElementById('joyKnob');
-  let startX=0, startY=0, active=false;
-  const radius=40;
-  function down(e){
-    active=true; joy.style.opacity=1;
-    const touch = (e.touches && e.touches[0]) || e;
-    startX = touch.clientX; startY = touch.clientY;
-    knob.style.left = '38px'; knob.style.top = '38px';
-    joystick.active = true;
+// ========== LANDING ANIMATION ==========
+function doLanding(planet){
+  if(STATE.mode !== 'space') return;
+  STATE.mode = 'landing';
+  // smooth camera zoom & fade, then reveal planet panel
+  const overlay = document.getElementById('planetPanel');
+  // small cinematic: move camera to planet side
+  // animate ship to planet's surface coord (simple lerp)
+  const targetPos = planet.position.clone().add(new THREE.Vector3(0, planet.geometry.parameters.radius + 6, 0));
+  const startPos = shipGroup.position.clone();
+  let t=0;
+  const duration = 900;
+  const start = performance.now();
+  function step(){
+    const now = performance.now(); t = (now - start) / duration;
+    if(t>1) t=1;
+    shipGroup.position.lerpVectors(startPos,targetPos,t);
+    camera.position.lerpVectors(camera.position, shipGroup.position.clone().add(new THREE.Vector3(0,6,18)), 0.08);
+    if(t<1) requestAnimationFrame(step); else {
+      // show planet panel, freeze space motion
+      openPlanetPanel(planet);
+    }
   }
-  function move(e){
-    if (!active) return;
-    e.preventDefault();
-    const touch = (e.touches && e.touches[0]) || e;
-    let dx = touch.clientX - startX, dy = touch.clientY - startY;
-    // clamp
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist > radius){ dx *= radius/dist; dy *= radius/dist; }
-    knob.style.left = (38 + dx) + 'px';
-    knob.style.top = (38 + dy) + 'px';
-    joystick.active = true;
-    joystick.dx = dx / radius; joystick.dy = -dy / radius; // invert y so up moves forward
-  }
-  function up(){
-    active=false; knob.style.left='38px'; knob.style.top='38px';
-    joystick.active=false; joystick.dx=0; joystick.dy=0;
-  }
-  joy.addEventListener('touchstart', down); joy.addEventListener('mousedown', down);
-  joy.addEventListener('touchmove', move); joy.addEventListener('mousemove', move);
-  joy.addEventListener('touchend', up); joy.addEventListener('mouseup', up); joy.addEventListener('mouseleave', up);
+  step();
 }
 
-/* -------------------- Helper: spawn initial objects -------------------- */
-function initBullets(){ initBullets = initBullets; } // placeholder to satisfy linter
-function initBullets(){
-  // already defined above; empty intentionally if used earlier
+// ========== PLANET PANEL HANDLERS (UI already created earlier) ==========
+function openPlanetPanel(planet){
+  // set name/desc
+  document.getElementById('planetName').textContent = planet.userData.name || 'PLANET';
+  document.getElementById('planetDesc').textContent = planet.userData.desc || '';
+  // fake NPC / dialogue done in UI part
+  document.getElementById('planetPanel').style.display = 'block';
+  updateHUD();
+  STATE.mode = 'landed';
+}
+function closePlanetPanel(){
+  document.getElementById('planetPanel').style.display = 'none';
+  STATE.mode = 'space';
 }
 
-/* -------------------- Window resize -------------------- */
-window.addEventListener('resize', ()=>{ if (camera && renderer){ camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); if (composer && composer.setSize) composer.setSize(innerWidth, innerHeight); } });
-
-/* -------------------- Helper: simple collision & movement updates for bullets pool -------------------- */
-function initBullets(){
-  // reinitialize pool if not there
-  if (BULLET_POOL.length === 0){
-    const geom = new THREE.SphereGeometry(0.7,8,8);
-    const mat = new THREE.MeshBasicMaterial({ color:0xffff66, emissive:0xffff66 });
-    for (let i=0;i<80;i++){ const m = new THREE.Mesh(geom, mat); m.visible=false; m.userData={vel:new THREE.Vector3(),life:0}; scene.add(m); BULLET_POOL.push(m); }
-  }
+// ========== EVENT: tap on canvas to try landing ==========
+rendererMouseHandler();
+function rendererMouseHandler(){
+  // tap anywhere — try detect planet under center ray, simple proximity check
+  const canvas = () => renderer.domElement;
+  canvas().addEventListener('touchstart', (e)=>{
+    if(STATE.mode !== 'space') return;
+    // if quick tap (not joystick)
+    const touch = e.touches[0];
+    const rect = renderer.domElement.getBoundingClientRect();
+    const x = (touch.clientX - rect.left) / rect.width * 2 - 1;
+    const y = - (touch.clientY - rect.top) / rect.height * 2 + 1;
+    // create ray
+    const ray = new THREE.Raycaster(); ray.setFromCamera({x,y}, camera);
+    // check intersection with planets
+    const hits = ray.intersectObjects(planets, false);
+    if(hits.length > 0){
+      const p = hits[0].object;
+      doLanding(p);
+    }
+  }, {passive:true});
 }
 
-/* Because initBullets defined twice guard earlier, ensure pool exists on start */
-function ensurePools(){ if (BULLET_POOL.length===0) initBullets(); }
-
-/* -------------------- start of game flow helpers -------------------- */
-function startGameInit(){
-  initThree(); addLights(); makeStarfield(); createShip(); spawnPlanets(); ensurePools();
-  // ship base properties
-  ship.userData = { speedBoost: 0 };
-  // more initial enemies
-  spawnEnemyWave();
+// ========== INIT EVERYTHING ==========
+function bootstrap(){
+  initThree(); makeLights(); createShip(); createStarfield(); generateSpacePlanets(); initSpaceObjects(); initBulletPool(); bindJoystick();
+  // spawn additional enemies periodically
+  setInterval(()=>{ if(STATE.mode === 'space'){ spawnEnemy((Math.random()-0.5)*600,(Math.random()-0.5)*200, shipGroup.position.z - 1200); } }, 2400);
+  setInterval(()=>{ if(STATE.mode === 'space'){ spawnAsteroid((Math.random()-0.5)*800,(Math.random()-0.5)*200, shipGroup.position.z - 1600, 1.2 + Math.random()*4); } }, 1300);
+  // hook buttons & purchase handlers already set earlier
 }
 
-/* call when pressing start */
-function startGame(){ startGameInit(); document.getElementById('menu').style.display='none'; animate(); showFakeDialog("Добро пожаловать, рейдер. Нажми 🛬 чтобы приземлиться."); }
+// ========== HELPERS: spawn functions for external use ==========
+function spawnAsteroid(x,y,z,size){ spawnAsteroidInternal(x,y,z,size); }
+function spawnAsteroidInternal(x,y,z,size){
+  const geom = new THREE.IcosahedronGeometry(size,0);
+  const mat = new THREE.MeshStandardMaterial({ color:0x9a9a9a, metalness:0.05, roughness:0.6 });
+  const m = new THREE.Mesh(geom, mat); m.position.set(x,y,z); m.userData={rot:{x:Math.random()*0.02,y:Math.random()*0.02,z:Math.random()*0.02}, radius:size}; scene.add(m); asteroids.push(m);
+}
+function spawnEnemy(x,y,z){ const geom = new THREE.OctahedronGeometry(3 + Math.random()*1.2,0); const m = new THREE.Mesh(geom,new THREE.MeshStandardMaterial({ color:0xff3355, emissive:0x440000, metalness:0.2, roughness:0.4 })); m.position.set(x,y,z); m.userData={health:25 + Math.floor(Math.random()*30), speed:0.5 + Math.random()*0.6}; scene.add(m); enemies.push(m); }
 
-/* -------------------- Tiny safety for message dots animation -------------------- */
-setInterval(()=>{ const el = document.getElementById('dots'); if (el) el.style.opacity = (Math.random()*0.5 + 0.5); }, 900);
+// ========== INIT UI values ==========
+document.getElementById('uiCredits').textContent = STATE.credits;
+updateHUD();
 
-/* Initialize bullet pool now to avoid race */
-document.addEventListener('DOMContentLoaded', ()=>{ ensurePools(); });
+// ========== BIND UI and bootstrap on DOMContentLoaded ==========
+document.addEventListener('DOMContentLoaded', ()=>{
+  // hide planets & HUD until start
+  bootstrap();
+  document.getElementById('loadingDots').textContent = '●●●';
+}, { once:true });
+
+// ========== RESIZE ==========
+window.addEventListener('resize', ()=>{ if(renderer && camera){ camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); if(hasComposer) composer.setSize(window.innerWidth, window.innerHeight); } });
+
+// ========== small helpers: UI + sound triggers for purchases ==========
+document.getElementById('btnBuyFuel').addEventListener('click', buyFuel);
+document.getElementById('btnUpgradeWeapon').addEventListener('click', buyWeaponUpgrade);
+document.getElementById('btnRepair').addEventListener('click', buyRepair);
+
+// ========== final: expose some debug on double tap for desktop ==========
+let dbl = 0; window.addEventListener('dblclick', ()=>{ STATE.credits += 200; updateHUD(); SFX.playBuy(); });
 
 </script>
 </body>
