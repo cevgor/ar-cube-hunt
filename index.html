@@ -1,2434 +1,2029 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-  <title>Z.E.R.O. — UNIFIED PLANET SYSTEM</title>
-  <!-- Three.js r128 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <!-- Postprocessing -->
-  <script src="https://threejs.org/examples/js/postprocessing/EffectComposer.js"></script>
-  <script src="https://threejs.org/examples/js/postprocessing/RenderPass.js"></script>
-  <script src="https://threejs.org/examples/js/postprocessing/UnrealBloomPass.js"></script>
-  <script src="https://threejs.org/examples/js/postprocessing/ShaderPass.js"></script>
-  <script src="https://threejs.org/examples/js/shaders/CopyShader.js"></script>
-  <script src="https://threejs.org/examples/js/shaders/GammaCorrectionShader.js"></script>
-  <style>
-    :root {
-      --neon: #00ffff;
-      --bg: #04111b;
-      --glass: rgba(0, 0, 0, 0.45);
-    }
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: var(--bg);
-      font-family: Inter, "Courier New", monospace;
-      color: var(--neon);
-      overflow: hidden;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    #gameContainer {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-    }
-    #ui {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      pointer-events: none;
-    }
-    .overlayCenter {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: auto;
-    }
-    .menuCard {
-      background: linear-gradient(135deg, rgba(0,8,18,0.85), rgba(0,6,12,0.6));
-      padding: 18px;
-      border-radius: 12px;
-      border: 1px solid rgba(0,255,255,0.06);
-      box-shadow: 0 10px 40px rgba(0,255,255,0.03);
-    }
-    .title {
-      font-size: 1.6rem;
-      color: var(--neon);
-      text-align: center;
-      margin-bottom: 8px;
-      text-shadow: 0 0 14px rgba(0,255,255,0.18);
-    }
-    .btn {
-      pointer-events: auto;
-      background: transparent;
-      border: 1px solid rgba(0,255,255,0.12);
-      padding: 10px 14px;
-      color: var(--neon);
-      border-radius: 10px;
-      margin: 6px;
-      cursor: pointer;
-    }
-    .hud {
-      position: fixed;
-      left: 10px;
-      top: 10px;
-      pointer-events: auto;
-      background: var(--glass);
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid rgba(0,255,255,0.06);
-    }
-    .hudRow {
-      font-size: 14px;
-      margin-bottom: 6px;
-    }
-    /* Space Controls */
-    #spaceControls {
-      position: fixed;
-      bottom: 12px;
-      left: 12px;
-      pointer-events: auto;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    .joyPad {
-      width: 110px;
-      height: 110px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.03);
-      touch-action: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .joyKnob {
-      width: 42px;
-      height: 42px;
-      border-radius: 999px;
-      background: rgba(0,255,255,0.06);
-      border: 1px solid rgba(0,255,255,0.12);
-    }
-    .spaceActionButtons {
-      position: fixed;
-      right: 12px;
-      bottom: 36px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      pointer-events: auto;
-    }
-    .actionBtn {
-      width: 64px;
-      height: 64px;
-      border-radius: 12px;
-      background: rgba(0,255,255,0.04);
-      border: 1px solid rgba(0,255,255,0.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      color: var(--neon);
-    }
-    /* Surface Controls */
-    #surfaceControls {
-      position: fixed;
-      bottom: 12px;
-      left: 12px;
-      pointer-events: auto;
-      display: none;
-      gap: 10px;
-      align-items: center;
-    }
-    #surfaceJoy {
-      width: 120px;
-      height: 120px;
-      border-radius: 60px;
-      background: rgba(0,0,0,0.25);
-      pointer-events: auto;
-      touch-action: none;
-      position: relative;
-    }
-    #surfaceKnob {
-      position: absolute;
-      width: 44px;
-      height: 44px;
-      border-radius: 22px;
-      background: rgba(0,255,255,0.12);
-      left: 38px;
-      top: 38px;
-      border: 1px solid rgba(0,255,255,0.08);
-    }
-    .surfaceActionButtons {
-      position: fixed;
-      right: 12px;
-      bottom: 36px;
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      pointer-events: auto;
-    }
-    #damageFlash {
-      position: fixed;
-      inset: 0;
-      background: #ff2b2b;
-      opacity: 0;
-      pointer-events: none;
-      mix-blend-mode: screen;
-      transition: opacity 120ms;
-    }
-    .bottomHints {
-      position: fixed;
-      left: 12px;
-      bottom: 12px;
-      font-size: 12px;
-      opacity: 0.9;
-      padding: 8px;
-      background: var(--glass);
-      border-radius: 8px;
-      border: 1px solid rgba(0,255,255,0.04);
-      pointer-events: auto;
-    }
-    .planetUI {
-      position: fixed;
-      inset: 10% 8% 10% 8%;
-      background: linear-gradient(180deg, rgba(0,6,18,0.96), rgba(0,4,10,0.88));
-      border-radius: 12px;
-      padding: 14px;
-      border: 1px solid rgba(0,255,255,0.06);
-      display: none;
-      z-index: 20;
-      pointer-events: auto;
-      color: #9ff;
-    }
-    .dialogue {
-      background: rgba(0,10,20,0.6);
-      padding: 10px;
-      border-radius: 8px;
-      margin: 10px 0;
-      border: 1px solid rgba(0,255,255,0.04);
-    }
-    .npc {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin: 8px 0;
-    }
-    .npc .face {
-      width: 44px;
-      height: 44px;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(0,255,255,0.05);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-    }
-    .shopGrid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .shopItem {
-      background: rgba(0,0,0,0.45);
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid rgba(0,255,255,0.06);
-      text-align: center;
-    }
-    .small {
-      font-size: 13px;
-      color: #9ff;
-      opacity: 0.9;
-    }
-    .scanlines {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background: repeating-linear-gradient(to bottom, rgba(255,255,255,0) 0px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0) 3px);
-      opacity: 0.18;
-      mix-blend-mode: overlay;
-    }
-    .landingIndicator {
-      position: fixed;
-      left: 50%;
-      bottom: 80px;
-      transform: translateX(-50%);
-      background: rgba(0, 40, 60, 0.8);
-      padding: 12px 20px;
-      border-radius: 20px;
-      border: 1px solid rgba(0,255,255,0.2);
-      font-size: 16px;
-      color: #00ffff;
-      transition: all 0.3s ease;
-      opacity: 0;
-      pointer-events: none;
-    }
-    .landingIndicator.active {
-      opacity: 1;
-      transform: translateX(-50%) scale(1.05);
-    }
-    @media (max-width:420px) {
-      .joyPad, #surfaceJoy { width: 90px; height: 90px; }
-      .joyKnob, #surfaceKnob { width: 36px; height: 36px; }
-      .actionBtn { width: 56px; height: 56px; }
-      .title { font-size: 1.2rem; }
-      .landingIndicator {
-        font-size: 14px;
-        padding: 8px 16px;
-        bottom: 60px;
-      }
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>ГОРОДПЛАН — СовСити 1986 (SimCity soviet)</title>
+<style>
+:root{
+  --bg-paper:#efe9df;
+  --accent:#b33a2f;
+  --accent-dark:#7f2418;
+  --panel:#f6f0e8;
+  --muted:#8b7f73;
+  --text:#2b2b2b;
+  --shadow: rgba(0,0,0,0.12);
+  --glass: rgba(255,255,255,0.6);
+}
+
+/* RESET */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(180deg,var(--bg-paper),#e6dfd6 60%);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+  touch-action:none;
+}
+
+/* Start Screen */
+.start-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.start-content {
+  background: var(--panel);
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  border: 4px solid var(--accent);
+}
+
+.start-title {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--accent-dark);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.start-subtitle {
+  font-size: 16px;
+  color: var(--muted);
+  margin-bottom: 30px;
+}
+
+.start-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.start-btn {
+  background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 18px;
+  font-weight: 800;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(179,58,47,0.3);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  width: 100%;
+}
+
+.start-btn.secondary {
+  background: linear-gradient(180deg, #4a7ba6, #2f5a8a);
+  box-shadow: 0 8px 20px rgba(47,90,138,0.3);
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(179,58,47,0.4);
+}
+
+.start-btn.secondary:hover {
+  box-shadow: 0 12px 25px rgba(47,90,138,0.4);
+}
+
+.start-btn:active {
+  transform: translateY(0);
+}
+
+/* Header - document style */
+.header{
+  position:fixed;left:10px;right:10px;top:10px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(180deg,#fff,#f3ebe0);
+  border:3px solid var(--accent);
+  padding:8px 12px;border-radius:8px;
+  box-shadow: 0 8px 20px var(--shadow);
+  z-index:1200;
+}
+.header .title .main{font-weight:900;color:var(--accent-dark);font-size:16px;letter-spacing:1px}
+.header .title .sub{font-size:11px;color:var(--muted)}
+
+/* Left control panel */
+.control-panel{
+  position:fixed;left:10px;top:70px;bottom:10px;width:300px;
+  background:linear-gradient(180deg,var(--panel),#ebe3d8);
+  border:3px solid #c9b59f;border-radius:10px;padding:12px;
+  box-shadow:0 8px 20px var(--shadow);overflow:auto;z-index:1150;
+  transform-origin:left center;
+  transition:transform .3s cubic-bezier(.2,.9,.2,1);
+}
+.control-panel.hidden{transform:translateX(-100%);opacity:0.9}
+
+.control-panel h2{font-size:14px;color:var(--accent-dark);margin-bottom:8px;border-bottom:1px dashed rgba(0,0,0,0.06);padding-bottom:6px}
+.category{margin-bottom:12px}
+.building-option{
+  display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:6px;margin:4px 0;
+  background:#fff;border:1px solid #d3c8b8;cursor:pointer;transition:transform .12s,box-shadow .12s;
+  font-size:13px;
+}
+.building-option:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.06)}
+.building-option.selected{outline:2px solid rgba(179,58,47,0.12);background:linear-gradient(180deg,#fff5ef,#fff2e8)}
+.building-option .name{font-weight:700;color:var(--accent-dark)}
+.building-option .desc{font-size:11px;color:var(--muted)}
+
+.controls-row{display:flex;gap:6px;margin-top:6px}
+.btn{
+  flex:1;padding:6px;border-radius:5px;background:linear-gradient(180deg,#fff,#f4ede2);
+  border:2px solid var(--accent);cursor:pointer;text-align:center;font-weight:800;color:var(--accent-dark);
+  box-shadow:0 4px 8px rgba(0,0,0,0.06);user-select:none;font-size:12px;
+}
+.btn.secondary{border-color:#9d8b7b;color:#6b5b4e}
+.btn.active {
+  background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+  color: white;
+}
+.small{padding:4px 6px;font-size:11px}
+.icon-btn{padding:4px 6px;border-radius:5px;background:#fff;border:1px solid #d3c8b8;cursor:pointer;font-size:12px;}
+
+/* center small control group */
+.rotate-controls{display:flex;gap:4px;align-items:center;margin-top:6px}
+.rotate-controls .icon-btn{font-weight:700}
+
+/* confirmation modal */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(20,20,20,0.45);display:flex;align-items:center;justify-content:center;z-index:1300;
+  opacity:0;pointer-events:none;transition:opacity .18s;
+}
+.modal-backdrop.show{opacity:1;pointer-events:auto}
+.modal{
+  width:300px;background:linear-gradient(180deg,#fff,#f6efe2);border:3px solid var(--accent);padding:14px;border-radius:10px;
+  box-shadow:0 12px 36px rgba(0,0,0,0.28);transform:translateY(12px);transition:transform .2s;
+}
+.modal.show{transform:translateY(0)}
+.modal h3{color:var(--accent-dark);margin-bottom:6px;font-size:14px;}
+.modal p{color:var(--muted);margin-bottom:10px;font-size:13px;}
+
+/* Game area */
+#game3d{
+  position:fixed;left:320px;right:250px;top:70px;bottom:10px;border-radius:8px;overflow:hidden;border:3px solid #d8c9b4;
+  box-shadow:0 8px 30px var(--shadow);background:linear-gradient(180deg,#9fd0ff,#cdeaff);
+}
+#canvas3d{width:100%;height:100%;display:block}
+
+/* placement DOM indicator */
+#placement-indicator{
+  position:fixed;pointer-events:none;z-index:1180;width:50px;height:50px;border-radius:6px;border:2px solid rgba(0,200,0,0.45);
+  transform:translate(-50%,-50%);display:none;background:linear-gradient(180deg,rgba(255,255,255,0.6),rgba(255,255,255,0.2));
+  box-shadow:0 6px 15px rgba(0,0,0,0.06);
+}
+
+/* info/right */
+.info-card{
+  position:fixed;right:10px;top:70px;width:230px;bottom:10px;padding:10px;border-radius:10px;
+  background:linear-gradient(180deg,#fff,#f7f1e7);border:3px solid #c9b59f;box-shadow:0 8px 20px var(--shadow);z-index:1150;overflow:auto;
+}
+.info-card h3{font-size:12px;color:var(--accent-dark);margin-bottom:6px}
+
+/* hint */
+.hint{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:linear-gradient(180deg,#fff6ef,#fff1e3);
+  border:2px solid var(--accent);padding:6px 12px;border-radius:15px;font-weight:800;color:var(--accent-dark);z-index:1190;
+  box-shadow:0 6px 15px rgba(0,0,0,0.06);font-size:12px;max-width:90%;text-align:center;
+}
+
+/* footer */
+.footer{position:fixed;left:10px;right:10px;bottom:5px;text-align:center;font-size:10px;color:var(--muted);z-index:1210}
+
+/* clouds */
+.cloud {position:fixed;pointer-events:none;z-index:1000;opacity:0.18;}
+
+/* 1986 secret mode */
+.secret-filter{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg, rgba(255,150,50,0.06), rgba(255,120,30,0.04));mix-blend-mode:overlay;z-index:1400;display:none}
+
+/* Time of day indicator */
+.time-indicator {
+  position: fixed;
+  top: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #fff6ef, #fff1e3);
+  border: 2px solid var(--accent);
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-weight: 800;
+  color: var(--accent-dark);
+  z-index: 1190;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+/* Transport indicator */
+.transport-indicator {
+  position: fixed;
+  top: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #e8f4ff, #d4eaff);
+  border: 2px solid #2f6fb3;
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-weight: 800;
+  color: #2f6fb3;
+  z-index: 1190;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+/* Pedestrians indicator */
+.pedestrians-indicator {
+  position: fixed;
+  top: 145px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #f0ffe8, #e0ffd4);
+  border: 2px solid #2fa05e;
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-weight: 800;
+  color: #2fa05e;
+  z-index: 1190;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+/* Road building preview */
+.road-preview {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1170;
+  background: rgba(0, 150, 0, 0.3);
+  border: 2px dashed rgba(0, 200, 0, 0.6);
+  display: none;
+}
+
+/* Mobile menu toggle */
+.mobile-menu-toggle {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 800;
+  z-index: 1250;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  display: none;
+}
+
+/* Compact building grid for mobile */
+.buildings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.building-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #d3c8b8;
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: center;
+  font-size: 10px;
+}
+
+.building-icon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+}
+
+.building-icon.selected {
+  outline: 2px solid rgba(179,58,47,0.12);
+  background: linear-gradient(180deg,#fff5ef,#fff2e8);
+}
+
+.building-icon .icon {
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.building-icon .name {
+  font-weight: 700;
+  color: var(--accent-dark);
+  font-size: 9px;
+}
+
+/* small responsive */
+@media (max-width:1200px){
+  .control-panel{width:280px}
+  #game3d{left:300px;right:10px}
+  .info-card{width:200px}
+}
+
+@media (max-width:1000px){
+  .control-panel{width:260px;left:8px;top:70px}
+  #game3d{left:280px;right:8px}
+  .info-card{display:none}
+}
+
+@media (max-width:800px){
+  .control-panel{width:240px}
+  #game3d{left:260px;right:8px}
+}
+
+@media (max-width:700px){
+  .control-panel{
+    position:fixed;
+    left:8px;
+    top:70px;
+    transform:translateX(-100%);
+    transition:transform .3s;
+    width:85%;
+    max-width:300px;
+    bottom:60px;
+  }
+  .control-panel.active{transform:translateX(0)}
+  #game3d{left:8px;right:8px;top:120px;bottom:60px}
+  .info-card{display:none}
+  .mobile-menu-toggle{display:block}
+  
+  .header {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    padding: 6px 10px;
+  }
+  
+  .header .title .main{font-size:14px;}
+  .header .title .sub{font-size:10px;}
+  
+  .time-indicator {top: 100px; font-size:10px;}
+  .transport-indicator {top: 130px; font-size:10px;}
+  .pedestrians-indicator {top: 160px; font-size:10px;}
+  
+  .buildings-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .building-option {
+    display: none;
+  }
+  
+  .category h3 {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width:500px){
+  .buildings-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .header .title .main{font-size:12px;}
+  .header .title .sub{display:none;}
+  
+  .btn.small {
+    padding: 3px 5px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width:400px){
+  .buildings-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px;
+  }
+  
+  .header .title {
+    text-align: center;
+  }
+}
+
+/* small animation for buttons */
+.btn:active, .icon-btn:active, .building-icon:active{transform:translateY(1px) scale(.995)}
+</style>
 </head>
 <body>
-  <div id="gameContainer"></div>
-  <div id="ui">
-    <div class="scanlines"></div>
-    <div id="menu" class="overlayCenter menuCard">
-      <div class="title">Z.E.R.O.: UNIFIED PLANET SYSTEM</div>
-      <div style="text-align:center;color:#9fe;margin-bottom:8px;font-size:13px">Космические полеты • Ходьба по планетам • Улучшенный геймплей</div>
-      <div style="display:flex;justify-content:center;gap:8px">
-        <button id="btnStart" class="btn">СТАРТ</button>
-        <button id="btnHow" class="btn">КАК ИГРАТЬ</button>
-      </div>
-      <div style="margin-top:10px;text-align:center;font-size:13px;color:#9aa">Загрузка модулей... <span id="loadingDots">●●●</span></div>
+
+<!-- Start Screen -->
+<div class="start-screen" id="start-screen">
+  <div class="start-content">
+    <div class="start-title">ГОРОДПЛАН</div>
+    <div class="start-subtitle">СовСити 1986 — Архитектурный режим</div>
+    <div class="start-buttons">
+      <button class="start-btn" id="start-btn">НАЧАТЬ СТРОИТЕЛЬСТВО</button>
+      <button class="start-btn secondary" id="ready-city-btn">ГОТОВЫЙ ГОРОД</button>
     </div>
-    <div id="hud" class="hud">
-      <div class="hudRow">❤️ <span id="uiHealth">100</span>  ·  🛡 <span id="uiShield">100</span>  ·  ⛽ <span id="uiFuel">100</span></div>
-      <div class="hudRow">💳 <span id="uiCredits">0</span>  ·  ⭐ <span id="uiStars">0</span>  ·  🎯 <span id="uiMission">0/5</span></div>
-    </div>
-    <!-- Space Controls -->
-    <div id="spaceControls">
-      <div id="spaceJoy" class="joyPad"><div id="spaceKnob" class="joyKnob"></div></div>
-      <div class="bottomHints">Джойстик — движение • Тап по планете — приземлиться</div>
-    </div>
-    <div class="spaceActionButtons">
-      <div id="btnShield" class="actionBtn" title="Щит">🛡</div>
-      <div id="btnShoot" class="actionBtn" title="Огонь">💥</div>
-      <div id="btnBoost" class="actionBtn" title="Овердрайв">⚡</div>
-    </div>
-    <!-- Surface Controls -->
-    <div id="surfaceControls">
-      <div id="surfaceJoy"><div id="surfaceKnob"></div></div>
-      <div class="bottomHints">Джойстик — ходьба • Исследуй планету</div>
-    </div>
-    <div class="surfaceActionButtons">
-      <div id="btnInteract" class="actionBtn" title="Взаимодействие">👁️</div>
-      <div id="btnTakeoff" class="actionBtn" title="Взлететь">🚀</div>
-    </div>
-    <div id="damageFlash"></div>
-    <div id="landingIndicator" class="landingIndicator">ПРИБЛИЖЕНИЕ К ПЛАНЕТЕ - НАЖМИТЕ ДЛЯ ПОСАДКИ</div>
-    <!-- Planet UI -->
-    <div id="planetPanel" class="planetUI">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong id="planetName">PLANET</strong><div class="small" id="planetDesc">Описание</div></div>
-        <div><button id="btnClosePanel" class="btn">Закрыть</button></div>
-      </div>
-      <div class="dialogue" id="npcDialogue">Добро пожаловать на планету. Что вас интересует?</div>
-      <div style="margin-top:8px"><strong>Торговцы на этой планете:</strong></div>
-      <div id="npcList" style="margin-top:8px"></div>
-      <div class="shopGrid" id="shopGrid">
-        <!-- Shop items will be populated here -->
-      </div>
+    <div style="margin-top:20px;font-size:12px;color:var(--muted)">
+      Построй свой идеальный советский город
     </div>
   </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="title">
+    <div class="main">ГОРОДПЛАН — 1986</div>
+    <div class="sub">СовСити 3D — Архитектурный режим</div>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+    <div style="font-weight:900;color:var(--muted);font-size:11px">Год: <span id="year-display">1985</span></div>
+    <button class="btn small" id="toggle-pedestrians" title="Включить пешеходов">👥</button>
+    <button class="btn small" id="toggle-transport" title="Включить транспорт">🚌</button>
+    <button class="btn small" id="toggle-time" title="Сменить время суток">🌙</button>
+    <button class="btn small" id="toggle-menu" title="Показать/скрыть меню">☰</button>
+    <button class="btn small" id="secret-mode">86</button>
+  </div>
+</div>
+
+<!-- Time indicator -->
+<div class="time-indicator" id="time-indicator">
+  <span id="time-icon">☀️</span>
+  <span id="time-text">День</span>
+</div>
+
+<!-- Transport indicator -->
+<div class="transport-indicator" id="transport-indicator" style="display:none">
+  <span id="transport-icon">🚌</span>
+  <span id="transport-text">Транспорт: 0</span>
+</div>
+
+<!-- Pedestrians indicator -->
+<div class="pedestrians-indicator" id="pedestrians-indicator" style="display:none">
+  <span id="pedestrians-icon">👥</span>
+  <span id="pedestrians-text">Пешеходы: 0</span>
+</div>
+
+<!-- Mobile Menu Toggle -->
+<button class="mobile-menu-toggle" id="mobile-menu-toggle">📋 МЕНЮ</button>
+
+<!-- Left panel -->
+<div class="control-panel" id="control-panel">
+  <h2>Типы зданий</h2>
+
+  <!-- Compact building grid for mobile -->
+  <div class="buildings-grid">
+    <div class="building-icon selected" data-type="khrushchev">
+      <div class="icon">🏢</div>
+      <div class="name">Хрущёвка</div>
+    </div>
+    <div class="building-icon" data-type="brezhnev">
+      <div class="icon">🏬</div>
+      <div class="name">Брежневка</div>
+    </div>
+    <div class="building-icon" data-type="dormitory">
+      <div class="icon">🏘️</div>
+      <div class="name">Общежитие</div>
+    </div>
+    <div class="building-icon" data-type="school">
+      <div class="icon">🏫</div>
+      <div class="name">Школа</div>
+    </div>
+    <div class="building-icon" data-type="hospital">
+      <div class="icon">🏥</div>
+      <div class="name">Поликлиника</div>
+    </div>
+    <div class="building-icon" data-type="busstop">
+      <div class="icon">🚏</div>
+      <div class="name">Остановка</div>
+    </div>
+    <div class="building-icon" data-type="factory">
+      <div class="icon">🏭</div>
+      <div class="name">Завод</div>
+    </div>
+    <div class="building-icon" data-type="park">
+      <div class="icon">🌳</div>
+      <div class="name">Парк</div>
+    </div>
+    <div class="building-icon" data-type="road">
+      <div class="icon">🛣️</div>
+      <div class="name">Дорога</div>
+    </div>
+  </div>
+
+  <!-- Original building list (hidden on mobile) -->
+  <div class="category">
+    <div class="building-option selected" data-type="khrushchev">
+      <div><div class="name">Хрущёвка</div><div class="desc">5 этажей, компактная</div></div>
+      <div style="font-size:11px;color:var(--muted)">r:3</div>
+    </div>
+    <div class="building-option" data-type="brezhnev">
+      <div><div class="name">Брежневка</div><div class="desc">9 этажей, более крупная</div></div>
+      <div style="font-size:11px;color:var(--muted)">r:4</div>
+    </div>
+    <div class="building-option" data-type="dormitory">
+      <div><div class="name">Общежитие</div><div class="desc">Длинный корпус</div></div>
+      <div style="font-size:11px;color:var(--muted)">r:4</div>
+    </div>
+  </div>
+
+  <div class="category">
+    <div class="building-option" data-type="school"><div><div class="name">Школа</div><div class="desc">Типовой блок</div></div><div style="font-size:11px;color:var(--muted)">r:5</div></div>
+    <div class="building-option" data-type="hospital"><div><div class="name">Поликлиника</div><div class="desc">Медпункт</div></div><div style="font-size:11px;color:var(--muted)">r:4</div></div>
+    <div class="building-option" data-type="busstop"><div><div class="name">Автобусная остановка</div><div class="desc">Точка транспорта</div></div><div style="font-size:11px;color:var(--muted)">r:2</div></div>
+  </div>
+
+  <div class="category">
+    <div class="building-option" data-type="factory"><div><div class="name">Завод</div><div class="desc">Кирпич, труба, дым</div></div><div style="font-size:11px;color:var(--muted)">r:5</div></div>
+    <div class="building-option" data-type="park"><div><div class="name">Парк</div><div class="desc">Деревья, газон</div></div><div style="font-size:11px;color:var(--muted)">r:3</div></div>
+    <div class="building-option" data-type="road"><div><div class="name">Дорога</div><div class="desc">Выбери начало и конец</div></div><div style="font-size:11px;color:var(--muted)">r:2</div></div>
+  </div>
+
+  <h2>Управление</h2>
+  <div style="display:flex;gap:6px;margin-bottom:8px">
+    <button class="btn active" id="camera-mode">Камера</button>
+    <button class="btn" id="build-mode">Строить</button>
+    <button class="btn secondary" id="demolish-mode">Снос</button>
+  </div>
+
+  <div style="margin-top:6px">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Подсказка</div>
+    <div style="background:#fff;padding:8px;border-radius:5px;border:1px solid #dfd1bd;font-size:11px">В режиме камеры: вращайте и перемещайте камеру. В режиме строительства: кликните по карте для размещения объекта.</div>
+  </div>
+
+  <div style="height:10px"></div>
+
+  <div style="display:flex;gap:6px;align-items:center">
+    <div class="rotate-controls" style="flex:1">
+      <button class="icon-btn" id="rot-left">↺</button>
+      <div style="font-weight:800;color:var(--muted);padding:4px 6px;border:1px dashed #e0d6c8;border-radius:5px;font-size:11px">Угол: <span id="rotate-angle">0°</span></div>
+      <button class="icon-btn" id="rot-right">↻</button>
+    </div>
+  </div>
+
+  <div style="height:10px"></div>
+  <div style="display:flex;gap:6px">
+    <button class="btn small" id="clear-all">Очистить</button>
+    <button class="btn small" id="center-camera">Центр</button>
+  </div>
+</div>
+
+<!-- Game -->
+<div id="game3d"><canvas id="canvas3d"></canvas></div>
+<div id="placement-indicator"></div>
+
+<!-- confirmation modal -->
+<div id="modal-back" class="modal-backdrop">
+  <div id="modal" class="modal">
+    <h3 id="modal-title">Поставить здание?</h3>
+    <p id="modal-desc">Вы действительно хотите установить этот объект в выбранном месте?</p>
+    <div style="display:flex;gap:6px;justify-content:flex-end">
+      <button class="btn small" id="modal-cancel">✖ Отмена</button>
+      <button class="btn small" id="modal-confirm">✔ Поставить</button>
+    </div>
+  </div>
+</div>
+
+<!-- info/right -->
+<div class="info-card">
+  <h3>План квартала</h3>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Жилой фонд, инфраструктура, настроение</div>
+  <div style="font-size:12px">Жилой фонд: <strong id="housing-value">40</strong></div>
+  <div style="height:6px"></div>
+  <div style="font-size:12px">Инфраструктура: <strong id="infra-value">1</strong></div>
+  <div style="height:6px"></div>
+  <div style="font-size:12px">Удовлетворённость: <strong id="satisfaction-value">75%</strong></div>
+  <div style="height:6px"></div>
+  <div style="font-size:12px">Транспорт: <strong id="transport-value">0%</strong></div>
+  <div style="height:6px"></div>
+  <div style="font-size:12px">Население: <strong id="population-value">0</strong></div>
+  <div style="height:12px"></div>
+  <div style="font-size:11px;color:var(--muted)">Подсветка: зелёная — можно ставить; красная — пересечение</div>
+</div>
+
+<div class="hint" id="hint">Выберите режим управления и осмотрите город</div>
+<div class="footer">© ГОРОДПЛАН — тестовая сборка</div>
+<div class="secret-filter" id="secret-filter"></div>
+
+<!-- clouds (decorative DOM) -->
+<img src="" id="cloud1" class="cloud" style="width:260px;top:40px;left:20px">
+<img src="" id="cloud2" class="cloud" style="width:200px;top:80px;right:60px">
+
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+
 <script>
-/* ========= Z.E.R.O. — UNIFIED PLANET SYSTEM =========
-   Полностью переработанная версия с исправленными посадками
-   и улучшенной архитектурой
-*/
-// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
-function easeOutCubic(t) {
-  return 1 - Math.pow(1 - t, 3);
+// ======================
+// Embedded base64 sounds
+// ======================
+const SOUND_CLICK = "data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YUcAAAAA/////wAAAP//AAD//wAA//8AAP//AAD//wAA";
+const SOUND_CONFIRM = "data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YVQAAAAAAP///wD///8A////AP///wD///8A";
+const SOUND_ERROR = "data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YRAAAAAA/////wAAAP//AAD//wAA";
+const SOUND_BUILD = "data:audio/wav;base64,UklGRhMAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAAA/////wAAAP//AAD//wAA";
+const SOUND_DEMOLISH = "data:audio/wav;base64,UklGRkAAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAAA/////wAAAP//AAD//wAA";
+const SOUND_TIME_CHANGE = "data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YRAAAAAA/////wAAAP//AAD//wAA";
+const SOUND_BUS_HORN = "data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YRAAAAAA/////wAAAP//AAD//wAA";
+
+function playSound(src, vol=0.35){
+  try{
+    const a = new Audio(src);
+    a.volume = vol;
+    a.play();
+  }catch(e){}
 }
 
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function distanceTo(x1, y1, z1, x2, y2, z2) {
-  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2) + Math.pow(z2 - z1, 2));
-}
-
-// ========== GLOBAL GAME STATE ==========
-const STATE = {
-  mode: 'menu', // 'menu'|'space'|'landing'|'surface'
-  credits: 0,
-  health: 100,
-  shield: 100,
-  fuel: 100,
-  stars: 0,
-  missionProgress: 0,
-  upgrades: { weapon:1, engine:1, shield:1 },
-  canShoot: true,
-  lastShot: 0,
-  overdrive: false,
-  shieldActive: false,
-  currentPlanet: null,
-  debugMode: false
-};
-
-// ========== THREE.js scene setup ==========
-let scene, camera, renderer, composer;
-let shipGroup, shipEngineParticles;
-let stars, nebulas = [];
-let asteroids = [], enemies = [], bullets = [], planets = [];
-let surfaceScene = null, surfacePlayer = null, surfaceObjects = [];
-let clock = new THREE.Clock();
-let pixelRatio = Math.min(window.devicePixelRatio || 1, 1.6);
-let hasComposer = false;
-let debugText = null;
-let raycaster = new THREE.Raycaster();
-
-// Control states
-let spaceJoystick = { x: 0, y: 0 };
-let surfaceJoystick = { x: 0, y: 0, active: false };
-
-// Landing animation state
-let landingAnimation = {
-  active: false,
-  startPos: new THREE.Vector3(),
-  targetPos: new THREE.Vector3(),
-  progress: 0,
-  duration: 2000,
-  startTime: 0
-};
-
-// Physics constants
-const GRAVITY = 9.8;
-const GROUND_LEVEL = -2;
-const PLAYER_HEIGHT = 2.5;
-
-// ========== ИНИЦИАЛИЗАЦИЯ THREE.js ==========
-function initThree(){
-  try {
-    scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x03121a, 3000, 8000);
+// ===============
+// Game class
+// ===============
+class SovietCityGame {
+  constructor(){
+    this.selectedType = 'khrushchev';
+    this.mode = 'camera'; // По умолчанию режим камеры
+    this.rotationAngle = 0;
+    this.buildings = [];
+    this.roads = [];
+    this.growing = [];
+    this.smoke = [];
+    this.roadBuildingStart = null;
+    this.roadPreview = null;
+    this.stats = { housing:40, infra:1, satisfaction:75, year:1985, transport:0, population:0 };
     
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 10000);
-    camera.position.set(0,6,22);
+    this.transportEnabled = false;
+    this.busStops = [];
+    this.buses = [];
+    this.busRoutes = [];
     
-    renderer = new THREE.WebGLRenderer({ antialias:true, alpha: true });
-    renderer.setPixelRatio(pixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x03121a, 1);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.pedestriansEnabled = false;
+    this.pedestrians = [];
+    this.pedestrianSpawnTimer = 0;
     
-    const gameContainer = document.getElementById('gameContainer');
-    if (gameContainer) {
-      gameContainer.appendChild(renderer.domElement);
-    } else {
-      document.body.appendChild(renderer.domElement);
-    }
-    
-    // Postprocessing
-    try {
-      composer = new THREE.EffectComposer(renderer);
-      const renderPass = new THREE.RenderPass(scene, camera);
-      composer.addPass(renderPass);
-      
-      const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.8, 0.2, 0.6);
-      bloom.threshold = 0.12; 
-      bloom.strength = 0.9; 
-      bloom.radius = 0.4;
-      composer.addPass(bloom);
-      
-      const gamma = new THREE.ShaderPass(THREE.GammaCorrectionShader);
-      composer.addPass(gamma);
-      
-      hasComposer = true;
-    } catch(e) {
-      hasComposer = false;
-      console.warn('Postprocessing not available:', e);
-    }
-    
-    console.log('Three.js initialized successfully');
-    return true;
-  } catch(e) {
-    console.error('Error initializing Three.js:', e);
-    return false;
+    this.isDay = true;
+    this.timeTransition = 0;
+    this.timeTransitionSpeed = 0.005;
+    this.windowLights = [];
+
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2();
+
+    this.wind = new THREE.Vector3((Math.random()-0.5)*0.06, 0.02, (Math.random()-0.5)*0.06);
+
+    this.initThree();
+    this.createScene();
+    this.setupUI();
+    this.animate();
+    this.updateUI();
+    this.setupClouds();
+    this.updateTimeDisplay();
   }
-}
 
-// ========== ОСВЕЩЕНИЕ ==========
-function makeLights(){
-  try {
-    const amb = new THREE.AmbientLight(0x8aaaff, 0.9);
-    scene.add(amb);
-    
-    const dir = new THREE.DirectionalLight(0xffffff, 1.0);
-    dir.position.set(30, 40, 10);
-    dir.castShadow = true;
-    dir.shadow.mapSize.width = 1024;
-    dir.shadow.mapSize.height = 1024;
-    scene.add(dir);
-    
-    const rim = new THREE.DirectionalLight(0x66bbff, 0.5);
-    rim.position.set(-20, -10, -30);
-    scene.add(rim);
-    
-    console.log('Lights created');
-    return true;
-  } catch(e) {
-    console.error('Error creating lights:', e);
-    return false;
+  initThree(){
+    const container = document.getElementById('game3d');
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0xbfe9ff);
+    this.scene.fog = new THREE.Fog(0xbfe9ff, 40, 250);
+
+    const aspect = container.clientWidth / container.clientHeight;
+    this.camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
+    this.camera.position.set(50,40,60);
+    this.camera.lookAt(0,0,0);
+
+    this.renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas3d'), antialias:true });
+    this.renderer.setSize(container.clientWidth, container.clientHeight);
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.08;
+
+    window.addEventListener('resize', ()=>this.onResize());
   }
-}
 
-// ========== СОЗДАНИЕ КОРАБЛЯ ==========
-function createShip(){
-  try {
-    shipGroup = new THREE.Group();
-    
-    // Корпус корабля
-    const hullGeom = new THREE.ConeGeometry(2.2, 7, 6);
-    const hullMat = new THREE.MeshStandardMaterial({ 
-      color: 0x00aaff, 
-      metalness: 0.4, 
-      roughness: 0.25, 
-      emissive: 0x002244, 
-      emissiveIntensity: 0.9,
-      side: THREE.DoubleSide
-    });
-    const hull = new THREE.Mesh(hullGeom, hullMat);
-    hull.rotation.x = Math.PI/2;
-    hull.castShadow = true;
-    shipGroup.add(hull);
-    
-    // Крылья
-    const wingGeom = new THREE.BoxGeometry(6.5, 0.6, 2.6);
-    const wingMat = new THREE.MeshStandardMaterial({ 
-      color: 0x006ea8, 
-      metalness: 0.25, 
-      roughness: 0.35, 
-      emissive: 0x001122,
-      side: THREE.DoubleSide
-    });
-    
-    const lw = new THREE.Mesh(wingGeom, wingMat);
-    lw.position.set(-4.5, 0, 0);
-    lw.castShadow = true;
-    shipGroup.add(lw);
-    
-    const rw = lw.clone();
-    rw.position.set(4.5, 0, 0);
-    shipGroup.add(rw);
-    
-    // Хвостовое оперение
-    const tailGeom = new THREE.ConeGeometry(1.0, 4, 8);
-    const tailMat = new THREE.MeshStandardMaterial({ 
-      color: 0x005577, 
-      metalness: 0.3, 
-      roughness: 0.4,
-      side: THREE.DoubleSide
-    });
-    const tail = new THREE.Mesh(tailGeom, tailMat);
-    tail.rotation.x = Math.PI/2;
-    tail.position.set(0, 0, -4);
-    shipGroup.add(tail);
-    
-    shipGroup.position.set(0, 0, 15);
-    scene.add(shipGroup);
-    
-    // Частицы двигателей
-    const maxP = 80;
-    const pos = new Float32Array(maxP * 3);
-    const cols = new Float32Array(maxP * 3);
-    
-    for(let i = 0; i < maxP; i++){ 
-      const j = i * 3; 
-      pos[j] = (Math.random() - 0.5) * 1.6; 
-      pos[j+1] = (Math.random() - 0.5) * 1.6; 
-      pos[j+2] = 2 + Math.random() * 4; 
-      
-      cols[j] = 1; 
-      cols[j+1] = 0.45 + Math.random() * 0.45; 
-      cols[j+2] = 0; 
-    }
-    
-    const pGeom = new THREE.BufferGeometry(); 
-    pGeom.setAttribute('position', new THREE.BufferAttribute(pos, 3)); 
-    pGeom.setAttribute('color', new THREE.BufferAttribute(cols, 3));
-    
-    const pMat = new THREE.PointsMaterial({ 
-      size: 2.2, 
-      vertexColors: true, 
-      transparent: true, 
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-    
-    const pSys = new THREE.Points(pGeom, pMat);
-    pSys.frustumCulled = false;
-    shipGroup.add(pSys);
-    shipEngineParticles = { points: pSys, geom: pGeom };
-    
-    console.log('Ship created');
-    return true;
-  } catch(e) {
-    console.error('Error creating ship:', e);
-    return false;
-  }
-}
+  createScene(){
+    const amb = new THREE.AmbientLight(0xffffff, 0.55);
+    this.scene.add(amb);
+    this.sun = new THREE.DirectionalLight(0xffffff, 0.9);
+    this.sun.position.set(50,80,20);
+    this.sun.castShadow = true;
+    this.sun.shadow.camera.left=-100; this.sun.shadow.camera.right=100;
+    this.sun.shadow.camera.top=100; this.sun.shadow.camera.bottom=-100;
+    this.sun.shadow.mapSize.width=2048; this.sun.shadow.mapSize.height=2048;
+    this.scene.add(this.sun);
 
-// ========== ЗВЕЗДНОЕ ПОЛЕ И ТУМАННОСТИ ==========
-function createStarfield(){
-  try {
-    const count = 2400;
-    const pos = new Float32Array(count * 3);
-    const cols = new Float32Array(count * 3);
-    
-    for(let i = 0; i < count; i++){ 
-      const j = i * 3; 
-      pos[j] = (Math.random() - 0.5) * 4000; 
-      pos[j+1] = (Math.random() - 0.5) * 2000; 
-      pos[j+2] = (Math.random() - 0.5) * 6000 - 1000; 
-      
-      const c = Math.random(); 
-      if(c < 0.7){ 
-        cols[j] = 1; cols[j+1] = 1; cols[j+2] = 1; 
-      } else if(c < 0.9){ 
-        cols[j] = 0.8; cols[j+1] = 0.9; cols[j+2] = 1; 
-      } else { 
-        cols[j] = 1; cols[j+1] = 0.9; cols[j+2] = 0.6; 
-      } 
-    }
-    
-    const geom = new THREE.BufferGeometry(); 
-    geom.setAttribute('position', new THREE.BufferAttribute(pos, 3)); 
-    geom.setAttribute('color', new THREE.BufferAttribute(cols, 3));
-    
-    const mat = new THREE.PointsMaterial({ 
-      vertexColors: true, 
-      size: 1.9, 
-      transparent: true, 
-      blending: THREE.AdditiveBlending, 
-      opacity: 0.95,
-      depthWrite: false
-    });
-    
-    stars = new THREE.Points(geom, mat);
-    stars.frustumCulled = false;
-    scene.add(stars);
-    
-    // Туманности
-    for(let i = 0; i < 3; i++){
-      const g = new THREE.SphereGeometry(300 + Math.random() * 260, 32, 32);
-      const mat = new THREE.MeshBasicMaterial({ 
-        color: new THREE.Color().setHSL(Math.random(), 0.6, 0.45), 
-        transparent: true, 
-        opacity: 0.06, 
-        side: THREE.BackSide, 
-        depthWrite: false 
-      });
-      
-      const m = new THREE.Mesh(g, mat); 
-      m.position.set(
-        (Math.random() - 0.5) * 2000,
-        (Math.random() - 0.5) * 1200,
-        (Math.random() - 0.5) * 3000 - 800
-      );
-      m.frustumCulled = false;
-      scene.add(m); 
-      nebulas.push(m);
-    }
-    
-    console.log('Starfield created');
-    return true;
-  } catch(e) {
-    console.error('Error creating starfield:', e);
-    return false;
-  }
-}
+    this.moon = new THREE.DirectionalLight(0xaaaacc, 0);
+    this.moon.position.set(-50,80,-20);
+    this.scene.add(this.moon);
 
-// ========== ПЛАНЕТЫ ==========
-function generateSpacePlanets(){
-  try {
-    const pdata = [
-      {name: 'КРИОНИС', color: 0x88ccff, size: 20, desc: 'Ледяной мир с кристальными пещерами'},
-      {name: 'ПИРОС', color: 0xff6633, size: 24, desc: 'Вулканический мир огненных рек'},
-      {name: 'ВЕРДАНТ', color: 0x44ff88, size: 18, desc: 'Биолюминесцентные леса'},
-      // Дальние планеты
-      {name: 'АУРЕЛИЯ', color: 0xffaa88, size: 22, desc: 'Пустынный мир с золотыми песками'},
-      {name: 'ТЕКТОНИКА', color: 0xaa66aa, size: 26, desc: 'Планета с гигантскими каньонами'},
-      {name: 'НЕБУЛА', color: 0x66aaff, size: 19, desc: 'Газовый гигант с кольцами'},
-      {name: 'ХИМИРА', color: 0x88ff44, size: 21, desc: 'Планета с экзотической флорой'},
-      {name: 'МАГНЕТАР', color: 0xff44aa, size: 17, desc: 'Магнитная планета с сияющими полюсами'},
-      {name: 'КВАЗАР', color: 0xffff44, size: 23, desc: 'Энергетическая аномалия'},
-      {name: 'ГАЛАКТИОН', color: 0xaa44ff, size: 28, desc: 'Древняя планета-артефакт'}
-    ];
-    
-    for(let i = 0; i < pdata.length; i++){
-      const p = pdata[i];
-      const geom = new THREE.SphereGeometry(p.size, 24, 24);
-      const mat = new THREE.MeshStandardMaterial({ 
-        color: p.color, 
-        emissive: new THREE.Color(p.color).multiplyScalar(0.18), 
-        roughness: 0.5,
-        metalness: 0.1
-      });
-      
-      const m = new THREE.Mesh(geom, mat); 
-      
-      // Позиционируем планеты на разных расстояниях - от близких до очень далеких
-      let zPos;
-      if (i < 3) {
-        // Близкие планеты
-        zPos = -800 - i * 600;
-      } else if (i < 6) {
-        // Средней дальности
-        zPos = -2500 - (i-3) * 800;
-      } else {
-        // Дальние планеты
-        zPos = -5000 - (i-6) * 1200;
-      }
-      
-      m.position.set(
-        (i % 4 - 1.5) * 180 + (Math.random() - 0.5) * 100, 
-        (Math.random() - 0.5) * 80, 
-        zPos
-      );
-      
-      m.userData = { 
-        name: p.name, 
-        desc: p.desc, 
-        type: i % 3, // Распределяем типы циклически
-        radius: p.size
-      };
-      m.castShadow = true;
-      scene.add(m); 
-      planets.push(m);
-    }
-    
-    console.log('Planets generated:', planets.length);
-    return true;
-  } catch(e) {
-    console.error('Error generating planets:', e);
-    return false;
-  }
-}
-
-// ========== ПОВЕРХНОСТЬ ПЛАНЕТЫ ==========
-function createSurfaceForPlanet(planet){
-  try {
-    console.log('Creating surface for planet:', planet.userData.name);
-    
-    // Очищаем существующую поверхность
-    if(surfaceScene) {
-      scene.remove(surfaceScene);
-      surfaceObjects = [];
-    }
-    
-    surfaceScene = new THREE.Group();
-    
-    // Создаем землю
-    const groundSize = 300;
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(groundSize, groundSize, 32, 32), 
-      new THREE.MeshStandardMaterial({ 
-        color: 0x0b1b12,
-        roughness: 0.8,
-        metalness: 0.1,
-        side: THREE.DoubleSide
-      })
-    );
-    ground.rotation.x = -Math.PI/2; 
-    ground.position.set(0, GROUND_LEVEL, 0);
+    const groundMat = new THREE.MeshLambertMaterial({ color:0x2e6a3e });
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(400,400), groundMat);
+    ground.rotation.x = -Math.PI/2;
     ground.receiveShadow = true;
-    ground.userData = { name: 'ground', type: 'terrain' };
-    surfaceScene.add(ground);
-    
-    // Генерируем природные объекты в зависимости от типа планеты
-    const objectCount = 30;
-    const colors = [
-      [0x4466ff, 0x6688ff],  // Крионис - синие кристаллы
-      [0xffaa33, 0xff6633],  // Пирон - оранжевые камни
-      [0x88ff88, 0x44ffaa]   // Вердант - зеленые растения
-    ];
-    
-    const planetType = planet.userData.type;
-    const planetColors = colors[planetType];
-    
-    for(let i = 0; i < objectCount; i++){
-      const size = 1 + Math.random() * 4;
-      const geom = new THREE.DodecahedronGeometry(size, 1);
-      const color = planetColors[Math.floor(Math.random() * planetColors.length)];
-      
-      const mat = new THREE.MeshStandardMaterial({ 
-        color: color,
-        roughness: 0.7,
-        metalness: 0.2,
-        emissive: planetType === 2 ? new THREE.Color(color).multiplyScalar(0.2) : 0x000000,
-        emissiveIntensity: 0.5
+    ground.userData.isGround = true;
+    this.ground = ground;
+    this.scene.add(ground);
+
+    // Grid helper - ВОССТАНОВЛЕНА СЕТКА!
+    const grid = new THREE.GridHelper(400, 40, 0x000000, 0x000000);
+    grid.material.opacity = 0.06; grid.material.transparent = true;
+    this.scene.add(grid);
+
+    const helperGeo = new THREE.PlaneGeometry(4,4);
+    const helperMat = new THREE.MeshBasicMaterial({ color:0x00ff00, transparent:true, opacity:0.16, side:THREE.DoubleSide });
+    this.placementHelper = new THREE.Mesh(helperGeo, helperMat);
+    this.placementHelper.rotation.x = -Math.PI/2;
+    this.placementHelper.visible = false;
+    this.scene.add(this.placementHelper);
+
+    this.smokeTex = this.makeSmokeTex();
+
+    this.createBuilding('khrushchev', -18, -12);
+    this.createBuilding('brezhnev', -4, -12);
+    this.createBuilding('school', 10, -12);
+  }
+
+  makeSmokeTex(){
+    const size = 128;
+    const c = document.createElement('canvas'); c.width = c.height = size;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(size/2,size/2,3,size/2,size/2,size/1.1);
+    g.addColorStop(0,'rgba(255,255,255,0.95)');
+    g.addColorStop(0.2,'rgba(220,220,220,0.6)');
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,size,size);
+    return new THREE.CanvasTexture(c);
+  }
+
+  footprint(type){
+    switch(type){
+      case 'khrushchev': return 3.0;
+      case 'brezhnev': return 4.0;
+      case 'dormitory': return 4.0;
+      case 'school': return 5.0;
+      case 'factory': return 5.0;
+      case 'park': return 3.0;
+      case 'hospital': return 4.0;
+      case 'busstop': return 2.0;
+      case 'road': return 1.8;
+      default: return 3.0;
+    }
+  }
+
+  checkCollision(x,z,radius){
+    for (const b of this.buildings){
+      const dx = b.userData.cx - x, dz = b.userData.cz - z;
+      const dist2 = dx*dx + dz*dz;
+      const minDist = (b.userData.radius + radius) * 0.9;
+      if (dist2 < minDist*minDist) return true;
+    }
+    for (const r of this.roads){
+      const dx = r.x - x, dz = r.z - z;
+      if (dx*dx + dz*dz < (radius+0.8)*(radius+0.8)) return true;
+    }
+    for (const s of this.busStops){
+      const dx = s.x - x, dz = s.z - z;
+      if (dx*dx + dz*dz < (radius+1.5)*(radius+1.5)) return true;
+    }
+    return false;
+  }
+
+  createBuilding(type, x, z){
+    const radius = this.footprint(type);
+    if (this.checkCollision(x,z,radius)){
+      playSound(SOUND_ERROR, 0.48);
+      return null;
+    }
+
+    const g = new THREE.Group();
+    g.position.set(x,0,z);
+    g.userData = { type, cx:x, cz:z, radius };
+
+    const addBlock = (w,h,d,color)=>{
+      const geom = new THREE.BoxGeometry(w,h,d);
+      const mat = new THREE.MeshLambertMaterial({ color });
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.castShadow = true; mesh.receiveShadow = true;
+      mesh.position.y = h/2;
+      g.add(mesh);
+
+      const winMat = new THREE.MeshBasicMaterial({ 
+        color: this.isDay ? 0xfff2c0 : 0xffdd00,
+        transparent: true,
+        opacity: this.isDay ? 0.3 : 0.9
       });
       
-      const obj = new THREE.Mesh(geom, mat);
-      obj.position.set(
-        (Math.random() - 0.5) * groundSize * 0.8, 
-        size/2 + GROUND_LEVEL, 
-        (Math.random() - 0.5) * groundSize * 0.8
-      );
-      obj.castShadow = true;
-      obj.receiveShadow = true;
-      obj.userData = { name: `object_${i}`, type: 'terrain' };
-      surfaceScene.add(obj);
-      surfaceObjects.push(obj);
+      const cols = Math.max(1, Math.floor(w/2.5));
+      const rows = Math.max(1, Math.floor(h/3));
+      for (let i=0;i<cols;i++){
+        for (let j=0;j<rows;j++){
+          if (Math.random() > 0.6) continue;
+          const winW = w/(cols*1.5), winH = h/(rows*1.6);
+          const plane = new THREE.Mesh(new THREE.PlaneGeometry(winW*0.9, winH*0.8), winMat);
+          const px = -w/2 + (i+0.6)*(w/cols);
+          const py = -h/2 + (j+0.8)*(h/rows) + h/2;
+          plane.position.set(px, py, d/2 + 0.02);
+          g.add(plane);
+          
+          this.windowLights.push(winMat);
+        }
+      }
+      return mesh;
+    };
+
+    if (type === 'khrushchev'){
+      addBlock(8,12,6, 0xcfcfc8);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(8.5,0.5,6.5), new THREE.MeshLambertMaterial({color:0x8c7a68}));
+      roof.position.y = 12 + 0.25; g.add(roof);
+    } else if (type === 'brezhnev'){
+      addBlock(10,26,8, 0xbdb6ae);
+      const side = addBlock(4,20,8, 0xa6a09a); side.position.x = 7;
+    } else if (type === 'dormitory'){
+      addBlock(18,14,6, 0xb7a0c3);
+    } else if (type === 'school'){
+      addBlock(20,9,15, 0x6fb0d8);
+      const porch = new THREE.Mesh(new THREE.BoxGeometry(6,3,6), new THREE.MeshLambertMaterial({color:0x3f7085}));
+      porch.position.set(0,1.5,9); g.add(porch);
+    } else if (type === 'hospital'){
+      addBlock(15,10,10, 0xffffff);
+      const cross = new THREE.Mesh(new THREE.BoxGeometry(4,4,1), new THREE.MeshLambertMaterial({color:0xff3333}));
+      cross.position.set(0,8,5.6); g.add(cross);
+    } else if (type === 'factory'){
+      addBlock(16,10,12, 0x8a8a8a);
+      const chimney = new THREE.Mesh(new THREE.CylinderGeometry(0.9,0.9,18,12), new THREE.MeshLambertMaterial({color:0x525252}));
+      chimney.position.set(5, 10+9, 0); chimney.castShadow = true; g.add(chimney);
+      const chimneyTop = new THREE.Object3D(); chimneyTop.name='chimneyTop'; chimneyTop.position.set(5, 10+18, 0); g.add(chimneyTop);
+    } else if (type === 'park'){
+      const lawn = new THREE.Mesh(new THREE.BoxGeometry(12,0.2,12), new THREE.MeshLambertMaterial({color:0x2fa05e}));
+      lawn.position.y = 0.1; g.add(lawn);
+      for (let i=0;i<5;i++){
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,5,8), new THREE.MeshLambertMaterial({color:0x6f3f21}));
+        trunk.position.set((Math.random()-0.5)*6, 2.5, (Math.random()-0.5)*6);
+        const leaves = new THREE.Mesh(new THREE.SphereGeometry(2.2,8,6), new THREE.MeshLambertMaterial({color:0x2fbf62}));
+        leaves.position.y = 4.2; trunk.add(leaves); g.add(trunk);
+      }
+    } else if (type === 'busstop'){
+      const pole1 = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,3,8), new THREE.MeshLambertMaterial({color:0x8B4513}));
+      pole1.position.set(-1,1.5,0); g.add(pole1);
+      const pole2 = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,3,8), new THREE.MeshLambertMaterial({color:0x8B4513}));
+      pole2.position.set(1,1.5,0); g.add(pole2);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(2.5,0.1,1.5), new THREE.MeshLambertMaterial({color:0x666666}));
+      roof.position.set(0,3,0); g.add(roof);
+      const sign = new THREE.Mesh(new THREE.BoxGeometry(1.5,1,0.1), new THREE.MeshLambertMaterial({color:0xFFD700}));
+      sign.position.set(0,2,0.8); g.add(sign);
+      
+      this.busStops.push({x, z, group: g});
+    } else if (type === 'road'){
+      return null;
+    } else {
+      addBlock(8,10,8, 0xbdbdb6);
     }
+
+    g.rotation.y = THREE.MathUtils.degToRad(this.rotationAngle);
+
+    g.scale.set(1, 0.02, 1);
+    g.userData.growthStart = performance.now();
+    g.userData.growthDuration = 700 + Math.random()*700;
+
+    this.scene.add(g);
+    this.buildings.push(g);
+    this.growing.push(g);
+
+    this.updateStats(type);
+
+    if (navigator.vibrate) navigator.vibrate(40);
+    playSound(SOUND_BUILD, 0.5);
+
+    return g;
+  }
+
+  buildRoadLine(x1,z1,x2,z2){
+    const dx = x2 - x1;
+    const dz = z2 - z1;
+    const length = Math.sqrt(dx*dx + dz*dz);
+    const angle = Math.atan2(dz, dx);
     
-    // Создаем NPC
-    const npcData = [
-      {name: 'Торговец Хан', dialog: 'Редкие артефакты по лучшим ценам!', type: 'merchant'},
-      {name: 'Механик Зори', dialog: 'Чиним корабли любой сложности', type: 'mechanic'},
-      {name: 'Ученый Лира', dialog: 'Изучаю местную фауну... опасную фауну', type: 'scientist'},
-      {name: 'Информатор Кей', dialog: 'Слухи о заброшенных станциях...', type: 'informant'}
-    ];
+    const roadGeometry = new THREE.PlaneGeometry(length, 4);
+    const roadMaterial = new THREE.MeshLambertMaterial({color: 0x333333});
+    const roadMesh = new THREE.Mesh(roadGeometry, roadMaterial);
     
-    npcData.forEach((npc, index) => {
-      const npcGroup = new THREE.Group();
-      npcGroup.userData = {...npc, interactable: true};
-      
-      // Тело NPC
-      const body = new THREE.Mesh(
-        new THREE.CapsuleGeometry(0.8, 2.0, 4, 8),
-        new THREE.MeshStandardMaterial({ 
-          color: 0x8888ff,
-          roughness: 0.7
-        })
-      );
-      body.position.y = 1.0;
-      npcGroup.add(body);
-      
-      // Голова NPC
-      const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.6, 8, 6),
-        new THREE.MeshStandardMaterial({ 
-          color: 0xffaa88,
-          roughness: 0.5
-        })
-      );
-      head.position.y = 2.3;
-      npcGroup.add(head);
-      
-      // Позиционируем NPC вокруг центра
-      const angle = (index / npcData.length) * Math.PI * 2;
-      const radius = 25;
-      npcGroup.position.set(
-        Math.cos(angle) * radius,
-        GROUND_LEVEL + 0.1,
-        Math.sin(angle) * radius
-      );
-      
-      npcGroup.lookAt(0, GROUND_LEVEL, 0);
-      npcGroup.castShadow = true;
-      surfaceScene.add(npcGroup);
-      surfaceObjects.push(npcGroup);
+    roadMesh.position.set((x1+x2)/2, 0.01, (z1+z2)/2);
+    roadMesh.rotation.x = -Math.PI/2;
+    roadMesh.rotation.z = angle;
+    
+    roadMesh.receiveShadow = true;
+    this.scene.add(roadMesh);
+    
+    const lineGeometry = new THREE.PlaneGeometry(length, 0.2);
+    const lineMaterial = new THREE.MeshBasicMaterial({color: 0xffff00});
+    const lineMesh = new THREE.Mesh(lineGeometry, lineMaterial);
+    lineMesh.position.set(0, 0.02, 0);
+    lineMesh.rotation.x = -Math.PI/2;
+    roadMesh.add(lineMesh);
+    
+    this.roads.push({
+      mesh: roadMesh,
+      x: (x1+x2)/2, 
+      z: (z1+z2)/2,
+      start: {x: x1, z: z1},
+      end: {x: x2, z: z2}
     });
     
-    // Солнце для освещения поверхности
-    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-    sun.position.set(100, 200, 100);
-    sun.castShadow = true;
-    sun.shadow.mapSize.width = 1024;
-    sun.shadow.mapSize.height = 1024;
-    surfaceScene.add(sun);
+    this.stats.infra += 1;
     
-    scene.add(surfaceScene);
-    console.log('Surface created with', surfaceObjects.length, 'objects');
-    return surfaceScene;
-  } catch(e) {
-    console.error('Error creating surface:', e);
-    return null;
+    playSound(SOUND_CONFIRM, 0.6);
+    if (navigator.vibrate) navigator.vibrate([20,10,20]);
+    
+    return roadMesh;
   }
-}
 
-function createSurfacePlayer(){
-  try {
-    console.log('Creating surface player');
+  updateRoadPreview(x1, z1, x2, z2) {
+    if (this.roadPreview) {
+      this.scene.remove(this.roadPreview);
+    }
     
-    const player = new THREE.Group();
+    const dx = x2 - x1;
+    const dz = z2 - z1;
+    const length = Math.sqrt(dx*dx + dz*dz);
+    const angle = Math.atan2(dz, dx);
     
-    // Тело игрока
+    const previewGeometry = new THREE.PlaneGeometry(length, 4);
+    const previewMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ff00,
+      transparent: true,
+      opacity: 0.6,
+      side: THREE.DoubleSide
+    });
+    
+    this.roadPreview = new THREE.Mesh(previewGeometry, previewMaterial);
+    this.roadPreview.position.set((x1+x2)/2, 0.02, (z1+z2)/2);
+    this.roadPreview.rotation.x = -Math.PI/2;
+    this.roadPreview.rotation.z = angle;
+    
+    this.scene.add(this.roadPreview);
+  }
+
+  removeRoadPreview() {
+    if (this.roadPreview) {
+      this.scene.remove(this.roadPreview);
+      this.roadPreview = null;
+    }
+  }
+
+  spawnSmokeAt(vec3){
+    const mat = new THREE.SpriteMaterial({ map: this.smokeTex, transparent:true, depthWrite:false });
+    const spr = new THREE.Sprite(mat);
+    spr.position.copy(vec3);
+    spr.scale.set(2.2,2.2,1);
+    spr.material.opacity = 0.95;
+    this.scene.add(spr);
+    this.smoke.push({mesh:spr, born:performance.now(), life:1200+Math.random()*900, vel: new THREE.Vector3((Math.random()-0.5)*0.06, 0.02+Math.random()*0.05, (Math.random()-0.5)*0.06)});
+  }
+
+  toggleTimeOfDay() {
+    this.isDay = !this.isDay;
+    playSound(SOUND_TIME_CHANGE, 0.4);
+    this.updateTimeDisplay();
+  }
+
+  toggleTransport() {
+    this.transportEnabled = !this.transportEnabled;
+    const indicator = document.getElementById('transport-indicator');
+    const button = document.getElementById('toggle-transport');
+    
+    if (this.transportEnabled) {
+      indicator.style.display = 'flex';
+      button.textContent = '🚌 Выкл.';
+      this.generateBusRoutes();
+      document.getElementById('hint').textContent = 'Транспортная система активирована';
+    } else {
+      indicator.style.display = 'none';
+      button.textContent = '🚌';
+      this.buses.forEach(bus => this.scene.remove(bus.group));
+      this.buses = [];
+      document.getElementById('hint').textContent = 'Транспортная система отключена';
+    }
+    this.updateTransportDisplay();
+  }
+
+  togglePedestrians() {
+    this.pedestriansEnabled = !this.pedestriansEnabled;
+    const indicator = document.getElementById('pedestrians-indicator');
+    const button = document.getElementById('toggle-pedestrians');
+    
+    if (this.pedestriansEnabled) {
+      indicator.style.display = 'flex';
+      button.textContent = '👥 Выкл.';
+      this.spawnInitialPedestrians();
+      document.getElementById('hint').textContent = 'Пешеходы активированы';
+    } else {
+      indicator.style.display = 'none';
+      button.textContent = '👥';
+      this.pedestrians.forEach(ped => this.scene.remove(ped.group));
+      this.pedestrians = [];
+      document.getElementById('hint').textContent = 'Пешеходы отключены';
+    }
+    this.updatePedestriansDisplay();
+  }
+
+  generateBusRoutes() {
+    this.busRoutes = [];
+    
+    if (this.busStops.length < 2) {
+      document.getElementById('hint').textContent = 'Нужно построить минимум 2 остановки для запуска транспорта';
+      return;
+    }
+
+    for (let i = 0; i < this.busStops.length - 1; i++) {
+      const start = this.busStops[i];
+      const end = this.busStops[i + 1];
+      
+      this.busRoutes.push({
+        start: { x: start.x, z: start.z },
+        end: { x: end.x, z: end.z },
+        stops: [start, end]
+      });
+    }
+
+    if (this.busStops.length >= 3) {
+      const start = this.busStops[this.busStops.length - 1];
+      const end = this.busStops[0];
+      this.busRoutes.push({
+        start: { x: start.x, z: start.z },
+        end: { x: end.x, z: end.z },
+        stops: [start, end]
+      });
+    }
+
+    this.spawnBuses();
+  }
+
+  spawnBuses() {
+    this.buses.forEach(bus => this.scene.remove(bus.group));
+    this.buses = [];
+
+    this.busRoutes.forEach(route => {
+      const bus = this.createBus(route.start.x, route.start.z);
+      if (bus) {
+        bus.route = route;
+        bus.progress = 0;
+        bus.speed = 0.002 + Math.random() * 0.003;
+        bus.waiting = 0;
+        this.buses.push(bus);
+      }
+    });
+
+    this.updateTransportDisplay();
+  }
+
+  createBus(x, z) {
+    const group = new THREE.Group();
+    group.position.set(x, 0.5, z);
+
     const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.6, 1.5, 4, 8),
-      new THREE.MeshStandardMaterial({ 
-        color: 0x66ddff,
-        emissive: 0x002233,
-        roughness: 0.4,
-        metalness: 0.3
-      })
+      new THREE.BoxGeometry(3, 1.2, 1.5),
+      new THREE.MeshLambertMaterial({ color: 0xff0000 })
     );
-    body.position.y = 0.75;
-    player.add(body);
-    
-    // Голова игрока
+    body.position.y = 0.6;
+    group.add(body);
+
+    const windowMat = new THREE.MeshBasicMaterial({ color: 0x87CEEB });
+    const frontWindow = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.8), windowMat);
+    frontWindow.position.set(0, 1.1, 0.76);
+    frontWindow.rotation.x = Math.PI / 2;
+    group.add(frontWindow);
+
+    const sideWindows = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.6, 0.1), windowMat);
+    sideWindows.position.set(0, 1.1, 0);
+    group.add(sideWindows);
+
+    const wheelMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+    const wheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 8);
+    wheelGeometry.rotateZ(Math.PI / 2);
+
+    const wheel1 = new THREE.Mesh(wheelGeometry, wheelMat);
+    wheel1.position.set(-1, 0.3, 0.8);
+    group.add(wheel1);
+
+    const wheel2 = new THREE.Mesh(wheelGeometry, wheelMat);
+    wheel2.position.set(1, 0.3, 0.8);
+    group.add(wheel2);
+
+    const wheel3 = new THREE.Mesh(wheelGeometry, wheelMat);
+    wheel3.position.set(-1, 0.3, -0.8);
+    group.add(wheel3);
+
+    const wheel4 = new THREE.Mesh(wheelGeometry, wheelMat);
+    wheel4.position.set(1, 0.3, -0.8);
+    group.add(wheel4);
+
+    this.scene.add(group);
+
+    return {
+      group: group,
+      route: null,
+      progress: 0,
+      speed: 0.003,
+      waiting: 0
+    };
+  }
+
+  createPedestrian(x, z) {
+    const group = new THREE.Group();
+    group.position.set(x, 0, z);
+
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.2, 0.2, 1, 8),
+      new THREE.MeshLambertMaterial({ color: Math.random() > 0.5 ? 0x2f6fb3 : 0xb32f6f })
+    );
+    body.position.y = 0.5;
+    group.add(body);
+
     const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.4, 8, 6),
-      new THREE.MeshStandardMaterial({ 
-        color: 0xffccaa,
-        roughness: 0.6
-      })
+      new THREE.SphereGeometry(0.15, 8, 6),
+      new THREE.MeshLambertMaterial({ color: 0xffdbac })
     );
-    head.position.y = 1.6;
-    player.add(head);
-    
-    player.position.set(0, GROUND_LEVEL + PLAYER_HEIGHT, 0);
-    player.castShadow = true;
-    player.userData = { name: 'player', type: 'character' };
-    
-    console.log('Surface player created at position:', player.position);
-    return player;
-  } catch(e) {
-    console.error('Error creating surface player:', e);
-    return null;
-  }
-}
+    head.position.y = 1.1;
+    group.add(head);
 
-// ========== СИСТЕМА ОБЪЕКТОВ КОСМОСА ==========
-function spawnAsteroid(x, y, z, size = 3){
-  try {
-    const geom = new THREE.IcosahedronGeometry(size, 1);
-    const mat = new THREE.MeshStandardMaterial({ 
-      color: 0x9a9a9a, 
-      metalness: 0.05, 
-      roughness: 0.6,
-      emissive: 0x222222,
-      emissiveIntensity: 0.2
-    });
-    
-    const m = new THREE.Mesh(geom, mat); 
-    m.position.set(x, y, z); 
-    m.userData = {
-      rot: {
-        x: (Math.random() - 0.5) * 0.02,
-        y: (Math.random() - 0.5) * 0.02,
-        z: (Math.random() - 0.5) * 0.02
-      },
-      radius: size,
-      type: 'asteroid'
+    this.scene.add(group);
+
+    let targetX, targetZ;
+    if (this.buildings.length > 0 && Math.random() > 0.3) {
+      const randomBuilding = this.buildings[Math.floor(Math.random() * this.buildings.length)];
+      targetX = randomBuilding.position.x + (Math.random() - 0.5) * 10;
+      targetZ = randomBuilding.position.z + (Math.random() - 0.5) * 10;
+    } else {
+      targetX = x + (Math.random() - 0.5) * 30;
+      targetZ = z + (Math.random() - 0.5) * 30;
+    }
+
+    return {
+      group: group,
+      target: { x: targetX, z: targetZ },
+      speed: 0.03 + Math.random() * 0.02,
+      idleTime: 0
     };
-    m.castShadow = true;
-    scene.add(m); 
-    asteroids.push(m);
-    return m;
-  } catch(e) {
-    console.error('Error spawning asteroid:', e);
-    return null;
   }
-}
 
-function spawnEnemy(x, y, z){
-  try {
-    const geom = new THREE.OctahedronGeometry(3, 1);
-    const mat = new THREE.MeshStandardMaterial({ 
-      color: 0xff3355, 
-      emissive: 0x550000, 
-      metalness: 0.2, 
-      roughness: 0.4 
+  spawnInitialPedestrians() {
+    const residentialBuildings = this.buildings.filter(b => 
+      ['khrushchev', 'brezhnev', 'dormitory'].includes(b.userData.type)
+    );
+    
+    residentialBuildings.forEach(building => {
+      for (let i = 0; i < 2; i++) {
+        const offsetX = (Math.random() - 0.5) * 8;
+        const offsetZ = (Math.random() - 0.5) * 8;
+        const ped = this.createPedestrian(
+          building.position.x + offsetX,
+          building.position.z + offsetZ
+        );
+        if (ped) {
+          this.pedestrians.push(ped);
+        }
+      }
     });
     
-    const e = new THREE.Mesh(geom, mat); 
-    e.position.set(x, y, z); 
-    e.userData = { 
-      health: 30, 
-      speed: 0.45 + Math.random() * 0.6,
-      type: 'enemy'
-    };
-    e.castShadow = true;
-    scene.add(e); 
-    enemies.push(e);
-    return e;
-  } catch(e) {
-    console.error('Error spawning enemy:', e);
-    return null;
+    this.updatePedestriansDisplay();
   }
-}
 
-function initSpaceObjects(){
-  try {
-    console.log('Initializing space objects');
-    
-    for(let i = 0; i < 18; i++){ 
-      spawnAsteroid(
-        (Math.random() - 0.5) * 600, 
-        (Math.random() - 0.5) * 200, 
-        -200 - Math.random() * 2000, 
-        1.5 + Math.random() * 4
-      );
-    }
-    
-    for(let i = 0; i < 8; i++){ 
-      spawnEnemy(
-        (Math.random() - 0.5) * 400, 
-        (Math.random() - 0.5) * 180, 
-        -300 - Math.random() * 1200
-      );
-    }
-    
-    console.log('Space objects initialized:', asteroids.length, 'asteroids,', enemies.length, 'enemies');
-    return true;
-  } catch(e) {
-    console.error('Error initializing space objects:', e);
-    return false;
-  }
-}
+  updateBuses() {
+    if (!this.transportEnabled) return;
 
-// ========== СИСТЕМА ПУЛЬ ==========
-let bulletPool = [];
-const POOL = { bullets: 60 };
-
-function initBulletPool(){
-  try {
-    console.log('Initializing bullet pool');
-    
-    const geom = new THREE.SphereGeometry(0.45, 6, 6);
-    const mat = new THREE.MeshBasicMaterial({ 
-      color: 0xffff88,
-      emissive: 0xffff88,
-      emissiveIntensity: 1.0
-    });
-    
-    for(let i = 0; i < POOL.bullets; i++){ 
-      const m = new THREE.Mesh(geom, mat); 
-      m.visible = false; 
-      m.userData = {
-        vel: new THREE.Vector3(), 
-        life: 0,
-        type: 'bullet'
-      }; 
-      m.frustumCulled = false;
-      scene.add(m); 
-      bulletPool.push(m); 
-    }
-    
-    console.log('Bullet pool initialized:', bulletPool.length, 'bullets');
-    return true;
-  } catch(e) {
-    console.error('Error initializing bullet pool:', e);
-    return false;
-  }
-}
-
-function getBullet(){
-  for(let i = 0; i < bulletPool.length; i++) {
-    if(!bulletPool[i].visible) {
-      return bulletPool[i];
-    }
-  }
-  console.warn('Bullet pool exhausted');
-  return null;
-}
-
-// ========== ЗВУКОВАЯ СИСТЕМА ==========
-const SFX = (function(){
-  let ctx = null;
-  let isMuted = false;
-  
-  function ensure(){ 
-    if(!ctx && !isMuted){ 
-      try{ 
-        ctx = new (window.AudioContext || window.webkitAudioContext)();
-        console.log('Audio context created');
-      } catch(e){ 
-        ctx = null;
-        console.warn('Audio context creation failed:', e);
-      } 
-    } 
-    return ctx; 
-  }
-  
-  function playStart(){ 
-    if(isMuted) return;
-    const c = ensure(); 
-    if(!c) return; 
-    
-    const o = c.createOscillator();
-    const g = c.createGain(); 
-    
-    o.type = 'sawtooth'; 
-    o.frequency.setValueAtTime(140, c.currentTime); 
-    o.frequency.exponentialRampToValueAtTime(480, c.currentTime + 0.25); 
-    
-    g.gain.setValueAtTime(0.0001, c.currentTime); 
-    g.gain.exponentialRampToValueAtTime(0.14, c.currentTime + 0.06); 
-    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.9); 
-    
-    o.connect(g); 
-    g.connect(c.destination); 
-    
-    o.start(); 
-    o.stop(c.currentTime + 0.8); 
-    
-    console.log('Start sound played');
-  }
-  
-  function playShoot(){ 
-    if(isMuted) return;
-    const c = ensure(); 
-    if(!c) return; 
-    
-    const o1 = c.createOscillator();
-    const o2 = c.createOscillator();
-    const g = c.createGain(); 
-    
-    o1.type = 'square'; 
-    o2.type = 'triangle'; 
-    
-    o1.frequency.setValueAtTime(900, c.currentTime); 
-    o2.frequency.setValueAtTime(1300, c.currentTime); 
-    
-    g.gain.setValueAtTime(0.22, c.currentTime); 
-    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.14); 
-    
-    o1.connect(g); 
-    o2.connect(g); 
-    g.connect(c.destination); 
-    
-    o1.start(); 
-    o2.start(); 
-    
-    o1.stop(c.currentTime + 0.14); 
-    o2.stop(c.currentTime + 0.14); 
-    
-    console.log('Shoot sound played');
-  }
-  
-  function playBuy(){ 
-    if(isMuted) return;
-    const c = ensure(); 
-    if(!c) return; 
-    
-    const o = c.createOscillator();
-    const g = c.createGain(); 
-    
-    o.type = 'sine'; 
-    o.frequency.setValueAtTime(600, c.currentTime); 
-    o.frequency.exponentialRampToValueAtTime(900, c.currentTime + 0.12); 
-    
-    g.gain.setValueAtTime(0.2, c.currentTime); 
-    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.2); 
-    
-    o.connect(g); 
-    g.connect(c.destination); 
-    
-    o.start(); 
-    o.stop(c.currentTime + 0.2); 
-    
-    console.log('Buy sound played');
-  }
-  
-  function playLanding(){
-    if(isMuted) return;
-    const c = ensure();
-    if(!c) return;
-    
-    const o = c.createOscillator();
-    const g = c.createGain();
-    
-    o.type = 'sine';
-    o.frequency.setValueAtTime(400, c.currentTime);
-    o.frequency.exponentialRampToValueAtTime(200, c.currentTime + 0.5);
-    
-    g.gain.setValueAtTime(0.1, c.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.8);
-    
-    o.connect(g);
-    g.connect(c.destination);
-    
-    o.start();
-    o.stop(c.currentTime + 0.8);
-    
-    console.log('Landing sound played');
-  }
-  
-  function playTakeoff(){
-    if(isMuted) return;
-    const c = ensure();
-    if(!c) return;
-    
-    const o = c.createOscillator();
-    const g = c.createGain();
-    
-    o.type = 'sawtooth';
-    o.frequency.setValueAtTime(200, c.currentTime);
-    o.frequency.exponentialRampToValueAtTime(800, c.currentTime + 0.6);
-    
-    g.gain.setValueAtTime(0.15, c.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 1.0);
-    
-    o.connect(g);
-    g.connect(c.destination);
-    
-    o.start();
-    o.stop(c.currentTime + 1.0);
-    
-    console.log('Takeoff sound played');
-  }
-  
-  function toggleMute(){
-    isMuted = !isMuted;
-    if(isMuted && ctx){
-      ctx.close();
-      ctx = null;
-    }
-    console.log('Audio muted:', isMuted);
-    return isMuted;
-  }
-  
-  return { 
-    playStart, 
-    playShoot, 
-    playBuy,
-    playLanding,
-    playTakeoff,
-    toggleMute
-  };
-})();
-
-// ========== БОЕВАЯ СИСТЕМА ==========
-function findNearestThreat(){
-  let min = Infinity;
-  let target = null;
-  const pos = shipGroup.position;
-  
-  [...enemies, ...asteroids].forEach(o => {
-    const d = pos.distanceTo(o.position);
-    if(d < min){
-      min = d;
-      target = o;
-    }
-  });
-  
-  return target;
-}
-
-function shootAt(target){
-  if(!target || !STATE.canShoot) return;
-  
-  const b = getBullet(); 
-  if(!b) return;
-  
-  b.visible = true;
-  b.position.copy(shipGroup.position);
-  
-  const dir = new THREE.Vector3()
-    .subVectors(target.position, shipGroup.position)
-    .normalize();
-  
-  b.userData.vel.copy(dir).multiplyScalar( 
-    (18 + STATE.upgrades.weapon * 4) * (STATE.overdrive ? 1.6 : 1) 
-  );
-  
-  b.userData.life = 120;
-  bullets.push(b);
-  
-  SFX.playShoot();
-  
-  STATE.canShoot = false;
-  STATE.lastShot = performance.now();
-  
-  setTimeout(() => { 
-    STATE.canShoot = true;
-  }, Math.max(120, 420 / (1 + (STATE.upgrades.weapon - 1) * 0.25)));
-}
-
-function createExplosion(pos, size = 12, color = 0xff6600){
-  try {
-    const count = 20;
-    const geom = new THREE.BufferGeometry();
-    const positions = new Float32Array(count * 3);
-    const cols = new Float32Array(count * 3);
-    
-    for(let i = 0; i < count; i++){ 
-      const j = i * 3; 
-      positions[j] = pos.x + (Math.random() - 0.5) * size; 
-      positions[j+1] = pos.y + (Math.random() - 0.5) * size; 
-      positions[j+2] = pos.z + (Math.random() - 0.5) * size; 
-      
-      cols[j] = 1; 
-      cols[j+1] = 0.4 + Math.random() * 0.6; 
-      cols[j+2] = 0; 
-    }
-    
-    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3)); 
-    geom.setAttribute('color', new THREE.BufferAttribute(cols, 3));
-    
-    const mat = new THREE.PointsMaterial({ 
-      size: 3.0, 
-      vertexColors: true, 
-      transparent: true, 
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-    
-    const pts = new THREE.Points(geom, mat); 
-    pts.userData.life = 1.0; 
-    scene.add(pts);
-    
-    const id = setInterval(() => { 
-      if(!pts.material) {
-        clearInterval(id);
+    this.buses.forEach(bus => {
+      if (bus.waiting > 0) {
+        bus.waiting--;
         return;
       }
-      
-      pts.material.opacity -= 0.12; 
-      pts.scale.multiplyScalar(1.1);
-      
-      if(pts.material.opacity <= 0){ 
-        clearInterval(id); 
-        try{
-          scene.remove(pts);
-        } catch(e){
-          console.warn('Error removing explosion:', e);
-        } 
-      } 
-    }, 50);
-    
-    return pts;
-  } catch(e) {
-    console.error('Error creating explosion:', e);
-    return null;
-  }
-}
 
-function flashDamage(){
-  const el = document.getElementById('damageFlash'); 
-  if(!el) return;
-  
-  el.style.opacity = '0.55'; 
-  setTimeout(() => {
-    if(el) el.style.opacity = '0';
-  }, 150);
-}
-
-// ========== СИСТЕМА ПОСАДКИ И ПОВЕРХНОСТИ ==========
-function performLanding(planet){
-  if(STATE.mode !== 'space') return;
-  
-  console.log("Starting landing sequence on:", planet.userData.name);
-  
-  STATE.mode = 'landing';
-  STATE.currentPlanet = planet;
-  
-  landingAnimation.active = true;
-  landingAnimation.startPos.copy(shipGroup.position);
-  
-  // Целевая позиция для посадки - над поверхностью планеты
-  landingAnimation.targetPos.copy(planet.position)
-    .add(new THREE.Vector3(0, planet.userData.radius + 10, 0));
-  
-  landingAnimation.progress = 0;
-  landingAnimation.startTime = performance.now();
-  
-  // Скрываем индикатор посадки
-  document.getElementById('landingIndicator').classList.remove('active');
-  
-  // Звук посадки
-  SFX.playLanding();
-  
-  // Визуальный эффект посадки
-  createLandingEffect(shipGroup.position, planet.userData.radius);
-}
-
-function createLandingEffect(position, radius){
-  try {
-    // Визуальный эффект двигателей при посадке
-    const count = 30;
-    const geom = new THREE.BufferGeometry();
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-    
-    for(let i = 0; i < count; i++){
-      const j = i * 3;
-      const angle = Math.random() * Math.PI * 2;
-      const dist = Math.random() * radius * 0.8;
+      bus.progress += bus.speed;
       
-      positions[j] = position.x + Math.cos(angle) * dist;
-      positions[j+1] = position.y - 5;
-      positions[j+2] = position.z + Math.sin(angle) * dist;
-      
-      colors[j] = 1;
-      colors[j+1] = 0.8;
-      colors[j+2] = 0.3;
-    }
-    
-    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    
-    const mat = new THREE.PointsMaterial({
-      size: 4.0,
-      vertexColors: true,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      opacity: 0.8
-    });
-    
-    const effect = new THREE.Points(geom, mat);
-    scene.add(effect);
-    
-    // Анимация эффекта
-    const startTime = performance.now();
-    const duration = 1000;
-    
-    function animateEffect(){
-      const elapsed = performance.now() - startTime;
-      const progress = elapsed / duration;
-      
-      if(progress < 1){
-        effect.material.opacity = 0.8 * (1 - progress);
-        effect.scale.set(1 + progress, 1 + progress, 1 + progress);
-        requestAnimationFrame(animateEffect);
-      } else {
-        try {
-          scene.remove(effect);
-        } catch(e) {
-          console.warn('Error removing landing effect:', e);
+      if (bus.progress >= 1) {
+        bus.progress = 0;
+        bus.waiting = 60;
+        
+        if (Math.random() < 0.3) {
+          playSound(SOUND_BUS_HORN, 0.2);
         }
       }
-    }
-    
-    animateEffect();
-  } catch(e) {
-    console.error('Error creating landing effect:', e);
-  }
-}
 
-function updateLanding(delta){
-  if(!landingAnimation.active || !STATE.currentPlanet) return;
-  
-  const elapsed = performance.now() - landingAnimation.startTime;
-  landingAnimation.progress = clamp(elapsed / landingAnimation.duration, 0, 1);
-  
-  const t = easeOutCubic(landingAnimation.progress);
-  
-  // Движение корабля к планете
-  shipGroup.position.lerpVectors(
-    landingAnimation.startPos, 
-    landingAnimation.targetPos, 
-    t
-  );
-  
-  // Обновление камеры
-  const camOffset = new THREE.Vector3(0, 8, 15);
-  const targetCamPos = shipGroup.position.clone().add(camOffset);
-  camera.position.lerp(targetCamPos, 0.1);
-  camera.lookAt(shipGroup.position);
-  
-  // Если посадка завершена
-  if(landingAnimation.progress >= 1){
-    landingAnimation.active = false;
-    completeLanding(STATE.currentPlanet);
-  }
-}
+      const route = bus.route;
+      const currentX = route.start.x + (route.end.x - route.start.x) * bus.progress;
+      const currentZ = route.start.z + (route.end.z - route.start.z) * bus.progress;
 
-function completeLanding(planet){
-  console.log("Landing complete on:", planet.userData.name);
-  
-  // Скрываем космические объекты
-  if(stars) stars.visible = false;
-  nebulas.forEach(n => { if(n) n.visible = false; });
-  planets.forEach(p => { if(p) p.visible = false; });
-  asteroids.forEach(a => { if(a) a.visible = false; });
-  enemies.forEach(e => { if(e) e.visible = false; });
-  bullets.forEach(b => { if(b) b.visible = false; });
-  if(shipGroup) shipGroup.visible = false;
-  
-  // Удаляем существующую поверхность
-  if(surfaceScene) {
-    try {
-      scene.remove(surfaceScene);
-    } catch(e) {
-      console.warn('Error removing surface scene:', e);
-    }
-    surfaceScene = null;
-    surfaceObjects = [];
-  }
-  
-  // Создаем поверхность планеты
-  surfaceScene = createSurfaceForPlanet(planet);
-  
-  // Создаем игрока на поверхности
-  surfacePlayer = createSurfacePlayer();
-  if (surfacePlayer && surfaceScene) {
-    surfacePlayer.position.set(0, GROUND_LEVEL + PLAYER_HEIGHT, 0);
-    surfaceScene.add(surfacePlayer);
-  }
-  
-  // Позиционируем камеру для поверхности
-  camera.position.set(0, GROUND_LEVEL + 8, 15);
-  if (surfacePlayer) {
-    camera.lookAt(surfacePlayer.position);
-  }
-  
-  // Переключаем управление
-  document.getElementById('spaceControls').style.display = 'none';
-  document.querySelector('.spaceActionButtons').style.display = 'none';
-  
-  document.getElementById('surfaceControls').style.display = 'flex';
-  document.querySelector('.surfaceActionButtons').style.display = 'flex';
-  
-  // Показываем UI планеты
-  showPlanetPanel(planet);
-  
-  STATE.mode = 'surface';
-  
-  console.log('Surface mode activated successfully');
-  console.log('Player position:', surfacePlayer?.position);
-  console.log('Camera position:', camera.position);
-}
-
-function takeOffFromPlanet(){
-  if(STATE.mode !== 'surface') return;
-  
-  console.log("Taking off from planet:", STATE.currentPlanet ? STATE.currentPlanet.userData.name : 'unknown');
-  
-  SFX.playTakeoff();
-  
-  // Удаляем поверхность
-  if(surfaceScene) {
-    try {
-      scene.remove(surfaceScene);
-    } catch(e) {
-      console.warn('Error removing surface scene during takeoff:', e);
-    }
-    surfaceScene = null;
-    surfacePlayer = null;
-    surfaceObjects = [];
-  }
-  
-  // Показываем космические объекты
-  if(stars) stars.visible = true;
-  nebulas.forEach(n => { if(n) n.visible = true; });
-  planets.forEach(p => { if(p) p.visible = true; });
-  asteroids.forEach(a => { if(a) a.visible = true; });
-  enemies.forEach(e => { if(e) e.visible = true; });
-  bullets.forEach(b => { if(b) b.visible = true; });
-  if(shipGroup) shipGroup.visible = true;
-  
-  // Позиционируем корабль
-  if(STATE.currentPlanet && shipGroup) {
-    shipGroup.position.copy(STATE.currentPlanet.position)
-      .add(new THREE.Vector3(0, STATE.currentPlanet.userData.radius + 20, 30));
-  }
-  
-  // Позиционируем камеру для космоса
-  if(shipGroup) {
-    const camOffset = new THREE.Vector3(0, 6, 22);
-    camera.position.copy(shipGroup.position).add(camOffset);
-    camera.lookAt(shipGroup.position);
-  }
-  
-  // Переключаем управление
-  document.getElementById('surfaceControls').style.display = 'none';
-  document.querySelector('.surfaceActionButtons').style.display = 'none';
-  
-  document.getElementById('spaceControls').style.display = 'flex';
-  document.querySelector('.spaceActionButtons').style.display = 'flex';
-  
-  // Закрываем UI планеты
-  document.getElementById('planetPanel').style.display = 'none';
-  
-  STATE.mode = 'space';
-  STATE.currentPlanet = null;
-  
-  console.log('Back to space mode successfully');
-}
-
-// ========== UI И МАГАЗИН ==========
-function updateHUD(){
-  try {
-    document.getElementById('uiCredits').textContent = STATE.credits;
-    document.getElementById('uiHealth').textContent = Math.max(0, Math.round(STATE.health));
-    document.getElementById('uiShield').textContent = Math.round(STATE.shield);
-    document.getElementById('uiFuel').textContent = Math.round(STATE.fuel);
-    document.getElementById('uiStars').textContent = STATE.stars;
-    document.getElementById('uiMission').textContent = `${STATE.missionProgress}/5`;
-  } catch(e) {
-    console.warn('Error updating HUD:', e);
-  }
-}
-
-function showPlanetPanel(planet){
-  if(!planet) return;
-  
-  try {
-    document.getElementById('planetName').textContent = planet.userData.name;
-    document.getElementById('planetDesc').textContent = planet.userData.desc;
-    
-    // Заполняем NPC
-    const npcList = document.getElementById('npcList');
-    if(npcList) {
-      npcList.innerHTML = '';
+      bus.group.position.set(currentX, 0.5, currentZ);
       
-      const npcs = [
-        {name: 'Торговец Хан', text: 'Редкие артефакты по лучшим ценам!'},
-        {name: 'Механик Зори', text: 'Чиним корабли любой сложности'},
-        {name: 'Ученый Лира', text: 'Изучаю местную фауну... опасную фауну'},
-        {name: 'Информатор Кей', text: 'Слухи о заброшенных станциях...'}
-      ];
-      
-      npcs.forEach((npc, idx) => {
-        const div = document.createElement('div');
-        div.className = 'npc';
-        div.innerHTML = `
-          <div class="face">${npc.name[0]}</div>
-          <div style="flex:1">
-            <strong>${npc.name}</strong>
-            <div class="small">${npc.text}</div>
-          </div>
-          <button class="btn" data-npc="${idx}">Говорить</button>
-        `;
-        npcList.appendChild(div);
-      });
-    }
-    
-    // Заполняем магазин
-    const shopGrid = document.getElementById('shopGrid');
-    if(shopGrid) {
-      shopGrid.innerHTML = '';
-      
-      const shopItems = [
-        {id: 'repair', name: 'Ремонт', price: 50, desc: '+50 здоровья', icon: '❤️'},
-        {id: 'weapon', name: 'Улучшение оружия', price: 100, desc: '+20% урона', icon: '💥'},
-        {id: 'engine', name: 'Улучшение двигателя', price: 80, desc: '+15% скорости', icon: '⚡'},
-        {id: 'shield', name: 'Щит', price: 60, desc: '+50 щита', icon: '🛡'},
-        {id: 'fuel', name: 'Топливо', price: 30, desc: '+50 топлива', icon: '⛽'},
-        {id: 'scan', name: 'Сканер', price: 120, desc: 'Обнаружение врагов', icon: '📡'}
-      ];
-      
-      shopItems.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'shopItem';
-        div.innerHTML = `
-          <div style="font-size:20px">${item.icon}</div>
-          <div><strong>${item.name}</strong></div>
-          <div class="small">${item.desc}</div>
-          <button class="btn" style="margin-top:8px" data-item="${item.id}" data-price="${item.price}">
-            ${item.price}💳
-          </button>
-        `;
-        shopGrid.appendChild(div);
-      });
-    }
-    
-    document.getElementById('planetPanel').style.display = 'block';
-  } catch(e) {
-    console.warn('Error showing planet panel:', e);
-  }
-}
-
-function buyItem(itemId, price){
-  if(STATE.credits < price) {
-    alert('Недостаточно кредитов!');
-    return false;
-  }
-  
-  STATE.credits -= price;
-  SFX.playBuy();
-  
-  switch(itemId){
-    case 'repair':
-      STATE.health = Math.min(100, STATE.health + 50);
-      break;
-    case 'weapon':
-      STATE.upgrades.weapon += 1;
-      break;
-    case 'engine':
-      STATE.upgrades.engine += 1;
-      break;
-    case 'shield':
-      STATE.shield = Math.min(100, STATE.shield + 50);
-      break;
-    case 'fuel':
-      STATE.fuel = Math.min(100, STATE.fuel + 50);
-      break;
-    case 'scan':
-      alert('Сканер активирован! Теперь вы видите врагов на радаре.');
-      break;
-  }
-  
-  updateHUD();
-  return true;
-}
-
-// ========== СИСТЕМА УПРАВЛЕНИЯ ==========
-function initSpaceJoystick(){
-  try {
-    const joy = document.getElementById('spaceJoy');
-    const knob = document.getElementById('spaceKnob');
-    
-    if(!joy || !knob) {
-      console.warn('Space joystick elements not found');
-      return false;
-    }
-    
-    let isTouching = false;
-    let joyRect;
-    
-    function start(ev){
-      isTouching = true;
-      joyRect = joy.getBoundingClientRect();
-      const pos = getTouchPos(ev);
-      moveKnob(pos.x - joyRect.left, pos.y - joyRect.top);
-    }
-    
-    function move(ev){
-      if(!isTouching) return;
-      ev.preventDefault();
-      const pos = getTouchPos(ev);
-      const localX = pos.x - joyRect.left - joyRect.width/2;
-      const localY = pos.y - joyRect.top - joyRect.height/2;
-      const maxDist = joyRect.width/2 - 21;
-      const dist = Math.hypot(localX, localY);
-      
-      const normX = (dist > maxDist) ? (localX/dist * maxDist) : localX;
-      const normY = (dist > maxDist) ? (localY/dist * maxDist) : localY;
-      
-      knob.style.transform = `translate(${normX}px, ${normY}px)`;
-      spaceJoystick.x = normX / maxDist;
-      spaceJoystick.y = -normY / maxDist;
-    }
-    
-    function end(){
-      isTouching = false;
-      knob.style.transform = `translate(0px, 0px)`;
-      spaceJoystick.x = 0;
-      spaceJoystick.y = 0;
-    }
-    
-    function getTouchPos(e){
-      const t = e.touches ? e.touches[0] : e;
-      return { x: t.clientX, y: t.clientY };
-    }
-    
-    function moveKnob(x, y){
-      const localX = x - joyRect.width/2;
-      const localY = y - joyRect.height/2;
-      const maxDist = joyRect.width/2 - 21;
-      const dist = Math.hypot(localX, localY);
-      
-      const normX = (dist > maxDist) ? (localX/dist * maxDist) : localX;
-      const normY = (dist > maxDist) ? (localY/dist * maxDist) : localY;
-      
-      knob.style.transform = `translate(${normX}px, ${normY}px)`;
-      spaceJoystick.x = normX / maxDist;
-      spaceJoystick.y = -normY / maxDist;
-    }
-    
-    joy.addEventListener('touchstart', start, {passive:false});
-    joy.addEventListener('touchmove', move, {passive:false});
-    joy.addEventListener('touchend', end, {passive:false});
-    joy.addEventListener('mousedown', start);
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', end);
-    
-    console.log('Space joystick initialized');
-    return true;
-  } catch(e) {
-    console.error('Error initializing space joystick:', e);
-    return false;
-  }
-}
-
-function initSurfaceJoystick(){
-  try {
-    const joy = document.getElementById('surfaceJoy');
-    const knob = document.getElementById('surfaceKnob');
-    
-    if(!joy || !knob) {
-      console.warn('Surface joystick elements not found');
-      return false;
-    }
-    
-    let startX = 0, startY = 0, active = false;
-    const radius = 40;
-    
-    function down(e){
-      active = true;
-      surfaceJoystick.active = true;
-      const touch = (e.touches && e.touches[0]) || e;
-      startX = touch.clientX;
-      startY = touch.clientY;
-    }
-    
-    function move(e){
-      if(!active) return;
-      e.preventDefault();
-      const touch = (e.touches && e.touches[0]) || e;
-      let dx = touch.clientX - startX;
-      let dy = touch.clientY - startY;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      
-      if(dist > radius){
-        dx *= radius/dist;
-        dy *= radius/dist;
-      }
-      
-      knob.style.left = (38 + dx) + 'px';
-      knob.style.top = (38 + dy) + 'px';
-      surfaceJoystick.x = dx / radius;
-      surfaceJoystick.y = -dy / radius;
-    }
-    
-    function up(){
-      active = false;
-      knob.style.left = '38px';
-      knob.style.top = '38px';
-      surfaceJoystick.active = false;
-      surfaceJoystick.x = 0;
-      surfaceJoystick.y = 0;
-    }
-    
-    joy.addEventListener('touchstart', down);
-    joy.addEventListener('touchmove', move);
-    joy.addEventListener('touchend', up);
-    joy.addEventListener('mousedown', down);
-    joy.addEventListener('mousemove', move);
-    joy.addEventListener('mouseup', up);
-    joy.addEventListener('mouseleave', up);
-    
-    console.log('Surface joystick initialized');
-    return true;
-  } catch(e) {
-    console.error('Error initializing surface joystick:', e);
-    return false;
-  }
-}
-
-// ========== ОСНОВНОЙ ИГРОВОЙ ЦИКЛ ==========
-let lastTime = performance.now();
-
-function animate(){
-  try {
-    requestAnimationFrame(animate);
-    
-    const now = performance.now();
-    const delta = Math.min((now - lastTime) / 1000, 0.05);
-    lastTime = now;
-    
-    // Обновление в зависимости от режима
-    switch(STATE.mode){
-      case 'space':
-        updateSpace(delta);
-        break;
-      case 'landing':
-        updateLanding(delta);
-        break;
-      case 'surface':
-        updateSurface(delta);
-        break;
-    }
-    
-    // Рендеринг
-    if(hasComposer && composer) {
-      composer.render();
-    } else if(renderer) {
-      renderer.render(scene, camera);
-    }
-  } catch(e) {
-    console.error('Error in game loop:', e);
-  }
-}
-
-function updateSpace(delta){
-  if(!shipGroup) return;
-  
-  // УВЕЛИЧЕННАЯ СКОРОСТЬ БОКОВОГО ПЕРЕМЕЩЕНИЯ - было 8 и 6, стало 16 и 12
-  const moveSpeed = 1.2 * (1 + (STATE.upgrades.engine - 1) * 0.2) * (STATE.overdrive ? 2.0 : 1.0);
-  
-  shipGroup.position.x += spaceJoystick.x * 16 * delta * moveSpeed;
-  shipGroup.position.y += spaceJoystick.y * 12 * delta * moveSpeed;
-  shipGroup.position.z -= 40 * delta * moveSpeed;
-  
-  // Обновление камеры
-  const camOffset = new THREE.Vector3(0, 6, 22);
-  const targetCamPos = shipGroup.position.clone().add(camOffset);
-  camera.position.lerp(targetCamPos, 0.12);
-  camera.lookAt(shipGroup.position.clone().add(new THREE.Vector3(0, 0, -180)));
-  
-  // Частицы двигателей
-  if(shipEngineParticles) {
-    animateEngineParticles(delta);
-  }
-  
-  // Движение звезд для параллакса
-  if(stars) { 
-    stars.position.z += 0.09 * delta * 60; 
-    if(stars.position.z > 2000) stars.position.z = -2000; 
-  }
-  
-  nebulas.forEach(n => {
-    if(n) n.rotation.y += 0.0005 * delta * 60;
-  });
-  
-  // Обновление астероидов
-  for(let i = asteroids.length - 1; i >= 0; i--){
-    const a = asteroids[i];
-    if(!a) continue;
-    
-    a.position.z += 0.6 * delta * 60;
-    a.rotation.x += a.userData.rot.x * delta * 60; 
-    a.rotation.y += a.userData.rot.y * delta * 60;
-    
-    if(a.position.z > shipGroup.position.z + 80){ 
-      try {
-        scene.remove(a);
-      } catch(e) {
-        console.warn('Error removing asteroid:', e);
-      }
-      asteroids.splice(i, 1); 
-      spawnAsteroid(
-        (Math.random() - 0.5) * 800, 
-        (Math.random() - 0.5) * 200, 
-        shipGroup.position.z - 1600, 
-        1.0 + Math.random() * 4
-      ); 
-    }
-    
-    // Проверка столкновений
-    if(a.position.distanceTo(shipGroup.position) < (a.userData.radius + 3.5)){
-      if(STATE.shield > 0){ 
-        STATE.shield = Math.max(0, STATE.shield - 10); 
-      } else { 
-        STATE.health -= 10; 
-        flashDamage(); 
-      }
-      
-      createExplosion(a.position, 10); 
-      try {
-        scene.remove(a);
-      } catch(e) {
-        console.warn('Error removing asteroid on collision:', e);
-      }
-      asteroids.splice(i, 1);
-    }
-  }
-  
-  // Обновление врагов
-  for(let i = enemies.length - 1; i >= 0; i--){
-    const e = enemies[i];
-    if(!e) continue;
-    
-    const dx = shipGroup.position.x - e.position.x; 
-    const dz = shipGroup.position.z - e.position.z;
-    const dist = Math.hypot(dx, dz);
-    
-    if(dist < 260){ 
-      e.position.x += dx * 0.008 * e.userData.speed * delta * 60; 
-      e.position.z += dz * 0.008 * e.userData.speed * delta * 60; 
-    } else {
-      e.position.z += 0.2 * delta * 60;
-    }
-    
-    if(e.position.distanceTo(shipGroup.position) < 8){ 
-      if(STATE.shield > 0) {
-        STATE.shield = Math.max(0, STATE.shield - 20);
-      } else { 
-        STATE.health -= 20; 
-        flashDamage(); 
-      } 
-      
-      createExplosion(e.position, 12); 
-      try {
-        scene.remove(e);
-      } catch(e) {
-        console.warn('Error removing enemy on collision:', e);
-      }
-      enemies.splice(i, 1); 
-      STATE.credits += 12; 
-      updateHUD(); 
-    }
-    
-    if(e.position.z > shipGroup.position.z + 200){ 
-      try {
-        scene.remove(e);
-      } catch(e) {
-        console.warn('Error removing enemy:', e);
-      }
-      enemies.splice(i, 1); 
-      spawnEnemy(
-        (Math.random() - 0.5) * 600,
-        (Math.random() - 0.5) * 200, 
-        shipGroup.position.z - 1200
-      ); 
-    }
-  }
-  
-  // Обновление пуль
-  for(let i = bullets.length - 1; i >= 0; i--){
-    const b = bullets[i];
-    if(!b || !b.visible) continue;
-    
-    b.position.add(b.userData.vel.clone().multiplyScalar(delta * 60));
-    b.userData.life--;
-    
-    for(let j = enemies.length - 1; j >= 0; j--){
-      const en = enemies[j];
-      if(!en) continue;
-      
-      if(b.position.distanceTo(en.position) < 5){
-        en.userData.health -= 12 * (1 + (STATE.upgrades.weapon - 1) * 0.25);
-        b.visible = false;
-        bullets.splice(i, 1);
-        
-        if(en.userData.health <= 0){
-          createExplosion(en.position, 10); 
-          try {
-            scene.remove(en);
-          } catch(e) {
-            console.warn('Error removing enemy:', e);
-          }
-          enemies.splice(j, 1); 
-          STATE.credits += 20; 
-          STATE.stars += 1;
-          updateHUD(); 
-        }
-        break;
-      }
-    }
-    
-    if(b.userData.life <= 0 || b.position.distanceTo(shipGroup.position) > 1200){ 
-      b.visible = false; 
-      bullets.splice(i, 1); 
-    }
-  }
-  
-  // Расход топлива
-  STATE.fuel = Math.max(0, STATE.fuel - 0.002 * delta * 60 * (STATE.overdrive ? 2 : 1));
-  if(STATE.fuel <= 0){ 
-    STATE.overdrive = false; 
-  }
-  
-  // Проверка близости к планетам
-  let nearPlanet = null;
-  let minDistance = Infinity;
-  
-  for(let p of planets){
-    if(!p) continue;
-    const d = shipGroup.position.distanceTo(p.position);
-    const landingDistance = p.userData.radius + 50;
-    
-    if(d < landingDistance && d < minDistance){
-      minDistance = d;
-      nearPlanet = p;
-    }
-  }
-  
-  // Показываем индикатор посадки
-  const landingIndicator = document.getElementById('landingIndicator');
-  if(landingIndicator) {
-    if(nearPlanet) {
-      landingIndicator.textContent = `ПРИБЛИЖЕНИЕ К ${nearPlanet.userData.name} - НАЖМИТЕ ДЛЯ ПОСАДКИ`;
-      landingIndicator.classList.add('active');
-    } else {
-      landingIndicator.classList.remove('active');
-    }
-  }
-  
-  // Автоматическая посадка при очень близком расстоянии
-  if(nearPlanet && minDistance < nearPlanet.userData.radius + 20){
-    performLanding(nearPlanet);
-  }
-  
-  updateHUD();
-  STATE.missionProgress = Math.min(5, STATE.missionProgress + 0.0005 * delta * 60);
-}
-
-function updateSurface(delta){
-  if(!surfacePlayer || !surfaceScene) return;
-  
-  // Гравитация и коллизии с землей
-  const playerY = surfacePlayer.position.y;
-  const targetY = GROUND_LEVEL + PLAYER_HEIGHT;
-  
-  if(playerY > targetY) {
-    surfacePlayer.position.y -= GRAVITY * delta * 60;
-    if(surfacePlayer.position.y < targetY) {
-      surfacePlayer.position.y = targetY;
-    }
-  } else if(playerY < targetY) {
-    surfacePlayer.position.y = targetY;
-  }
-  
-  // Движение по поверхности
-  const speed = 8 * delta;
-  
-  if(surfaceJoystick.active){
-    const moveX = surfaceJoystick.x * speed;
-    const moveZ = surfaceJoystick.y * speed;
-    
-    surfacePlayer.position.x += moveX;
-    surfacePlayer.position.z += moveZ;
-    
-    // Поворот игрока в направлении движения
-    if(Math.abs(surfaceJoystick.x) > 0.1 || Math.abs(surfaceJoystick.y) > 0.1){
-      surfacePlayer.rotation.y = Math.atan2(-surfaceJoystick.x, -surfaceJoystick.y);
-    }
-  }
-  
-  // Обновление камеры для поверхности
-  const camOffset = new THREE.Vector3(0, PLAYER_HEIGHT + 4, 12);
-  const targetCamPos = surfacePlayer.position.clone().add(camOffset);
-  camera.position.lerp(targetCamPos, 0.1);
-  camera.lookAt(surfacePlayer.position);
-  
-  // Проверка взаимодействия с NPC
-  if(surfaceObjects.length > 0) {
-    for(let obj of surfaceObjects) {
-      if(!obj.userData || !obj.userData.interactable) continue;
-      
-      const dist = surfacePlayer.position.distanceTo(obj.position);
-      if(dist < 4.0 && STATE.mode === 'surface') {
-        document.querySelector('.bottomHints').textContent = 'Нажмите 👁️ для взаимодействия';
-        break;
-      }
-    }
-  }
-}
-
-function animateEngineParticles(delta){
-  if(!shipEngineParticles || !shipEngineParticles.geom) return;
-  
-  const positions = shipEngineParticles.geom.attributes.position.array;
-  const count = positions.length / 3;
-  
-  for(let i = 0; i < count; i++){
-    const j = i * 3;
-    positions[j+2] += (1.0 + Math.random() * 1.0) * (STATE.overdrive ? 1.4 : 1.0);
-    
-    if(positions[j+2] > 18){ 
-      positions[j] = (Math.random() - 0.5) * 1.8; 
-      positions[j+1] = (Math.random() - 0.5) * 1.8; 
-      positions[j+2] = 2 + Math.random() * 4; 
-    }
-  }
-  
-  shipEngineParticles.geom.attributes.position.needsUpdate = true;
-  shipEngineParticles.points.material.opacity = 0.6 + Math.abs(Math.sin(Date.now() * 0.006)) * 0.25;
-}
-
-// ========== ОБРАБОТЧИКИ СОБЫТИЙ ==========
-function initEventHandlers(){
-  try {
-    // Запуск игры
-    const startBtn = document.getElementById('btnStart');
-    if (startBtn) startBtn.addEventListener('click', startGame);
-    
-    // Обучение
-    const howBtn = document.getElementById('btnHow');
-    if (howBtn) howBtn.addEventListener('click', () => {
-      alert(`Управление:
-Космос: Джойстик - движение, 💥 - стрельба, 🛡 - щит, ⚡ - овердрайв
-Планета: Джойстик - ходьба, 👁️ - взаимодействие, 🚀 - взлет
-Тап по планете для посадки!`);
+      const angle = Math.atan2(route.end.z - route.start.z, route.end.x - route.start.x);
+      bus.group.rotation.y = angle;
     });
-    
-    // Действия в космосе
-    const shootBtn = document.getElementById('btnShoot');
-    if (shootBtn) shootBtn.addEventListener('click', () => {
-      if(STATE.mode === 'space'){ 
-        const t = findNearestThreat(); 
-        if(t) shootAt(t); 
+  }
+
+  updatePedestrians() {
+    if (!this.pedestriansEnabled) return;
+
+    this.pedestrians.forEach(pedestrian => {
+      if (pedestrian.idleTime > 0) {
+        pedestrian.idleTime--;
+        return;
       }
-    });
-    
-    const shieldBtn = document.getElementById('btnShield');
-    if (shieldBtn) shieldBtn.addEventListener('click', () => {
-      if(STATE.mode === 'space' && STATE.credits >= 20 && !STATE.shieldActive){ 
-        STATE.credits -= 20; 
-        STATE.shieldActive = true;
-        
-        // Визуальный эффект щита
-        const shield = new THREE.Mesh(
-          new THREE.SphereGeometry(8, 16, 12),
-          new THREE.MeshBasicMaterial({ 
-            color: 0x00ffff, 
-            transparent: true, 
-            opacity: 0.2, 
-            side: THREE.DoubleSide 
-          })
-        );
-        shield.userData = { type: 'shield' };
-        shipGroup.add(shield);
-        
-        setTimeout(() => {
-          try{ 
-            if(shipGroup && shipGroup.children.includes(shield)) {
-              shipGroup.remove(shield);
-            }
-          } catch(e){
-            console.warn('Error removing shield:', e);
-          }
-          STATE.shieldActive = false;
-        }, 5000);
-        
-        SFX.playBuy(); 
-        updateHUD(); 
-      } else {
-        alert('Не хватает кредитов или щит уже активен.');
-      }
-    });
-    
-    const boostBtn = document.getElementById('btnBoost');
-    if (boostBtn) boostBtn.addEventListener('click', () => {
-      if(STATE.mode === 'space' && STATE.fuel >= 20 && !STATE.overdrive){ 
-        STATE.fuel -= 20; 
-        STATE.overdrive = true; 
-        setTimeout(() => STATE.overdrive = false, 5000); 
-      }
-    });
-    
-    // Действия на поверхности
-    const takeoffBtn = document.getElementById('btnTakeoff');
-    if (takeoffBtn) takeoffBtn.addEventListener('click', takeOffFromPlanet);
-    
-    const interactBtn = document.getElementById('btnInteract');
-    if (interactBtn) interactBtn.addEventListener('click', () => {
-      if(STATE.mode === 'surface' && surfaceObjects.length > 0){
-        // Находим ближайшего NPC
-        let nearestNPC = null;
-        let minDist = Infinity;
-        
-        for(let obj of surfaceObjects) {
-          if(!obj.userData || !obj.userData.interactable) continue;
-          
-          const dist = surfacePlayer.position.distanceTo(obj.position);
-          if(dist < minDist && dist < 4.0) {
-            minDist = dist;
-            nearestNPC = obj;
-          }
-        }
-        
-        if(nearestNPC) {
-          // Показываем диалог с NPC
-          const dialogues = {
-            merchant: "Добро пожаловать! У меня есть лучшие товары в галактике.",
-            mechanic: "Привет! Чем я могу помочь с вашим кораблем?",
-            scientist: "О, путешественник! Я изучаю местную экосистему. Осторожно, некоторые существа опасны!",
-            informant: "Эй, шепотом... Я знаю, где спрятаны древние артефакты."
-          };
-          
-          document.getElementById('npcDialogue').textContent = 
-            dialogues[nearestNPC.userData.type] || nearestNPC.userData.dialog;
-          
-          document.getElementById('planetPanel').style.display = 'block';
+
+      const dx = pedestrian.target.x - pedestrian.group.position.x;
+      const dz = pedestrian.target.z - pedestrian.group.position.z;
+      const distance = Math.sqrt(dx*dx + dz*dz);
+
+      if (distance < 1) {
+        if (this.buildings.length > 0 && Math.random() > 0.3) {
+          const randomBuilding = this.buildings[Math.floor(Math.random() * this.buildings.length)];
+          pedestrian.target.x = randomBuilding.position.x + (Math.random() - 0.5) * 10;
+          pedestrian.target.z = randomBuilding.position.z + (Math.random() - 0.5) * 10;
         } else {
-          document.querySelector('.bottomHints').textContent = 'Нет NPC рядом для взаимодействия';
+          pedestrian.target.x = pedestrian.group.position.x + (Math.random() - 0.5) * 30;
+          pedestrian.target.z = pedestrian.group.position.z + (Math.random() - 0.5) * 30;
+        }
+        pedestrian.idleTime = 60 + Math.random() * 60;
+      } else {
+        const moveX = (dx / distance) * pedestrian.speed;
+        const moveZ = (dz / distance) * pedestrian.speed;
+        
+        pedestrian.group.position.x += moveX;
+        pedestrian.group.position.z += moveZ;
+        
+        const angle = Math.atan2(moveZ, moveX);
+        pedestrian.group.rotation.y = angle;
+      }
+    });
+
+    this.pedestrianSpawnTimer++;
+    if (this.pedestrianSpawnTimer > 180 && this.pedestrians.length < 50) {
+      this.pedestrianSpawnTimer = 0;
+      
+      const residentialBuildings = this.buildings.filter(b => 
+        ['khrushchev', 'brezhnev', 'dormitory'].includes(b.userData.type)
+      );
+      
+      if (residentialBuildings.length > 0 && Math.random() < 0.7) {
+        const randomBuilding = residentialBuildings[Math.floor(Math.random() * residentialBuildings.length)];
+        const offsetX = (Math.random() - 0.5) * 8;
+        const offsetZ = (Math.random() - 0.5) * 8;
+        const ped = this.createPedestrian(
+          randomBuilding.position.x + offsetX,
+          randomBuilding.position.z + offsetZ
+        );
+        if (ped) {
+          this.pedestrians.push(ped);
+          this.updatePedestriansDisplay();
+        }
+      }
+    }
+  }
+
+  updateTransportDisplay() {
+    const transportValue = document.getElementById('transport-value');
+    const transportText = document.getElementById('transport-text');
+    
+    const coverage = this.calculateTransportCoverage();
+    transportValue.textContent = coverage + '%';
+    transportText.textContent = `Транспорт: ${this.buses.length}`;
+    
+    this.stats.transport = coverage;
+    this.updateSatisfactionFromTransport();
+  }
+
+  updatePedestriansDisplay() {
+    const populationValue = document.getElementById('population-value');
+    const pedestriansText = document.getElementById('pedestrians-text');
+    
+    populationValue.textContent = this.pedestrians.length;
+    pedestriansText.textContent = `Пешеходы: ${this.pedestrians.length}`;
+    
+    this.stats.population = this.pedestrians.length;
+  }
+
+  calculateTransportCoverage() {
+    if (this.busStops.length === 0) return 0;
+    
+    let coveredBuildings = 0;
+    const coverageRadius = 15;
+    
+    this.buildings.forEach(building => {
+      if (building.userData.type === 'khrushchev' || 
+          building.userData.type === 'brezhnev' ||
+          building.userData.type === 'dormitory') {
+        
+        for (const stop of this.busStops) {
+          const dx = building.userData.cx - stop.x;
+          const dz = building.userData.cz - stop.z;
+          const distance = Math.sqrt(dx * dx + dz * dz);
+          
+          if (distance <= coverageRadius) {
+            coveredBuildings++;
+            break;
+          }
         }
       }
     });
     
-    // Панель планеты
-    const closePanelBtn = document.getElementById('btnClosePanel');
-    if (closePanelBtn) closePanelBtn.addEventListener('click', () => {
-      document.getElementById('planetPanel').style.display = 'none';
+    const totalResidential = this.buildings.filter(b => 
+      ['khrushchev', 'brezhnev', 'dormitory'].includes(b.userData.type)
+    ).length;
+    
+    return totalResidential > 0 ? Math.round((coveredBuildings / totalResidential) * 100) : 0;
+  }
+
+  updateSatisfactionFromTransport() {
+    const transportBonus = Math.floor(this.stats.transport / 10);
+    this.stats.satisfaction = Math.min(100, 75 + transportBonus);
+  }
+
+  updateTimeDisplay() {
+    const timeIcon = document.getElementById('time-icon');
+    const timeText = document.getElementById('time-text');
+    const timeButton = document.getElementById('toggle-time');
+    
+    if (this.isDay) {
+      timeIcon.textContent = '☀️';
+      timeText.textContent = 'День';
+      timeButton.textContent = '🌙';
+    } else {
+      timeIcon.textContent = '🌙';
+      timeText.textContent = 'Ночь';
+      timeButton.textContent = '☀️';
+    }
+  }
+
+  updateLighting() {
+    if (this.isDay && this.timeTransition > 0) {
+      this.timeTransition -= this.timeTransitionSpeed;
+    } else if (!this.isDay && this.timeTransition < 1) {
+      this.timeTransition += this.timeTransitionSpeed;
+    }
+    
+    this.timeTransition = Math.max(0, Math.min(1, this.timeTransition));
+    
+    const daySkyColor = new THREE.Color(0xbfe9ff);
+    const nightSkyColor = new THREE.Color(0x0a1a2a);
+    this.scene.background = daySkyColor.clone().lerp(nightSkyColor, this.timeTransition);
+    this.scene.fog.color = daySkyColor.clone().lerp(nightSkyColor, this.timeTransition);
+    
+    this.sun.intensity = 0.9 * (1 - this.timeTransition);
+    this.moon.intensity = 0.3 * this.timeTransition;
+    
+    this.windowLights.forEach(winMat => {
+      winMat.color = new THREE.Color(0xfff2c0).lerp(new THREE.Color(0xffdd00), this.timeTransition);
+      winMat.opacity = 0.3 + 0.7 * this.timeTransition;
+    });
+  }
+
+  setupUI(){
+    // Обработчики для кнопок режимов
+    document.getElementById('camera-mode').addEventListener('click', ()=>{ 
+      this.setMode('camera'); 
     });
     
-    // Взаимодействие с NPC в UI
-    const npcList = document.getElementById('npcList');
-    if (npcList) {
-      npcList.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-npc]');
-        if(btn){
-          const npcId = parseInt(btn.dataset.npc);
-          const dialogues = [
-            "Слышал о караване в секторе 9? Высокая оплата!",
-            "Нужен ремонт? У меня есть запчасти... за кредиты.",
-            "Говорят, на заброшенной станции нашли артефакты.",
-            "Осторожно! На орбите пираты. Лучше включить щиты."
-          ];
-          document.getElementById('npcDialogue').textContent = dialogues[npcId] || "Приветствую, путник.";
-        }
-      });
-    }
+    document.getElementById('build-mode').addEventListener('click', ()=>{ 
+      this.setMode('build'); 
+    });
     
-    // Покупки в магазине
-    const shopGrid = document.getElementById('shopGrid');
-    if (shopGrid) {
-      shopGrid.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-item]');
-        if(btn){
-          const itemId = btn.dataset.item;
-          const price = parseInt(btn.dataset.price);
-          buyItem(itemId, price);
-        }
-      });
-    }
-    
-    // Обнаружение кликов по планетам
-    if (renderer && renderer.domElement) {
-      renderer.domElement.addEventListener('click', (e) => {
-        if(STATE.mode !== 'space') return;
-        
-        // Проверяем, не кликнули ли по UI
-        const uiElements = document.querySelectorAll('.btn, .actionBtn, .joyPad, .spaceActionButtons, .surfaceActionButtons, .planetUI');
-        for(let el of uiElements) {
-          if(el.contains(e.target)) return;
-        }
-        
-        const rect = renderer.domElement.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        
-        raycaster.setFromCamera({x, y}, camera);
-        const intersects = raycaster.intersectObjects(planets);
-        
-        if(intersects.length > 0){
-          performLanding(intersects[0].object);
-        }
-      });
-    }
-    
-    console.log('Event handlers initialized');
-    return true;
-  } catch(e) {
-    console.error('Error initializing event handlers:', e);
-    return false;
-  }
-}
+    document.getElementById('demolish-mode').addEventListener('click', ()=>{ 
+      this.setMode('demolish'); 
+    });
 
-// ========== ИНИЦИАЛИЗАЦИЯ ИГРЫ ==========
-function startGame(){
-  if(STATE.mode !== 'menu') return;
-  
-  console.log('Starting game...');
-  
-  try {
-    SFX.playStart();
-    STATE.mode = 'space';
-    const menu = document.getElementById('menu');
-    if (menu) menu.style.display = 'none';
-    
-    // Запускаем игровой цикл
-    animate();
-    
-    console.log('Game started successfully');
-  } catch(e) {
-    console.error('Error starting game:', e);
-    alert('Ошибка запуска игры: ' + e.message);
-  }
-}
+    document.querySelectorAll('.building-option').forEach(el=>{
+      el.addEventListener('click', (e)=>{
+        document.querySelectorAll('.building-option').forEach(x=>x.classList.remove('selected'));
+        document.querySelectorAll('.building-icon').forEach(x=>x.classList.remove('selected'));
+        e.currentTarget.classList.add('selected');
+        this.selectedType = e.currentTarget.dataset.type;
+        
+        const correspondingIcon = document.querySelector(`.building-icon[data-type="${this.selectedType}"]`);
+        if (correspondingIcon) {
+          correspondingIcon.classList.add('selected');
+        }
+        
+        if (this.selectedType === 'road') {
+          document.getElementById('hint').textContent = 'Дорога: выберите начало и конец';
+        } else {
+          document.getElementById('hint').textContent = 'Выбрано: ' + this.selectedType;
+        }
+        
+        this.removeRoadPreview();
+        this.roadBuildingStart = null;
+      });
+    });
 
-function initGame() {
-  try {
-    console.log('Initializing game components...');
+    document.getElementById('rot-left').addEventListener('click', ()=>{ this.rotationAngle = (this.rotationAngle - 15) % 360; document.getElementById('rotate-angle').textContent = this.rotationAngle + '°'; playSound(SOUND_CLICK,0.45) });
+    document.getElementById('rot-right').addEventListener('click', ()=>{ this.rotationAngle = (this.rotationAngle + 15) % 360; document.getElementById('rotate-angle').textContent = this.rotationAngle + '°'; playSound(SOUND_CLICK,0.45) });
+
+    document.getElementById('clear-all').addEventListener('click', ()=>{
+      this.clearCity();
+      playSound(SOUND_CLICK,0.4);
+      this.updateUI();
+      this.updateTransportDisplay();
+      this.updatePedestriansDisplay();
+    });
+
+    document.getElementById('center-camera').addEventListener('click', ()=>{
+      this.controls.reset();
+      this.camera.position.set(50,40,60);
+      this.controls.update();
+      playSound(SOUND_CLICK,0.4);
+    });
+
+    document.getElementById('toggle-menu').addEventListener('click', ()=>{
+      document.getElementById('control-panel').classList.toggle('active');
+      document.getElementById('control-panel').classList.toggle('hidden');
+      playSound(SOUND_CLICK,0.4);
+    });
+
+    document.getElementById('secret-mode').addEventListener('click', ()=>{
+      const sf = document.getElementById('secret-filter');
+      sf.style.display = (sf.style.display === 'block') ? 'none' : 'block';
+      playSound(SOUND_CLICK,0.4);
+    });
+
+    document.getElementById('toggle-time').addEventListener('click', ()=>{
+      this.toggleTimeOfDay();
+    });
+
+    document.getElementById('toggle-transport').addEventListener('click', ()=>{
+      this.toggleTransport();
+    });
+
+    document.getElementById('toggle-pedestrians').addEventListener('click', ()=>{
+      this.togglePedestrians();
+    });
+
+    this.modalBack = document.getElementById('modal-back');
+    this.modal = document.getElementById('modal');
+    this.modalConfirm = document.getElementById('modal-confirm');
+    this.modalCancel = document.getElementById('modal-cancel');
+    this.pendingPlace = null;
+
+    this.modalCancel.addEventListener('click', ()=>{ this.closeModal(false); playSound(SOUND_ERROR,0.5) });
+    this.modalConfirm.addEventListener('click', ()=>{ this.closeModal(true); playSound(SOUND_CONFIRM,0.6) });
+
+    const canvas = this.renderer.domElement;
+    canvas.addEventListener('mousemove', (e)=>this.onPointerMove(e));
+    canvas.addEventListener('click', (e)=>this.onPointerClick(e));
+    canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); const t = e.touches[0]; this.onPointerClick({clientX:t.clientX, clientY:t.clientY}); }, {passive:false});
+    canvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); const t = e.touches[0]; this.onPointerMove({clientX:t.clientX, clientY:t.clientY}); }, {passive:false});
+  }
+
+  setMode(mode) {
+    this.mode = mode;
     
-    if (!initThree()) throw new Error('Three.js initialization failed');
-    if (!makeLights()) throw new Error('Lights creation failed');
-    if (!createShip()) throw new Error('Ship creation failed');
-    if (!createStarfield()) throw new Error('Starfield creation failed');
-    if (!generateSpacePlanets()) throw new Error('Planets generation failed');
-    if (!initSpaceObjects()) throw new Error('Space objects initialization failed');
-    if (!initBulletPool()) throw new Error('Bullet pool initialization failed');
-    if (!initSpaceJoystick()) throw new Error('Space joystick initialization failed');
-    if (!initSurfaceJoystick()) throw new Error('Surface joystick initialization failed');
-    if (!initEventHandlers()) throw new Error('Event handlers initialization failed');
+    // Сбрасываем активные классы со всех кнопок
+    document.getElementById('camera-mode').classList.remove('active');
+    document.getElementById('build-mode').classList.remove('active');
+    document.getElementById('demolish-mode').classList.remove('active');
     
-    // Периодическое спавнение врагов
-    setInterval(() => {
-      if(STATE.mode === 'space'){ 
-        spawnEnemy(
-          (Math.random() - 0.5) * 600,
-          (Math.random() - 0.5) * 200, 
-          shipGroup.position.z - 1200
-        ); 
+    // Добавляем активный класс к выбранной кнопке
+    document.getElementById(mode + '-mode').classList.add('active');
+    
+    // Обновляем подсказку и состояние
+    switch(mode) {
+      case 'camera':
+        document.getElementById('hint').textContent = 'Режим камеры: вращайте и перемещайте камеру';
+        this.placementHelper.visible = false;
+        document.getElementById('placement-indicator').style.display = 'none';
+        this.removeRoadPreview();
+        this.roadBuildingStart = null;
+        break;
+      case 'build':
+        document.getElementById('hint').textContent = 'Режим строительства: выберите место для постройки';
+        break;
+      case 'demolish':
+        document.getElementById('hint').textContent = 'Режим сноса: кликните на объект для удаления';
+        this.placementHelper.visible = false;
+        document.getElementById('placement-indicator').style.display = 'none';
+        this.removeRoadPreview();
+        this.roadBuildingStart = null;
+        break;
+    }
+    
+    playSound(SOUND_CLICK, 0.4);
+  }
+
+  clearCity() {
+    for (const b of this.buildings) this.scene.remove(b);
+    for (const r of this.roads) this.scene.remove(r.mesh);
+    for (const bus of this.buses) this.scene.remove(bus.group);
+    for (const stop of this.busStops) this.scene.remove(stop.group);
+    for (const ped of this.pedestrians) this.scene.remove(ped.group);
+    this.buildings = []; this.roads = []; this.growing = []; this.smoke = [];
+    this.buses = []; this.busStops = []; this.busRoutes = [];
+    this.pedestrians = [];
+    this.windowLights = [];
+    this.stats = { housing:0, infra:0, satisfaction:75, year:1985, transport:0, population:0 };
+  }
+
+  generateRandomCity() {
+    this.clearCity();
+    
+    // Сетка реального города - прямоугольная структура с главными и второстепенными дорогами
+    const mainRoads = [
+      {x1: -80, z1: 0, x2: 80, z2: 0},  // Главная горизонтальная дорога
+      {x1: 0, z1: -80, x2: 0, z2: 80},  // Главная вертикальная дорога
+      
+      // Второстепенные дороги
+      {x1: -60, z1: -60, x2: -60, z2: 60},
+      {x1: 60, z1: -60, x2: 60, z2: 60},
+      {x1: -60, z1: -60, x2: 60, z2: -60},
+      {x1: -60, z1: 60, x2: 60, z2: 60},
+      
+      // Дополнительные дороги для лучшей связности
+      {x1: -30, z1: -60, x2: -30, z2: 60},
+      {x1: 30, z1: -60, x2: 30, z2: 60},
+      {x1: -60, z1: -30, x2: 60, z2: -30},
+      {x1: -60, z1: 30, x2: 60, z2: 30}
+    ];
+    
+    // Строим все дороги
+    mainRoads.forEach(road => {
+      this.buildRoadLine(road.x1, road.z1, road.x2, road.z2);
+    });
+    
+    // Здания - размещаем в соответствии с городской сеткой
+    const buildingTypes = ['khrushchev', 'brezhnev', 'dormitory', 'school', 'hospital', 'factory', 'park', 'busstop'];
+    const buildingPositions = [
+      // Квартал 1 (северо-запад)
+      {x: -45, z: 45, type: 'khrushchev'},
+      {x: -45, z: 35, type: 'khrushchev'},
+      {x: -35, z: 45, type: 'brezhnev'},
+      {x: -35, z: 35, type: 'school'},
+      {x: -25, z: 45, type: 'park'},
+      
+      // Квартал 2 (северо-восток)
+      {x: 25, z: 45, type: 'brezhnev'},
+      {x: 35, z: 45, type: 'khrushchev'},
+      {x: 45, z: 45, type: 'hospital'},
+      {x: 35, z: 35, type: 'dormitory'},
+      {x: 45, z: 35, type: 'park'},
+      
+      // Квартал 3 (юго-запад)
+      {x: -45, z: -25, type: 'factory'},
+      {x: -35, z: -25, type: 'khrushchev'},
+      {x: -25, z: -25, type: 'brezhnev'},
+      {x: -45, z: -35, type: 'dormitory'},
+      {x: -35, z: -35, type: 'school'},
+      
+      // Квартал 4 (юго-восток)
+      {x: 25, z: -25, type: 'brezhnev'},
+      {x: 35, z: -25, type: 'khrushchev'},
+      {x: 45, z: -25, type: 'hospital'},
+      {x: 35, z: -35, type: 'dormitory'},
+      {x: 45, z: -35, type: 'park'},
+      
+      // Центральные районы
+      {x: -15, z: 15, type: 'park'},
+      {x: 15, z: 15, type: 'school'},
+      {x: -15, z: -15, type: 'hospital'},
+      {x: 15, z: -15, type: 'park'},
+      
+      // Автобусные остановки в ключевых местах
+      {x: -50, z: 0, type: 'busstop'},
+      {x: 50, z: 0, type: 'busstop'},
+      {x: 0, z: -50, type: 'busstop'},
+      {x: 0, z: 50, type: 'busstop'},
+      {x: -30, z: 30, type: 'busstop'},
+      {x: 30, z: 30, type: 'busstop'},
+      {x: -30, z: -30, type: 'busstop'},
+      {x: 30, z: -30, type: 'busstop'}
+    ];
+    
+    // Создаем здания
+    buildingPositions.forEach(pos => {
+      const building = this.createBuilding(pos.type, pos.x, pos.z);
+      if (building) {
+        // Случайный поворот для разнообразия
+        building.rotation.y = THREE.MathUtils.degToRad(Math.floor(Math.random() * 4) * 90);
       }
-    }, 2400);
+    });
     
-    // Периодическое спавнение астероидов
-    setInterval(() => {
-      if(STATE.mode === 'space'){ 
-        spawnAsteroid(
-          (Math.random() - 0.5) * 800,
-          (Math.random() - 0.5) * 200, 
-          shipGroup.position.z - 1600, 
-          1.2 + Math.random() * 4
-        ); 
+    // Включаем транспорт и пешеходов
+    this.transportEnabled = true;
+    this.pedestriansEnabled = true;
+    
+    const transportIndicator = document.getElementById('transport-indicator');
+    const transportButton = document.getElementById('toggle-transport');
+    const pedestriansIndicator = document.getElementById('pedestrians-indicator');
+    const pedestriansButton = document.getElementById('toggle-pedestrians');
+    
+    transportIndicator.style.display = 'flex';
+    transportButton.textContent = '🚌 Выкл.';
+    pedestriansIndicator.style.display = 'flex';
+    pedestriansButton.textContent = '👥 Выкл.';
+    
+    this.generateBusRoutes();
+    this.spawnInitialPedestrians();
+    
+    // Автоматически переключаемся в режим камеры после создания города
+    this.setMode('camera');
+    
+    document.getElementById('hint').textContent = 'Готовый город построен! Используйте режим камеры для осмотра.';
+    
+    playSound(SOUND_CONFIRM, 0.7);
+  }
+
+  showModalForPlace(obj){
+    this.pendingPlace = obj;
+    const title = `Поставить: ${obj.type}`;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-desc').textContent = `Установить ${obj.type} в выбранном месте?`;
+    this.modalBack.classList.add('show');
+    this.modal.classList.add('show');
+    playSound(SOUND_CLICK,0.35);
+  }
+  
+  closeModal(confirm){
+    this.modalBack.classList.remove('show');
+    this.modal.classList.remove('show');
+    
+    if (confirm && this.pendingPlace){
+      const p = this.pendingPlace;
+      if (p.type === 'road'){
+        this.buildRoadLine(p.x1,p.z1,p.x2,p.z2);
+      } else {
+        const building = this.createBuilding(p.type, p.x, p.z);
+        if (building) {
+          building.rotation.y = THREE.MathUtils.degToRad(this.rotationAngle);
+        }
       }
-    }, 1300);
-    
-    updateHUD();
-    
-    console.log('Game bootstrapped successfully');
-  } catch(e) {
-    console.error('Critical error during bootstrap:', e);
-    alert('Ошибка инициализации игры: ' + e.message);
-  }
-}
-
-function bootstrap(){
-  console.log('Bootstrapping game...');
-  
-  // Ждем полной загрузки страницы
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGame);
-  } else {
-    initGame();
-  }
-}
-
-// ========== ОБРАБОТЧИКИ ИЗМЕНЕНИЯ РАЗМЕРА ==========
-window.addEventListener('resize', () => {
-  console.log('Window resized');
-  
-  if(renderer && camera){
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    
-    if(hasComposer && composer) {
-      composer.setSize(window.innerWidth, window.innerHeight);
-      composer.setPixelRatio(pixelRatio);
     }
+    this.pendingPlace = null;
+  }
+
+  onPointerMove(event){
+    // В режиме камеры не показываем индикаторы размещения
+    if (this.mode === 'camera') {
+      this.placementHelper.visible = false;
+      document.getElementById('placement-indicator').style.display = 'none';
+      this.removeRoadPreview();
+      return;
+    }
+
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const clientX = event.clientX, clientY = event.clientY;
+    this.pointerX = clientX; this.pointerY = clientY;
+    this.mouse = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+
+    if (this.mode === 'build'){
+      const hits = this.raycaster.intersectObject(this.ground);
+      if (hits.length > 0){
+        const p = hits[0].point;
+        
+        if (this.selectedType === 'road' && this.roadBuildingStart) {
+          this.updateRoadPreview(this.roadBuildingStart.x, this.roadBuildingStart.z, p.x, p.z);
+        } else {
+          this.removeRoadPreview();
+        }
+        
+        this.placementHelper.position.set(p.x, 0.01, p.z);
+        this.placementHelper.visible = true;
+        const radius = this.footprint(this.selectedType);
+        const blocked = this.checkCollision(p.x, p.z, radius);
+        const ind = document.getElementById('placement-indicator');
+        ind.style.display = 'block';
+        ind.style.left = clientX + 'px';
+        ind.style.top = clientY + 'px';
+        ind.style.borderColor = blocked ? 'rgba(200,20,20,0.75)' : 'rgba(0,150,0,0.6)';
+        ind.style.boxShadow = blocked ? '0 6px 18px rgba(200,20,20,0.15)' : '0 6px 18px rgba(0,150,0,0.12)';
+      } else {
+        this.placementHelper.visible = false;
+        document.getElementById('placement-indicator').style.display = 'none';
+      }
+    } else {
+      this.placementHelper.visible = false;
+      document.getElementById('placement-indicator').style.display = 'none';
+      this.removeRoadPreview();
+    }
+  }
+
+  onPointerClick(event){
+    // В режиме камеры клики не обрабатываются для строительства/сноса
+    if (this.mode === 'camera') {
+      return;
+    }
+
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const clientX = event.clientX, clientY = event.clientY;
+    this.mouse = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+
+    if (this.mode === 'demolish'){
+      const intersects = this.raycaster.intersectObjects(this.buildings, true);
+      if (intersects.length > 0){
+        let obj = intersects[0].object;
+        while (obj && obj.type !== 'Group' && obj.parent) obj = obj.parent;
+        if (obj && obj.type === 'Group'){
+          this.removeBuilding(obj);
+          playSound(SOUND_DEMOLISH, 0.6);
+          document.getElementById('hint').textContent = 'Здание снесено';
+        }
+      } else {
+        const roadHits = [];
+        for (const r of this.roads){
+          const screenPos = this.worldToScreen(new THREE.Vector3(r.x,0,r.z));
+          const dx = screenPos.x - clientX, dy = screenPos.y - clientY;
+          if (Math.hypot(dx,dy) < 20) roadHits.push(r);
+        }
+        if (roadHits.length>0){
+          const r = roadHits[0];
+          this.scene.remove(r.mesh);
+          this.roads.splice(this.roads.indexOf(r),1);
+          playSound(SOUND_DEMOLISH,0.5);
+          document.getElementById('hint').textContent = 'Дорожный сегмент удалён';
+        } else {
+          document.getElementById('hint').textContent = 'Тапни по объекту для сноса';
+        }
+      }
+      return;
+    }
+
+    const hits = this.raycaster.intersectObject(this.ground);
+    if (hits.length === 0) return;
+    const p = hits[0].point;
+
+    if (this.selectedType === 'road'){
+      if (!this.roadBuildingStart){
+        this.roadBuildingStart = {x:p.x, z:p.z};
+        document.getElementById('hint').textContent = 'Дорога: выберите конец (тапните снова)';
+        playSound(SOUND_CLICK,0.35);
+      } else {
+        this.buildRoadLine(this.roadBuildingStart.x, this.roadBuildingStart.z, p.x, p.z);
+        this.roadBuildingStart = null;
+        this.removeRoadPreview();
+        document.getElementById('hint').textContent = 'Дорога построена';
+      }
+      return;
+    }
+
+    const radius = this.footprint(this.selectedType);
+    if (this.checkCollision(p.x, p.z, radius)){
+      document.getElementById('hint').textContent = 'Нельзя ставить здесь — пересечение';
+      playSound(SOUND_ERROR, 0.6);
+      return;
+    }
+
+    this.showModalForPlace({type:this.selectedType, x:p.x, z:p.z, rot:this.rotationAngle});
+  }
+
+  worldToScreen(v){
+    const width = this.renderer.domElement.clientWidth, height = this.renderer.domElement.clientHeight;
+    const proj = v.clone().project(this.camera);
+    return { x: (proj.x+1) * 0.5 * width + this.renderer.domElement.getBoundingClientRect().left, y: (-proj.y+1) * 0.5 * height + this.renderer.domElement.getBoundingClientRect().top };
+  }
+
+  removeBuilding(group){
+    const busStopIndex = this.busStops.findIndex(stop => stop.group === group);
+    if (busStopIndex !== -1) {
+      this.busStops.splice(busStopIndex, 1);
+      if (this.transportEnabled) {
+        this.generateBusRoutes();
+      }
+    }
+
+    this.scene.remove(group);
+    const idx = this.buildings.indexOf(group);
+    if (idx>=0) this.buildings.splice(idx,1);
+    const gi = this.growing.indexOf(group);
+    if (gi>=0) this.growing.splice(gi,1);
+    this.updateStatsOnDemolition(group.userData.type);
+    playSound(SOUND_DEMOLISH, 0.6);
+    this.updateUI();
+    this.updateTransportDisplay();
+  }
+
+  updateStats(type){
+    switch(type){
+      case 'khrushchev': case 'brezhnev': case 'dormitory':
+        this.stats.housing += 10; this.stats.satisfaction = Math.min(100,this.stats.satisfaction+1); break;
+      case 'school': case 'hospital':
+        this.stats.infra += 1; this.stats.satisfaction = Math.min(100,this.stats.satisfaction+2); break;
+      case 'busstop':
+        this.stats.infra += 1; break;
+      case 'park': this.stats.satisfaction = Math.min(100,this.stats.satisfaction+3); break;
+      case 'factory': this.stats.satisfaction = Math.max(0,this.stats.satisfaction-2); break;
+    }
+  }
+  updateStatsOnDemolition(type){
+    switch(type){
+      case 'khrushchev': case 'brezhnev': case 'dormitory':
+        this.stats.housing = Math.max(0,this.stats.housing-10); this.stats.satisfaction = Math.max(0,this.stats.satisfaction-1); break;
+      case 'school': case 'hospital':
+        this.stats.infra = Math.max(0,this.stats.infra-1); this.stats.satisfaction = Math.max(0,this.stats.satisfaction-2); break;
+      case 'busstop':
+        this.stats.infra = Math.max(0,this.stats.infra-1); break;
+      case 'factory': this.stats.satisfaction = Math.min(100,this.stats.satisfaction+3); break;
+    }
+  }
+
+  updateUI(){
+    document.getElementById('housing-value').textContent = Math.max(0, this.stats.housing);
+    document.getElementById('infra-value').textContent = Math.max(0, this.stats.infra);
+    document.getElementById('satisfaction-value').textContent = this.stats.satisfaction + '%';
+    document.getElementById('year-display').textContent = Math.floor(this.stats.year);
+  }
+
+  onResize(){
+    const container = document.getElementById('game3d');
+    this.camera.aspect = container.clientWidth / container.clientHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(container.clientWidth, container.clientHeight);
+  }
+
+  animate(){
+    requestAnimationFrame(()=>this.animate());
+    const now = performance.now();
+
+    this.stats.year += 0.001;
+
+    this.updateLighting();
+
+    this.updateBuses();
+
+    this.updatePedestrians();
+
+    for (let i=this.growing.length-1;i>=0;i--){
+      const g = this.growing[i];
+      const elapsed = now - g.userData.growthStart;
+      const t = Math.min(1, elapsed / g.userData.growthDuration);
+      const ease = 1 - Math.pow(1 - t, 3);
+      g.scale.y = Math.max(0.02, ease);
+      if (t>=1){
+        g.scale.y = 1; this.growing.splice(i,1);
+        if (g.userData.type === 'factory'){
+          const chimney = g.getObjectByName('chimneyTop');
+          if (chimney){
+            const wp = new THREE.Vector3(); chimney.getWorldPosition(wp);
+            this.spawnSmokeAt(wp);
+          }
+        }
+      }
+    }
+
+    for (let i=this.smoke.length-1;i>=0;i--){
+      const p = this.smoke[i];
+      const age = now - p.born; const ratio = age / p.life;
+      if (ratio >= 1){ this.scene.remove(p.mesh); this.smoke.splice(i,1); continue; }
+      const wind = this.wind;
+      p.mesh.position.addScaledVector(new THREE.Vector3(p.vel.x + wind.x, p.vel.y + wind.y, p.vel.z + wind.z), 1.0 * (1 + ratio*0.5));
+      const s = 2.2 * (1 + ratio*0.5);
+      p.mesh.scale.set(s,s,1); p.mesh.material.opacity = 0.9 * (1 - ratio);
+    }
+
+    if (!this._lastSmoke || now - this._lastSmoke > 900){
+      this._lastSmoke = now;
+      for (const b of this.buildings){
+        if (b.userData.type === 'factory' && Math.random() > 0.35){
+          const chimney = b.getObjectByName('chimneyTop');
+          if (chimney){
+            const wp = new THREE.Vector3(); chimney.getWorldPosition(wp);
+            this.spawnSmokeAt(wp);
+          }
+        }
+      }
+    }
+
+    this.controls.update();
+    this.renderer.render(this.scene, this.camera);
+
+    this.updateUI();
+  }
+
+  setupClouds(){
+    const cloud1 = document.getElementById('cloud1'), cloud2 = document.getElementById('cloud2');
+    function makeCloudSVG(w,h,fill='rgba(255,255,255,0.9)'){
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><g fill='${fill}'><ellipse cx='40' cy='30' rx='40' ry='20'/><ellipse cx='80' cy='30' rx='30' ry='18'/><ellipse cx='120' cy='30' rx='28' ry='16'/></g></svg>`;
+      return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+    }
+    cloud1.src = makeCloudSVG(260,80);
+    cloud2.src = makeCloudSVG(200,70);
+    let t = 0;
+    const move = ()=>{ t+=0.2; cloud1.style.left = (20 + Math.sin(t/40)*40) + 'px'; cloud2.style.right = (60 + Math.cos(t/30)*30) + 'px'; requestAnimationFrame(move); };
+    move();
+  }
+}
+
+// ======================
+// Start Screen Logic
+// ======================
+let gameInstance = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  const startScreen = document.getElementById('start-screen');
+  const startBtn = document.getElementById('start-btn');
+  const readyCityBtn = document.getElementById('ready-city-btn');
+  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+  const controlPanel = document.getElementById('control-panel');
+  
+  startBtn.addEventListener('click', function() {
+    startScreen.style.opacity = '0';
+    startScreen.style.transition = 'opacity 0.5s ease';
+    
+    setTimeout(function() {
+      startScreen.style.display = 'none';
+      initializeGame();
+    }, 500);
+  });
+
+  readyCityBtn.addEventListener('click', function() {
+    startScreen.style.opacity = '0';
+    startScreen.style.transition = 'opacity 0.5s ease';
+    
+    setTimeout(function() {
+      startScreen.style.display = 'none';
+      initializeGame();
+      
+      // Генерируем готовый город после небольшой задержки для инициализации игры
+      setTimeout(function() {
+        if (gameInstance) {
+          gameInstance.generateRandomCity();
+        }
+      }, 100);
+    }, 500);
+  });
+
+  function initializeGame() {
+    gameInstance = new SovietCityGame();
+    
+    mobileMenuToggle.addEventListener('click', function() {
+      controlPanel.classList.toggle('active');
+    });
+    
+    document.addEventListener('click', function(event) {
+      if (window.innerWidth <= 700) {
+        const isClickInsidePanel = controlPanel.contains(event.target);
+        const isClickOnToggle = mobileMenuToggle.contains(event.target);
+        
+        if (!isClickInsidePanel && !isClickOnToggle && controlPanel.classList.contains('active')) {
+          controlPanel.classList.remove('active');
+        }
+      }
+    });
+    
+    document.querySelectorAll('.building-icon').forEach(icon => {
+      icon.addEventListener('click', function() {
+        document.querySelectorAll('.building-icon').forEach(i => i.classList.remove('selected'));
+        document.querySelectorAll('.building-option').forEach(i => i.classList.remove('selected'));
+        
+        this.classList.add('selected');
+        
+        const type = this.dataset.type;
+        const correspondingOption = document.querySelector(`.building-option[data-type="${type}"]`);
+        if (correspondingOption) {
+          correspondingOption.classList.add('selected');
+        }
+        
+        if (gameInstance) {
+          gameInstance.selectedType = type;
+          if (type === 'road') {
+            document.getElementById('hint').textContent = 'Дорога: выберите начало и конец';
+          } else {
+            document.getElementById('hint').textContent = 'Выбрано: ' + type;
+          }
+          
+          gameInstance.removeRoadPreview();
+          gameInstance.roadBuildingStart = null;
+        }
+        
+        if (window.innerWidth <= 700) {
+          controlPanel.classList.remove('active');
+        }
+      });
+    });
   }
 });
-
-// ========== ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ==========
-bootstrap();
-
-// Анимация загрузки
-let dots = 0;
-setInterval(() => {
-  dots = (dots + 1) % 4;
-  const loadingDots = document.getElementById('loadingDots');
-  if (loadingDots) loadingDots.textContent = '●'.repeat(dots);
-}, 500);
-
-// Debug режим по двойному клику
-window.addEventListener('dblclick', () => {
-  if(STATE.debugMode) {
-    STATE.credits += 100;
-    STATE.stars += 5;
-    updateHUD();
-    SFX.playBuy();
-    alert('Debug credits and stars added!');
-  }
-});
-
-// ========== DEBUG ФУНКЦИИ ==========
-window.debugInfo = function() {
-  console.log('=== DEBUG INFO ===');
-  console.log('Mode:', STATE.mode);
-  console.log('Current planet:', STATE.currentPlanet ? STATE.currentPlanet.userData.name : 'none');
-  console.log('Ship position:', shipGroup ? shipGroup.position : 'no ship');
-  console.log('Surface player position:', surfacePlayer ? surfacePlayer.position : 'no surface player');
-  console.log('Surface scene:', surfaceScene ? 'exists' : 'none');
-  console.log('Surface objects:', surfaceObjects.length);
-  console.log('Planets:', planets.length);
-  console.log('Asteroids:', asteroids.length);
-  console.log('Enemies:', enemies.length);
-  console.log('Bullets:', bullets.length);
-  console.log('=================');
-};
-
-console.log('Game script loaded successfully');
 </script>
 </body>
 </html>
