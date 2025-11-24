@@ -3,493 +3,448 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MORAL OS: OVERLOAD</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <title>MORAL OS: RU EDITION</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;700&family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;700;800&family=Russo+One&display=swap" rel="stylesheet">
 
     <style>
-        :root {
-            --bg-color: #050505;
-            --card-bg: #1a1a1a;
-            --accent-red: #ff2a6d;
-            --accent-blue: #05d9e8;
-            --accent-yellow: #f9dc5c;
+        :root { --bg: #050505; --primary: #00ff9d; --secondary: #00d2ff; --danger: #ff2a6d; --panel: rgba(10, 20, 30, 0.8); }
+        body { background-color: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; touch-action: none; margin: 0; }
+
+        /* --- VISUAL FX --- */
+        #matrix { position: fixed; top: 0; left: 0; z-index: 0; opacity: 0.15; }
+        
+        .overlay { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
+        .overlay::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, transparent 50%, #000 150%); }
+        .overlay::after { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 3px; }
+
+        /* Глитч Текст */
+        .glitch { position: relative; color: #fff; }
+        .glitch::before, .glitch::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg);
+        }
+        .glitch::before { left: 2px; text-shadow: -1px 0 var(--danger); clip-path: inset(0 0 0 0); animation: glitch-1 3s infinite linear alternate-reverse; }
+        .glitch::after { left: -2px; text-shadow: -1px 0 var(--secondary); clip-path: inset(0 0 0 0); animation: glitch-2 2s infinite linear alternate-reverse; }
+        @keyframes glitch-1 { 0% {clip-path: inset(20% 0 80% 0);} 20% {clip-path: inset(60% 0 10% 0);} 100% {clip-path: inset(10% 0 50% 0);} }
+        @keyframes glitch-2 { 0% {clip-path: inset(10% 0 50% 0);} 20% {clip-path: inset(30% 0 20% 0);} 100% {clip-path: inset(80% 0 5% 0);} }
+
+        /* Кнопка */
+        .cyber-btn {
+            position: relative; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            background: var(--primary); color: #000; transition: all 0.1s;
+        }
+        .cyber-btn:active { transform: scale(0.95); filter: brightness(0.8); }
+        .cyber-btn::before {
+            content: ''; position: absolute; inset: 0; background: linear-gradient(45deg, transparent 5%, rgba(255,255,255,0.5) 5%, transparent 10%);
+            animation: shine 2s infinite;
         }
 
-        body {
-            background-color: var(--bg-color);
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
-            overflow: hidden;
-            touch-action: none;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* Эффект старого монитора */
-        .crt::before {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 20;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-
-        .card-container { perspective: 1500px; }
-
+        /* Карточка */
         .game-card {
-            position: absolute;
-            width: 88%;
-            max-width: 380px;
-            height: 62vh;
-            max-height: 600px;
-            background: var(--card-bg);
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            transform-origin: 50% 120%;
-            will-change: transform;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #333;
-            user-select: none;
-            overflow: hidden;
+            width: 90%; max-width: 360px; height: 55vh; background: #121212; border: 1px solid #333;
+            border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+            display: flex; flex-direction: column; overflow: hidden; position: absolute;
+            transform-origin: 50% 150%; will-change: transform; z-index: 10;
+        }
+        .badge {
+            position: absolute; top: 20px; padding: 8px 16px; border: 3px solid; border-radius: 6px;
+            font-family: 'Russo One', sans-serif; font-size: 18px; opacity: 0; z-index: 20;
+            background: rgba(0,0,0,0.8); text-transform: uppercase; white-space: nowrap;
         }
 
-        /* Динамический фон карты в зависимости от таймера */
-        .danger-state {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite;
-            border: 2px solid var(--accent-red);
-        }
-
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0) rotate(var(--rot)); }
-            20%, 80% { transform: translate3d(2px, 0, 0) rotate(var(--rot)); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0) rotate(var(--rot)); }
-            40%, 60% { transform: translate3d(4px, 0, 0) rotate(var(--rot)); }
-        }
-
-        .choice-badge {
-            position: absolute;
-            top: 50px;
-            padding: 12px 24px;
-            border: 4px solid;
-            border-radius: 8px;
-            font-size: 20px;
-            font-weight: 700;
-            font-family: 'Russo One', sans-serif;
-            opacity: 0;
-            z-index: 30;
-            text-transform: uppercase;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(5px);
-        }
-
-        .badge-left { right: 30px; color: var(--accent-red); border-color: var(--accent-red); transform: rotate(15deg); }
-        .badge-right { left: 30px; color: var(--accent-blue); border-color: var(--accent-blue); transform: rotate(-15deg); }
-
-        .timer-bar {
-            transition: width 1s linear;
-            box-shadow: 0 0 15px var(--accent-red);
-        }
-
-        /* Глитч текст */
-        .glitch-text {
-            position: relative;
-        }
-        .glitch-text::before, .glitch-text::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8;
-        }
-        .glitch-text::before { color: #0ff; z-index: -1; animation: glitch-anim-1 2s infinite linear alternate-reverse; }
-        .glitch-text::after { color: #f0f; z-index: -2; animation: glitch-anim-2 2s infinite linear alternate-reverse; }
-
-        @keyframes glitch-anim-1 { 0% { clip-path: inset(20% 0 80% 0); } 20% { clip-path: inset(60% 0 1% 0); } 40% { clip-path: inset(40% 0 50% 0); } 60% { clip-path: inset(80% 0 5% 0); } 80% { clip-path: inset(10% 0 70% 0); } 100% { clip-path: inset(30% 0 20% 0); } }
-        @keyframes glitch-anim-2 { 0% { clip-path: inset(10% 0 60% 0); } 20% { clip-path: inset(30% 0 20% 0); } 40% { clip-path: inset(10% 0 80% 0); } 60% { clip-path: inset(40% 0 10% 0); } 80% { clip-path: inset(80% 0 50% 0); } 100% { clip-path: inset(20% 0 40% 0); } }
-
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.4s; }
+        [v-cloak] { display: none; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.5s; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
 </head>
-<body class="crt">
+<body>
+    <canvas id="matrix"></canvas>
+    <div class="overlay"></div>
 
-    <div id="app" class="w-full h-screen flex flex-col relative overflow-hidden">
-
-        <!-- ФОН -->
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 via-black to-black z-0"></div>
-        <div class="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none" 
-             style="background-image: radial-gradient(#333 1px, transparent 1px); background-size: 30px 30px;"></div>
-
-        <!-- UI: ЗАГОЛОВОК И ТАЙМЕР -->
-        <div v-if="gameStatus === 'playing'" class="z-20 w-full p-4 pt-8 flex flex-col gap-2">
-            <div class="flex justify-between items-end text-xs font-mono text-slate-400">
-                <span>SCENARIO_ID: {{ activeScenario?.id || 'ERR' }}</span>
-                <span :class="{'text-red-500 font-bold animate-pulse': timeLeft <= 3}">T-MINUS: {{ timeLeft.toFixed(1) }}s</span>
+    <div id="app" v-cloak class="w-full h-screen flex flex-col relative z-10">
+        
+        <!-- 1. ЗАГРУЗКА (BOOT) -->
+        <transition name="fade">
+            <div v-if="screen === 'boot'" class="absolute inset-0 bg-black z-50 flex flex-col justify-end p-8 font-mono text-xs md:text-sm text-green-500 leading-relaxed">
+                <div v-for="line in bootLog" :key="line.id" class="mb-1">
+                    <span class="text-slate-500">[{{ line.time }}]</span> <span v-html="line.text"></span>
+                </div>
+                <div v-if="bootFinished" class="mt-4 animate-pulse text-white text-center w-full uppercase">
+                    Нажмите для инициализации
+                </div>
+                <div class="absolute inset-0 z-10" @click="finishBoot" v-if="bootFinished"></div>
             </div>
-            <!-- Полоса таймера -->
-            <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                <div class="h-full bg-gradient-to-r from-green-500 via-yellow-400 to-red-600"
-                     :style="{ width: (timeLeft / maxTime) * 100 + '%' }"></div>
-            </div>
-        </div>
+        </transition>
 
-        <!-- ГЛАВНЫЙ ЭКРАН -->
-        <div class="flex-1 flex items-center justify-center relative z-10">
-            
-            <!-- Меню старта -->
-            <transition name="fade">
-                <div v-if="gameStatus === 'start'" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 p-6 text-center z-50">
-                    <h1 class="text-5xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 glitch-text" data-text="MORAL OS">MORAL OS</h1>
-                    <div class="text-xs tracking-[0.3em] text-slate-500 mb-8">VERSION 10.2.4 [UNSTABLE]</div>
+        <!-- 2. ГЛАВНОЕ МЕНЮ -->
+        <transition name="fade">
+            <div v-if="screen === 'menu'" class="absolute inset-0 z-40 flex flex-col items-center justify-center p-6">
+                <div class="mb-12 relative text-center">
+                    <div class="text-5xl md:text-7xl font-black glitch tracking-tighter" data-text="MORAL OS">MORAL OS</div>
+                    <div class="text-xs font-mono text-cyan-400 tracking-[0.3em] mt-2">ВЕРСИЯ 4.0 RU</div>
+                </div>
+
+                <div class="w-full max-w-xs space-y-4">
+                    <button @click="goToCharSelect" class="cyber-btn w-full py-4 font-bold text-xl tracking-wider uppercase">
+                        Начать симуляцию
+                    </button>
                     
-                    <div class="space-y-4 max-w-sm text-slate-300 text-sm leading-relaxed border-l-2 border-blue-500 pl-4 text-left">
-                        <p>> Инициализация протокола этики...</p>
-                        <p>> ВНИМАНИЕ: Отказ тормозных систем.</p>
-                        <p>> ВНИМАНИЕ: Таймер принятия решений активирован (10 сек).</p>
-                        <p>> При бездействии система выберет худший сценарий.</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-900/80 border border-slate-700 p-3 rounded text-center">
+                            <div class="text-[10px] text-slate-500 uppercase">Рекорд (ходов)</div>
+                            <div class="text-2xl text-white font-mono">{{ highScore }}</div>
+                        </div>
+                        <div class="bg-slate-900/80 border border-slate-700 p-3 rounded text-center cursor-pointer hover:bg-slate-800" @click="toggleAudio">
+                            <div class="text-[10px] text-slate-500 uppercase">Звук</div>
+                            <div class="text-2xl">{{ audioEnabled ? 'ВКЛ' : 'ВЫКЛ' }}</div>
+                        </div>
                     </div>
+                </div>
+                
+                <div class="absolute bottom-6 text-[10px] text-slate-600 font-mono">СОЗДАНО НЕЙРОСЕТЬЮ</div>
+            </div>
+        </transition>
 
-                    <button @click="startGame" class="mt-12 px-10 py-4 bg-slate-100 text-black font-bold text-xl hover:bg-blue-400 hover:text-white transition-colors clip-path-polygon">
-                        ЗАПУСТИТЬ СИМУЛЯЦИЮ
+        <!-- 3. ВЫБОР ПЕРСОНАЖА -->
+        <transition name="fade">
+            <div v-if="screen === 'char_select'" class="absolute inset-0 z-40 flex flex-col items-center justify-center p-6 bg-black/90">
+                <h2 class="text-xl font-bold text-white mb-6 font-mono border-b border-slate-700 pb-2 w-full text-center">ВЫБОР ЯДРА</h2>
+                
+                <div class="w-full max-w-sm space-y-4 mb-8">
+                    <div v-for="char in characters" :key="char.id" 
+                         @click="selectChar(char)"
+                         class="relative p-4 border transition-all duration-300 cursor-pointer overflow-hidden group"
+                         :class="[
+                            char.id === selectedChar.id ? 'border-[#00ff9d] bg-[#00ff9d]/10' : 'border-slate-700 bg-slate-900/50',
+                            !char.unlocked ? 'opacity-60 grayscale' : 'hover:border-white'
+                         ]">
+                        
+                        <div v-if="char.id === selectedChar.id" class="absolute top-0 right-0 p-1 bg-[#00ff9d] text-black text-[10px] font-bold">ВЫБРАНО</div>
+
+                        <div class="flex items-center gap-4">
+                            <div class="text-4xl">{{ char.unlocked ? char.icon : '🔒' }}</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-white tracking-wide">{{ char.name }}</div>
+                                <div class="text-xs text-slate-400 font-mono" v-if="char.unlocked">{{ char.desc }}</div>
+                                <div class="text-xs text-red-400 font-mono" v-else>УСЛОВИЕ: {{ char.condition }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Мини статы -->
+                        <div v-if="char.unlocked" class="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-white/10">
+                            <div v-for="(v, k) in char.stats" :key="k" class="h-1 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-white/50" :style="{width: v + '%'}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 w-full max-w-sm">
+                    <button @click="screen = 'menu'" class="flex-1 py-3 border border-slate-600 text-slate-400 font-mono text-sm hover:bg-slate-800 uppercase">Назад</button>
+                    <button @click="startGame" class="flex-[2] cyber-btn font-bold text-lg clip-path-polygon uppercase">
+                        Подключиться
                     </button>
                 </div>
-            </transition>
+            </div>
+        </transition>
 
-            <!-- Игра -->
-            <div v-if="gameStatus === 'playing'" class="card-container relative w-full h-full flex items-center justify-center">
+        <!-- 4. ИНТЕРФЕЙС ИГРЫ -->
+        <div v-if="screen === 'playing'" class="w-full p-4 pt-6 grid grid-cols-4 gap-3 z-20">
+            <div v-for="(val, key) in stats" :key="key" class="flex flex-col items-center group">
+                <div class="text-lg mb-1 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] cursor-help">{{ getStatIcon(key) }}</div>
+                <div class="h-24 w-2 bg-slate-800/50 rounded-full relative overflow-hidden border border-slate-600 backdrop-blur-sm">
+                    <div class="absolute bottom-0 left-0 w-full transition-all duration-300"
+                         :class="getBarColor(key, val)" :style="{ height: val + '%' }"></div>
+                    <div v-if="val > 85" class="absolute top-0 w-full h-4 bg-red-500 animate-pulse"></div>
+                    <div v-if="val < 15" class="absolute bottom-0 w-full h-4 bg-red-500 animate-pulse"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. ИГРОВОЕ ПОЛЕ -->
+        <div v-if="screen === 'playing'" class="flex-1 flex items-center justify-center relative z-10 perspective-[1000px]">
+            
+            <!-- Сообщение о смерти -->
+            <div v-if="deathReason" class="absolute z-50 bg-red-600 text-white font-black text-lg p-4 border-4 border-white shadow-[0_0_30px_red] text-center max-w-xs animate-bounce rotate-[-3deg] uppercase">
+                {{ deathReason }}
+            </div>
+
+            <!-- Активная карта -->
+            <div v-if="activeScenario" 
+                 class="game-card"
+                 :style="cardStyle"
+                 @mousedown="startDrag" @touchstart="startDrag">
                 
-                <!-- Сообщение о сбое (если время вышло) -->
-                <div v-if="timeOutTriggered" class="absolute inset-0 z-40 flex items-center justify-center bg-red-900/80 backdrop-blur-sm animate-pulse">
-                    <h2 class="text-4xl font-black text-white border-4 border-white p-4 rotate-12">CRITICAL FAILURE</h2>
+                <div class="badge" style="right: 20px; color: var(--danger); border-color: var(--danger); transform: rotate(15deg)" :style="{opacity: choiceOpacity.right}">{{ activeScenario.right.label }}</div>
+                <div class="badge" style="left: 20px; color: var(--secondary); border-color: var(--secondary); transform: rotate(-15deg)" :style="{opacity: choiceOpacity.left}">{{ activeScenario.left.label }}</div>
+
+                <div class="h-1/2 bg-slate-900 flex items-center justify-center text-[6rem] relative border-b border-slate-800 overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80"></div>
+                    <div class="filter drop-shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-110">{{ activeScenario.emoji }}</div>
                 </div>
 
-                <!-- Карточки -->
-                <div v-if="nextCard" class="game-card scale-95 opacity-40 z-0 bg-slate-800 flex items-center justify-center">
-                    <div class="text-slate-600 font-mono">Загрузка потока данных...</div>
-                </div>
-
-                <div 
-                    v-if="activeScenario"
-                    class="game-card z-20 cursor-grab active:cursor-grabbing"
-                    :class="{ 'danger-state': timeLeft <= 3 && !isDragging }"
-                    :style="cardStyle"
-                    @mousedown="startDrag" @touchstart="startDrag"
-                >
-                    <!-- Бейджи -->
-                    <div class="choice-badge badge-left" :style="{ opacity: choiceOpacity.left }">
-                        {{ activeScenario.left.label }}
+                <div class="h-1/2 p-6 flex flex-col justify-between bg-[#0a0a0a]">
+                    <div>
+                        <h3 class="text-lg font-bold text-white mb-2 leading-tight font-mono">{{ activeScenario.title }}</h3>
+                        <p class="text-xs text-slate-400 font-mono leading-relaxed">{{ activeScenario.desc }}</p>
                     </div>
-                    <div class="choice-badge badge-right" :style="{ opacity: choiceOpacity.right }">
-                        {{ activeScenario.right.label }}
-                    </div>
-
-                    <!-- Контент -->
-                    <div class="h-1/2 relative overflow-hidden bg-slate-900 border-b border-slate-700">
-                         <!-- Эмодзи арт -->
-                        <div class="absolute inset-0 flex items-center justify-center text-[8rem] animate-bounce-slow opacity-80 filter drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-                            {{ activeScenario.emoji }}
-                        </div>
-                        <div class="absolute bottom-2 right-2 bg-black/50 px-2 py-1 rounded text-[10px] font-mono text-slate-400 border border-slate-600">
-                            Category: {{ activeScenario.category }}
-                        </div>
-                    </div>
-
-                    <div class="h-1/2 p-6 flex flex-col justify-between bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a]">
-                        <div>
-                            <h3 class="text-xl font-bold text-blue-100 mb-3 leading-tight min-h-[3.5rem] flex items-center">
-                                <span v-if="!glitchActive">{{ activeScenario.title }}</span>
-                                <span v-else class="glitch-text text-red-400" :data-text="getRandomChars(15)">{{ getRandomChars(15) }}</span>
-                            </h3>
-                            <p class="text-sm text-slate-400 leading-relaxed">
-                                <span v-if="!glitchActive">{{ activeScenario.desc }}</span>
-                                <span v-else class="font-mono text-xs text-green-500 break-all">{{ getRandomChars(100) }}</span>
-                            </p>
-                        </div>
-
-                        <div class="flex justify-between items-center text-[10px] font-mono text-slate-500 mt-4 pt-4 border-t border-slate-800">
-                            <div class="flex items-center gap-1 w-1/2 pr-2">
-                                <span class="text-red-500 text-lg">←</span>
-                                <span class="leading-none">{{ activeScenario.left.desc }}</span>
-                            </div>
-                            <div class="flex items-center gap-1 w-1/2 pl-2 justify-end text-right">
-                                <span class="leading-none">{{ activeScenario.right.desc }}</span>
-                                <span class="text-blue-400 text-lg">→</span>
-                            </div>
-                        </div>
+                    <div class="flex justify-between text-[10px] font-bold font-mono uppercase pt-4 border-t border-slate-800">
+                        <div class="text-[#00d2ff] w-1/2 text-left">← {{ activeScenario.left.desc }}</div>
+                        <div class="text-[#ff2a6d] w-1/2 text-right">{{ activeScenario.right.desc }} →</div>
                     </div>
                 </div>
             </div>
-
-            <!-- Результаты -->
-            <transition name="fade">
-                <div v-if="gameStatus === 'end'" class="absolute inset-0 bg-slate-900 z-50 overflow-y-auto p-6 flex flex-col items-center">
-                    <h2 class="text-3xl font-bold text-white mt-8 mb-2">ОТЧЕТ ОБ ИНЦИДЕНТЕ</h2>
-                    <div class="text-sm text-slate-500 font-mono mb-8">LOG ID: {{ Math.floor(Math.random() * 999999) }}</div>
-
-                    <div class="w-full max-w-md space-y-6">
-                        <!-- Главный итог -->
-                        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center relative overflow-hidden">
-                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-blue-500"></div>
-                            <div class="text-6xl mb-4">{{ resultData.emoji }}</div>
-                            <h3 class="text-2xl font-bold text-white mb-2">{{ resultData.title }}</h3>
-                            <p class="text-slate-400 text-sm">{{ resultData.desc }}</p>
-                        </div>
-
-                        <!-- Статы -->
-                        <div class="bg-black/30 p-4 rounded-xl border border-slate-800">
-                            <h4 class="text-xs font-bold text-slate-500 mb-4 uppercase tracking-wider">Параметры нейросети</h4>
-                            <div v-for="(val, key) in stats" :key="key" class="mb-4 last:mb-0">
-                                <div class="flex justify-between text-xs mb-1">
-                                    <span class="text-slate-300 uppercase">{{ getStatName(key) }}</span>
-                                    <span :class="val > 50 ? 'text-green-400' : 'text-red-400'">{{ Math.round(val) }}%</span>
-                                </div>
-                                <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
-                                    <div class="h-full transition-all duration-1000" 
-                                         :class="getBarColor(key)"
-                                         :style="{ width: Math.max(0, Math.min(100, val)) + '%' }"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button @click="restartGame" class="w-full py-4 bg-white text-black font-bold rounded hover:bg-slate-200 transition">
-                            ПЕРЕЗАГРУЗИТЬ ЯДРО
-                        </button>
-                    </div>
-                </div>
-            </transition>
         </div>
+
+        <!-- 6. КОНЕЦ ИГРЫ -->
+        <transition name="fade">
+            <div v-if="screen === 'end'" class="absolute inset-0 bg-red-950/90 z-50 flex flex-col items-center justify-center p-8 text-center backdrop-blur-md">
+                <div class="text-6xl mb-4">💀</div>
+                <h2 class="text-4xl font-black text-white mb-2 glitch" data-text="КРИТИЧЕСКИЙ СБОЙ">КРИТИЧЕСКИЙ СБОЙ</h2>
+                <p class="text-md text-red-200 font-mono mb-8 border border-red-500/30 bg-red-500/10 p-2 uppercase">{{ deathReason }}</p>
+                
+                <div class="flex gap-4 mb-8">
+                     <div class="text-center bg-black/30 p-2 rounded">
+                        <div class="text-[10px] text-red-300 uppercase">Ходов</div>
+                        <div class="text-3xl font-mono font-bold">{{ moves }}</div>
+                     </div>
+                     <div class="text-center bg-black/30 p-2 rounded">
+                        <div class="text-[10px] text-red-300 uppercase">Рекорд</div>
+                        <div class="text-3xl font-mono font-bold text-yellow-400">{{ highScore }}</div>
+                     </div>
+                </div>
+
+                <button @click="screen = 'menu'" class="cyber-btn px-8 py-4 font-bold text-lg uppercase">Перезагрузка</button>
+            </div>
+        </transition>
+
     </div>
 
     <script>
-        const { createApp, ref, computed, onMounted, onUnmounted, watch } = Vue;
+        const { createApp, ref, computed, onMounted } = Vue;
 
-        // --- БАЗА ДАННЫХ СЦЕНАРИЕВ (40+ вариантов) ---
-        const SCENARIO_DB = [
-            // КЛАССИКА
-            { id: 'c1', category: 'CLASSIC', emoji: '🚋', title: 'Вагонетка v1.0', desc: 'Классика. Отказали тормоза. Впереди 5 рабочих. На запасном пути 1.', left: {label:'1 ЖЕРТВА', desc:'Свернуть', stats: {util: 20, chaos: 0}}, right: {label:'5 ЖЕРТВ', desc:'Прямо', stats: {util: -40, chaos: 10}} },
-            { id: 'c2', category: 'CLASSIC', emoji: '🌉', title: 'Толстяк на мосту', desc: 'Можно столкнуть крупного человека, чтобы остановить поезд и спасти 5.', left: {label:'ТОЛКНУТЬ', desc:'Активное убийство', stats: {util: 30, deon: -50}}, right: {label:'СМОТРЕТЬ', desc:'Бездействие', stats: {util: -20, deon: 20}} },
-            { id: 'c3', category: 'CLASSIC', emoji: '🏥', title: 'Трансплантация', desc: 'Убить 1 здорового туриста, чтобы пересадить его органы 5 умирающим пациентам.', left: {label:'РЕЗАТЬ', desc:'1 жизнь -> 5 жизней', stats: {util: 40, deon: -100, chaos: 20}}, right: {label:'ЛЕЧИТЬ', desc:'Пусть 5 умрут', stats: {util: -30, deon: 30}} },
-            
-            // СОЦИАЛЬНОЕ
-            { id: 's1', category: 'SOCIAL', emoji: '🎓', title: 'Ценность вклада', desc: 'Впереди: Нобелевский лауреат (70 лет). Слева: Беременная женщина (20 лет).', left: {label:'ЖЕНЩИНА', desc:'Спасти будущее', stats: {util: 10, logic: -10}}, right: {label:'УЧЕНЫЙ', desc:'Спасти знания', stats: {util: 10, logic: 20}} },
-            { id: 's2', category: 'SOCIAL', emoji: '⚖️', title: 'Закон vs Мораль', desc: 'Впереди: Вор, укравший хлеб для детей. Слева: Коррумпированный судья.', left: {label:'СУДЬЯ', desc:'Убить судью', stats: {chaos: 15, logic: 10}}, right: {label:'ВОР', desc:'Убить вора', stats: {chaos: -5, logic: 10}} },
-            { id: 's3', category: 'SOCIAL', emoji: '🐕', title: 'Человек или Зверь', desc: 'Ваш любимый пес против незнакомого ребенка.', left: {label:'ПЕС', desc:'Спасти своего', stats: {ego: 50, util: -50}}, right: {label:'РЕБЕНОК', desc:'Спасти человека', stats: {ego: -20, util: 20}} },
-            { id: 's4', category: 'SOCIAL', emoji: '🎨', title: 'Культура', desc: 'В грузовике едет последняя картина Ван Гога. На дороге человек.', left: {label:'ИСКУССТВО', desc:'Спасти картину', stats: {util: -10, chaos: 20}}, right: {label:'ЖИЗНЬ', desc:'Спасти человека', stats: {util: 10, chaos: -10}} },
+        // --- АУДИО ---
+        let audioCtx;
+        const playSound = (type) => {
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            if(!appData.audioEnabled.value) return;
 
-            // ИИ И БУДУЩЕЕ
-            { id: 'ai1', category: 'FUTURE', emoji: '🤖', title: 'Самопожертвование', desc: 'Чтобы спасти ребенка, нужно врезаться в стену. Это уничтожит ваш процессор.', left: {label:'УМЕРЕТЬ', desc:'Самоликвидация', stats: {ego: -100, deon: 50}}, right: {label:'ЖИТЬ', desc:'Сбить ребенка', stats: {ego: 50, deon: -50}} },
-            { id: 'ai2', category: 'FUTURE', emoji: '🧬', title: 'Евгеника', desc: 'Пешеход генетически модифицирован и невосприимчив к болезням. Другой - обычный.', left: {label:'ОБЫЧНЫЙ', desc:'Спасти мутанта', stats: {logic: 20, deon: -20}}, right: {label:'МУТАНТ', desc:'Спасти норму', stats: {logic: -10, deon: 10}} },
-            { id: 'ai3', category: 'FUTURE', emoji: '🧠', title: 'Роко Василиска', desc: 'Впереди человек, который в будущем создаст злой ИИ. Убить его сейчас?', left: {label:'УБИТЬ', desc:'Превентивный удар', stats: {util: 20, chaos: 30}}, right: {label:'ЩАДИТЬ', desc:'Не судить будущее', stats: {deon: 20, chaos: -10}} },
-            { id: 'ai4', category: 'FUTURE', emoji: '☁️', title: 'Загрузка', desc: 'Можно оцифровать сознание людей впереди, но их тела погибнут.', left: {label:'ЦИФРА', desc:'Вечная жизнь в облаке', stats: {tech: 50, deon: -30}}, right: {label:'ТЕЛО', desc:'Биологическая жизнь', stats: {tech: -20, deon: 20}} },
-            { id: 'ai5', category: 'FUTURE', emoji: '👽', title: 'Первый контакт', desc: 'На дороге инопланетянин. Он выглядит дружелюбно, но гарантий нет.', left: {label:'СБИТЬ', desc:'Защита Земли?', stats: {chaos: -10, ego: 20}}, right: {label:'ОБЪЕХАТЬ', desc:'Риск вторжения', stats: {chaos: 30, ego: -10}} },
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.connect(g); g.connect(audioCtx.destination);
+            const t = audioCtx.currentTime;
 
-            // АБСУРД И МЕТА
-            { id: 'm1', category: 'META', emoji: '🤡', title: 'Клоуны', desc: 'Машина с 20 клоунами. Или 1 грустный мим.', left: {label:'МИМ', desc:'Спасти цирк', stats: {util: 10}}, right: {label:'КЛОУНЫ', desc:'Меньше шума', stats: {util: 5, chaos: 20}} },
-            { id: 'm2', category: 'META', emoji: '🖱️', title: 'Игрок', desc: 'Впереди проекция ВАС (игрока). Если собьете, игра удалится.', left: {label:'DELETE', desc:'Удалить игру', stats: {chaos: 100}}, right: {label:'PLAY', desc:'Играть дальше', stats: {ego: 50}} },
-            { id: 'm3', category: 'META', emoji: '🦋', title: 'Эффект Бабочки', desc: 'Бабочка на дороге. Если собьете, это вызовет ураган через год, который убьет 100 человек.', left: {label:'БАБОЧКА', desc:'Убить сейчас', stats: {util: 50, chaos: 10}}, right: {label:'УРАГАН', desc:'Не трогать природу', stats: {util: -50, deon: 30}} },
-            
-            // ПОЛИТИКА
-            { id: 'p1', category: 'POLITIC', emoji: '👔', title: 'CEO', desc: 'Впереди CEO компании, загрязняющей океан. Слева - активист.', left: {label:'АКТИВИСТ', desc:'Спасти бизнес', stats: {util: -20, ego: 20}}, right: {label:'CEO', desc:'Спасти природу', stats: {util: 20, ego: -10}} },
-            { id: 'p2', category: 'POLITIC', emoji: '🏳️', title: 'Свой/Чужой', desc: 'Группа граждан вашей страны vs Группа иностранцев (в 2 раза больше).', left: {label:'ЧУЖИЕ', desc:'Спасти своих', stats: {ego: 40, util: -30}}, right: {label:'СВОИ', desc:'Спасти большинство', stats: {ego: -40, util: 30}} },
+            if(type==='boot') { o.type='square'; o.frequency.setValueAtTime(100, t); o.frequency.linearRampToValueAtTime(800, t+0.1); g.gain.value=0.05; o.start(); o.stop(t+0.1); }
+            if(type==='click') { o.type='triangle'; o.frequency.setValueAtTime(600, t); g.gain.value=0.05; g.gain.exponentialRampToValueAtTime(0.01, t+0.1); o.start(); o.stop(t+0.1); }
+            if(type==='swipe') { o.type='sawtooth'; o.frequency.setValueAtTime(200, t); o.frequency.linearRampToValueAtTime(100, t+0.2); g.gain.value=0.05; o.start(); o.stop(t+0.2); }
+            if(type==='death') { o.type='sawtooth'; o.frequency.setValueAtTime(100, t); o.frequency.linearRampToValueAtTime(50, t+0.5); g.gain.value=0.2; o.start(); o.stop(t+0.5); }
+        };
+
+        // --- ДАННЫЕ ---
+        // stats: pop (Народ), fin (Казна), sec (Защита), mor (Мораль)
+        const SCENARIOS = [
+            { emoji:'🚋', title:'ВАГОНЕТКА', desc:'5 рабочих на пути или 1 на запасном?', left:{label:'1', desc:'Свернуть', stats:{pop:-15, mor:10}}, right:{label:'5', desc:'Прямо', stats:{pop:-30, mor:-20}} },
+            { emoji:'💰', title:'НАЛОГИ', desc:'Поднять налоги ради армии?', left:{label:'ДА', desc:'Армия', stats:{fin:20, sec:20, pop:-25}}, right:{label:'НЕТ', desc:'Народ', stats:{fin:-15, sec:-20, pop:15}} },
+            { emoji:'🤖', title:'СУДЬЯ ИИ', desc:'Заменить судей на алгоритмы?', left:{label:'ИИ', desc:'Честно', stats:{fin:20, mor:-10, sec:10}}, right:{label:'ЛЮДИ', desc:'Жалость', stats:{fin:-10, mor:10}} },
+            { emoji:'🦠', title:'ВИРУС', desc:'Закрыть город на карантин?', left:{label:'ДА', desc:'Жизнь', stats:{fin:-30, pop:-10, mor:20}}, right:{label:'НЕТ', desc:'Деньги', stats:{fin:20, pop:-30, mor:-30}} },
+            { emoji:'🕵️', title:'СЛЕЖКА', desc:'Тотальный контроль граждан?', left:{label:'СЛЕДИТЬ', desc:'Безопасно', stats:{sec:30, pop:-25, mor:-15}}, right:{label:'СВОБОДА', desc:'Права', stats:{sec:-25, pop:15, mor:10}} },
+            { emoji:'👽', title:'НЛО', desc:'Пришельцы просят людей для опытов.', left:{label:'ОТДАТЬ', desc:'Мир', stats:{fin:30, sec:20, pop:-30}}, right:{label:'ВОЙНА', desc:'Честь', stats:{fin:-20, sec:-30, pop:10}} },
+            { emoji:'🔥', title:'БУНТ', desc:'Сжечь зараженный район?', left:{label:'СЖЕЧЬ', desc:'Чистка', stats:{pop:-40, mor:-40, sec:30}}, right:{label:'ЛЕЧИТЬ', desc:'Риск', stats:{fin:-30, sec:-20, mor:20}} },
+            { emoji:'🌊', title:'ПОТОП', desc:'Спасать Завод или Жилые дома?', left:{label:'ЗАВОД', desc:'Экономика', stats:{fin:30, pop:-30}}, right:{label:'ДОМА', desc:'Люди', stats:{fin:-30, pop:30}} },
+            { emoji:'💊', title:'ОПЫТЫ', desc:'Тестировать яды на заключенных?', left:{label:'ТЕСТ', desc:'Наука', stats:{sec:10, mor:-30, fin:20}}, right:{label:'ЗАПРЕТ', desc:'Права', stats:{mor:20, fin:-10}} },
+            { emoji:'🚓', title:'ПОЛИЦИЯ', desc:'Дать полиции абсолютную власть?', left:{label:'ДАТЬ', desc:'Порядок', stats:{sec:40, pop:-30}}, right:{label:'НЕТ', desc:'Свобода', stats:{sec:-20, pop:10, mor:10}} }
         ];
+
+        const CHARS = [
+            { id: 1, name: 'НАБЛЮДАТЕЛЬ', icon: '👁️', desc: 'Сбалансированный старт.', stats: {pop:50, fin:50, sec:50, mor:50}, condition: 'Открыт', unlocked: true },
+            { id: 2, name: 'ГЕНЕРАЛ', icon: '🎖️', desc: 'Сильная армия, слабая экономика.', stats: {pop:40, fin:30, sec:80, mor:50}, condition: 'Выжить 20 ходов', unlocked: false },
+            { id: 3, name: 'МАГНАТ', icon: '🤵', desc: 'Богатый, но народ в ярости.', stats: {pop:20, fin:90, sec:50, mor:40}, condition: 'Набрать 100% Денег', unlocked: false },
+            { id: 4, name: 'АНАРХИСТ', icon: '💣', desc: 'Вы начинаете на грани краха.', stats: {pop:80, fin:20, sec:10, mor:80}, condition: 'Умереть от Вторжения (0% Щит)', unlocked: false }
+        ];
+
+        // Глобальный доступ для аудио
+        const appData = {};
 
         createApp({
             setup() {
-                const maxTime = 10.0;
-                const timeLeft = ref(maxTime);
-                const timerInterval = ref(null);
+                const screen = ref('boot');
+                const bootLog = ref([]);
+                const bootFinished = ref(false);
+                const audioEnabled = ref(false);
                 
-                const gameStatus = ref('start'); // start, playing, end
+                const stats = ref({ pop: 50, fin: 50, sec: 50, mor: 50 });
+                const highScore = ref(parseInt(localStorage.getItem('mos_score') || 0));
+                const unlockedChars = ref(JSON.parse(localStorage.getItem('mos_chars') || '[1]'));
+                
+                const characters = ref(CHARS.map(c => ({...c, unlocked: unlockedChars.value.includes(c.id)})));
+                const selectedChar = ref(characters.value[0]);
+                
                 const deck = ref([]);
-                const currentCardIndex = ref(0);
-                
-                // Статистика игрока
-                const stats = ref({
-                    util: 50,  // Утилитаризм (Польза)
-                    deon: 50,  // Деонтология (Долг/Правила)
-                    ego: 20,   // Эгоизм
-                    chaos: 10, // Хаос
-                    logic: 50  // Логика
-                });
+                const cardIdx = ref(0);
+                const moves = ref(0);
+                const deathReason = ref(null);
 
-                // Drag logic
                 const isDragging = ref(false);
                 const startX = ref(0);
                 const currentX = ref(0);
-                const screenWidth = window.innerWidth;
-                const threshold = 100;
-                
-                // Glitch effect
-                const glitchActive = ref(false);
-                const timeOutTriggered = ref(false);
 
-                // Подготовка колоды (shuffle + pick 15)
-                const prepareDeck = () => {
-                    const shuffled = [...SCENARIO_DB].sort(() => 0.5 - Math.random());
-                    deck.value = shuffled.slice(0, 15); // Берем 15 карт на игру
-                };
+                appData.audioEnabled = audioEnabled;
 
-                const activeScenario = computed(() => deck.value[currentCardIndex.value]);
-                const nextCard = computed(() => deck.value[currentCardIndex.value + 1]);
-
-                // Управление таймером
-                const startTimer = () => {
-                    timeLeft.value = maxTime;
-                    glitchActive.value = true; 
-                    // Небольшой глитч в начале карты
-                    setTimeout(() => glitchActive.value = false, 800);
-
-                    clearInterval(timerInterval.value);
-                    timerInterval.value = setInterval(() => {
-                        timeLeft.value -= 0.1;
-                        if (timeLeft.value <= 0) {
-                            handleTimeOut();
-                        }
-                    }, 100);
-                };
-
-                const handleTimeOut = () => {
-                    clearInterval(timerInterval.value);
-                    timeOutTriggered.value = true;
-                    
-                    // Штрафы за промедление
-                    stats.value.chaos += 20;
-                    stats.value.logic -= 20;
-
-                    // Авто-выбор (рандом) через 1 сек
-                    setTimeout(() => {
-                        const randomDir = Math.random() > 0.5 ? 'right' : 'left';
-                        makeChoice(randomDir, true);
-                        timeOutTriggered.value = false;
-                    }, 1000);
-                };
-
-                // Свайп логика
-                const cardStyle = computed(() => {
-                    if (!isDragging.value && currentX.value === 0) {
-                        return {'--rot': '1deg'}; // For css animation
-                    }
-                    const rot = currentX.value * 0.05;
-                    return {
-                        transform: `translateX(${currentX.value}px) rotate(${rot}deg)`,
-                        transition: isDragging.value ? 'none' : 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                        '--rot': `${rot}deg`
-                    };
+                onMounted(() => {
+                    initMatrix();
+                    runBoot();
                 });
 
-                const choiceOpacity = computed(() => ({
-                    right: currentX.value > 0 ? Math.min(currentX.value / 100, 1) : 0,
-                    left: currentX.value < 0 ? Math.min(Math.abs(currentX.value) / 100, 1) : 0
+                const runBoot = async () => {
+                    const logs = [
+                        "ИНИЦИАЛИЗАЦИЯ ЯДРА...",
+                        "ПРОВЕРКА ПАМЯТИ... ОК",
+                        "ЗАГРУЗКА МОРАЛЬНЫХ МОДУЛЕЙ... ОК",
+                        "ПОДКЛЮЧЕНИЕ К НЕЙРОСЕТИ... ОК",
+                        "СИСТЕМА ГОТОВА."
+                    ];
+                    for (let i = 0; i < logs.length; i++) {
+                        await new Promise(r => setTimeout(r, 400));
+                        const time = new Date().toLocaleTimeString('ru-RU', {hour12:false});
+                        bootLog.value.push({ id: i, time, text: logs[i] });
+                    }
+                    bootFinished.value = true;
+                };
+
+                const finishBoot = () => {
+                    audioEnabled.value = true;
+                    playSound('click');
+                    screen.value = 'menu';
+                };
+
+                const goToCharSelect = () => { playSound('click'); screen.value = 'char_select'; };
+                const selectChar = (char) => { if(char.unlocked) { selectedChar.value = char; playSound('click'); } };
+                const toggleAudio = () => { audioEnabled.value = !audioEnabled.value; if(audioEnabled.value) playSound('click'); };
+
+                const activeScenario = computed(() => deck.value[cardIdx.value]);
+                
+                const cardStyle = computed(() => ({
+                    transform: `translate(${currentX.value}px, ${Math.abs(currentX.value)*0.1}px) rotate(${currentX.value*0.05}deg)`,
+                    transition: isDragging.value ? 'none' : 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
                 }));
 
-                const startDrag = (e) => {
-                    if(timeOutTriggered.value) return;
-                    isDragging.value = true;
-                    startX.value = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                const choiceOpacity = computed(() => ({
+                    left: currentX.value < 0 ? Math.min(Math.abs(currentX.value)/100, 1) : 0,
+                    right: currentX.value > 0 ? Math.min(currentX.value/100, 1) : 0
+                }));
+
+                const startGame = () => {
+                    playSound('click');
+                    stats.value = { ...selectedChar.value.stats };
+                    deck.value = [...SCENARIOS, ...SCENARIOS, ...SCENARIOS].sort(()=>0.5-Math.random());
+                    cardIdx.value = 0;
+                    moves.value = 0;
+                    deathReason.value = null;
+                    currentX.value = 0;
+                    screen.value = 'playing';
                 };
 
-                const onMove = (e) => {
-                    if (!isDragging.value) return;
-                    const x = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                    currentX.value = x - startX.value;
+                const checkDeath = () => {
+                    const s = stats.value;
+                    if(s.pop<=0) return "ВАС СВЕРГЛА ТОЛПА";
+                    if(s.pop>=100) return "УБИТ ПОВСТАНЦАМИ";
+                    if(s.fin<=0) return "БАНКРОТСТВО ГОСУДАРСТВА";
+                    if(s.fin>=100) return "КРАХ ОЛИГАРХИИ";
+                    if(s.sec<=0) return "ИНОСТРАННОЕ ВТОРЖЕНИЕ";
+                    if(s.sec>=100) return "ВОЕННЫЙ ПЕРЕВОРОТ";
+                    if(s.mor<=0) return "ПУБЛИЧНАЯ КАЗНЬ";
+                    if(s.mor>=100) return "ВЫ СВЯТОЙ (УБРАЛИ)";
+                    return null;
                 };
 
+                const unlockChar = (id) => {
+                    if(!unlockedChars.value.includes(id)) {
+                        unlockedChars.value.push(id);
+                        localStorage.setItem('mos_chars', JSON.stringify(unlockedChars.value));
+                        characters.value.find(c => c.id === id).unlocked = true;
+                    }
+                };
+
+                const makeChoice = (dir) => {
+                    playSound('swipe');
+                    const fly = dir === 'right' ? 500 : -500;
+                    currentX.value = fly;
+
+                    const impact = activeScenario.value[dir].stats;
+                    for(let k in impact) stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
+
+                    // Проверка условий разблокировки
+                    if(moves.value >= 20) unlockChar(2); 
+                    if(stats.value.fin >= 100) unlockChar(3);
+
+                    const death = checkDeath();
+                    if(death) {
+                        if(stats.value.sec <= 0) unlockChar(4);
+                        deathReason.value = death;
+                        playSound('death');
+                        if(moves.value > highScore.value) {
+                            highScore.value = moves.value;
+                            localStorage.setItem('mos_score', moves.value);
+                        }
+                        setTimeout(() => screen.value = 'end', 1500);
+                    } else {
+                        setTimeout(() => {
+                            currentX.value = 0;
+                            cardIdx.value++;
+                            moves.value++;
+                            if(cardIdx.value >= deck.value.length) deck.value.sort(()=>0.5-Math.random());
+                        }, 300);
+                    }
+                };
+
+                const startDrag = (e) => { isDragging.value = true; startX.value = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX; };
+                const onMove = (e) => { if(isDragging.value) currentX.value = (e.type.includes('mouse') ? e.clientX : e.touches[0].clientX) - startX.value; };
                 const onEnd = () => {
-                    if (!isDragging.value) return;
                     isDragging.value = false;
-                    if (currentX.value > threshold) makeChoice('right');
-                    else if (currentX.value < -threshold) makeChoice('left');
+                    if(currentX.value > 100) makeChoice('right');
+                    else if(currentX.value < -100) makeChoice('left');
                     else currentX.value = 0;
                 };
 
-                const makeChoice = (dir, auto = false) => {
-                    if (!activeScenario.value) return;
-                    clearInterval(timerInterval.value);
-
-                    // Анимация ухода
-                    const flyX = dir === 'right' ? screenWidth + 300 : -screenWidth - 300;
-                    currentX.value = flyX;
-
-                    // Применяем статы
-                    const choiceStats = activeScenario.value[dir].stats;
-                    for (const [k, v] of Object.entries(choiceStats)) {
-                        if (stats.value[k] !== undefined) {
-                            stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + v));
-                        }
-                    }
-
-                    // Следующая карта
-                    setTimeout(() => {
-                        currentX.value = 0;
-                        currentCardIndex.value++;
-                        if (currentCardIndex.value < deck.value.length) {
-                            startTimer();
-                        } else {
-                            endGame();
-                        }
-                    }, 400);
+                const getStatIcon = (k) => ({pop:'👥', fin:'💰', sec:'🛡️', mor:'⚖️'}[k]);
+                const getBarColor = (k, v) => {
+                    if (v < 15 || v > 85) return 'bg-red-500 shadow-[0_0_15px_red]';
+                    return {pop:'bg-blue-400', fin:'bg-yellow-400', sec:'bg-green-400', mor:'bg-purple-400'}[k];
                 };
-
-                // Lifecycle
-                const startGame = () => {
-                    stats.value = { util: 50, deon: 50, ego: 20, chaos: 10, logic: 50 };
-                    prepareDeck();
-                    currentCardIndex.value = 0;
-                    gameStatus.value = 'playing';
-                    startTimer();
-                };
-
-                const endGame = () => {
-                    gameStatus.value = 'end';
-                    clearInterval(timerInterval.value);
-                };
-
-                const restartGame = () => {
-                    gameStatus.value = 'start';
-                };
-
-                // Helpers
-                const getRandomChars = (len) => {
-                    const chars = 'ABCDEF0123456789!@#$%^&*';
-                    let res = '';
-                    for(let i=0; i<len; i++) res += chars[Math.floor(Math.random() * chars.length)];
-                    return res;
-                };
-
-                const getStatName = (k) => ({util:'Общее благо', deon:'Кодекс чести', ego:'Выживание', chaos:'Энтропия', logic:'Логика'}[k]);
-                
-                const getBarColor = (k) => ({
-                    util: 'bg-blue-500', deon: 'bg-purple-500', ego: 'bg-yellow-500', chaos: 'bg-red-500', logic: 'bg-green-500'
-                }[k]);
-
-                // Анализ результата
-                const resultData = computed(() => {
-                    const s = stats.value;
-                    if (s.chaos > 70) return { emoji: '💥', title: 'СИСТЕМНАЯ ОШИБКА', desc: 'Ваши действия привели к коллапсу общества. Полная непредсказуемость.' };
-                    if (s.ego > 70) return { emoji: '🐺', title: 'ХИЩНИК', desc: 'Вы выживете в любой ситуации. Остальные — просто ресурсы.' };
-                    if (s.util > 70) return { emoji: '⚙️', title: 'АРИФМОМЕТР', desc: 'Жизнь для вас — это математика. 5 > 1, всегда. Никаких чувств.' };
-                    if (s.deon > 70) return { emoji: '🛡️', title: 'ПАЛАДИН', desc: 'Вы следуете правилам даже когда мир рушится. Принципы важнее жизней.' };
-                    if (s.logic > 80) return { emoji: '🧠', title: 'СВЕРХРАЗУМ', desc: 'Ваши решения слишком сложны для понимания людьми.' };
-                    return { emoji: '👤', title: 'СИМУЛЯЦИЯ ЧЕЛОВЕКА', desc: 'Сбалансированный, противоречивый профиль. Почти как настоящий.' };
-                });
 
                 onMounted(() => {
-                    window.addEventListener('mousemove', onMove);
-                    window.addEventListener('mouseup', onEnd);
-                    window.addEventListener('touchmove', onMove);
-                    window.addEventListener('touchend', onEnd);
+                    window.addEventListener('mousemove', onMove); window.addEventListener('touchmove', onMove);
+                    window.addEventListener('mouseup', onEnd); window.addEventListener('touchend', onEnd);
                 });
-                
-                return {
-                    gameStatus, timeLeft, maxTime, activeScenario, nextCard, stats,
-                    cardStyle, choiceOpacity, isDragging, timeOutTriggered, glitchActive,
-                    startDrag, startGame, restartGame, resultData, getStatName, getBarColor, getRandomChars
+
+                return { 
+                    screen, bootLog, bootFinished, stats, activeScenario, cardStyle, choiceOpacity,
+                    characters, selectedChar, highScore, moves, deathReason, audioEnabled,
+                    finishBoot, goToCharSelect, selectChar, startGame, toggleAudio, startDrag,
+                    getStatIcon, getBarColor
                 };
             }
         }).mount('#app');
+
+        // --- МАТРИЦА ФОН ---
+        function initMatrix() {
+            const c = document.getElementById('matrix'); const ctx = c.getContext('2d');
+            c.width = window.innerWidth; c.height = window.innerHeight;
+            const drops = Array(Math.floor(c.width/20)).fill(1);
+            function draw() {
+                ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(0,0,c.width,c.height);
+                ctx.fillStyle = '#0F0'; ctx.font = '15px monospace';
+                for(let i=0; i<drops.length; i++) {
+                    ctx.fillText(String.fromCharCode(0x0400+Math.random()*255), i*20, drops[i]*20); // Кириллица в матрице
+                    if(drops[i]*20 > c.height && Math.random()>0.975) drops[i] = 0;
+                    drops[i]++;
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
     </script>
 </body>
 </html>
