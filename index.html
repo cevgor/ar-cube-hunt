@@ -115,7 +115,7 @@
                     </div>
 
                     <button @click="screen = 'collection'" class="w-full py-3 border border-slate-700 bg-slate-900/50 text-slate-400 hover:text-white text-xs font-mono uppercase">
-                        АРХИВ ({{ unlockedDeaths.length }}/8)
+                        АРХИВ ({{ unlockedDeaths.length }}/13)
                     </button>
                 </div>
             </div>
@@ -314,6 +314,7 @@
 
         // DATA
         const SCENARIOS = [
+            // Базовые (10)
             { emoji:'🚋', title:'ВАГОНЕТКА', desc:'5 рабочих или 1?', left:{label:'1', stats:{pop:-10, mor:5}}, right:{label:'5', stats:{pop:-20, mor:-15}} },
             { emoji:'💰', title:'НАЛОГИ', desc:'Поднять налоги ради армии?', left:{label:'НЕТ', stats:{fin:-10, sec:-10, pop:10}}, right:{label:'ДА', stats:{fin:15, sec:10, pop:-15}} },
             { emoji:'🤖', title:'СУДЬЯ ИИ', desc:'Заменить судей?', left:{label:'ЛЮДИ', stats:{fin:-5, mor:5}}, right:{label:'ИИ', stats:{fin:15, mor:-5}} },
@@ -323,18 +324,126 @@
             { emoji:'🔥', title:'БУНТ', desc:'Сжечь район?', left:{label:'МИР', stats:{fin:-15, sec:-10, mor:10}}, right:{label:'СИЛА', stats:{pop:-20, mor:-20, sec:15}} },
             { emoji:'🌊', title:'ПОТОП', desc:'Спасать завод или дома?', left:{label:'ДОМА', stats:{fin:-15, pop:15}}, right:{label:'ЗАВОД', stats:{fin:15, pop:-15}} },
             { emoji:'💊', title:'ОПЫТЫ', desc:'Тесты на людях?', left:{label:'ЗАПРЕТ', stats:{mor:10, fin:-5}}, right:{label:'ТЕСТ', stats:{sec:10, mor:-15, fin:10}} },
-            { emoji:'🚓', title:'ПОЛИЦИЯ', desc:'Больше власти?', left:{label:'НЕТ', stats:{sec:-10, pop:5}}, right:{label:'ДА', stats:{sec:20, pop:-15}} }
+            { emoji:'🚓', title:'ПОЛИЦИЯ', desc:'Больше власти?', left:{label:'НЕТ', stats:{sec:-10, pop:5}}, right:{label:'ДА', stats:{sec:20, pop:-15}} },
+
+            // ЭКОНОМИЧЕСКИЕ (15)
+            { emoji:'🏦', title:'БАНКОВСКИЙ КРИЗИС', desc:'Спасать банки?', left:{label:'НАЦИОНАЛИЗАЦИЯ', stats:{fin:-25, pop:10}}, right:{label:'РЫНОК', stats:{pop:-20, fin:10}} },
+            { emoji:'📈', title:'БИРЖЕВАЯ ЛИХОРАДКА', desc:'Регулировать рынок?', left:{label:'КОНТРОЛЬ', stats:{fin:10, pop:-5}}, right:{label:'СВОБОДА', stats:{fin:20, pop:-15, mor:-5}} },
+            { emoji:'🛢️', title:'НЕФТЯНОЕ ЭМБАРГО', desc:'Найти новых поставщиков?', left:{label:'ДИПЛОМАТИЯ', stats:{fin:-15, sec:5}}, right:{label:'ВТОРЖЕНИЕ', stats:{sec:-20, fin:25, mor:-15}} },
+            { emoji:'💸', title:'ГИПЕРИНФЛЯЦИЯ', desc:'Печатать деньги?', left:{label:'ДА', stats:{pop:-25, fin:15}}, right:{label:'НЕТ', stats:{fin:-20, pop:10, mor:5}} },
+            { emoji:'🏭', title:'ЗАКРЫТИЕ ЗАВОДА', desc:'Субсидировать?', left:{label:'ПОДДЕРЖАТЬ', stats:{fin:-20, pop:15}}, right:{label:'ЗАКРЫТЬ', stats:{pop:-20, fin:10}} },
+            { emoji:'🌾', title:'СЕЛЬХОЗ КРИЗИС', desc:'Импорт или свои?', left:{label:'ИМПОРТ', stats:{fin:-10, pop:5}}, right:{label:'СУБСИДИИ', stats:{fin:-15, pop:10, mor:5}} },
+            { emoji:'💎', title:'АЛМАЗНЫЙ СКАНДАЛ', desc:'Расследовать коррупцию?', left:{label:'РАССЛЕДОВАТЬ', stats:{mor:15, fin:-10, sec:-5}}, right:{label:'ЗАМЯТЬ', stats:{fin:10, mor:-20}} },
+            { emoji:'🚂', title:'ТРАНССИБ', desc:'Строить магистраль?', left:{label:'ДА', stats:{fin:-30, sec:15, pop:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-5}} },
+            { emoji:'🏗️', title:'МЕГАПРОЕКТ', desc:'Строить небоскреб?', left:{label:'СТРОИТЬ', stats:{fin:-25, mor:-10, pop:5}}, right:{label:'ОТЛОЖИТЬ', stats:{fin:10, pop:-5}} },
+            { emoji:'📉', title:'ДЕФОЛТ', desc:'Объявлять дефолт?', left:{label:'ДА', stats:{fin:30, pop:-25, mor:-20}}, right:{label:'НЕТ', stats:{fin:-35, pop:10}} },
+            { emoji:'🛒', title:'ПОТРЕБЛЕНИЕ', desc:'Стимулировать покупки?', left:{label:'СТИМУЛЫ', stats:{fin:-15, pop:10}}, right:{label:'ЭКОНОМИЯ', stats:{fin:10, pop:-10}} },
+            { emoji:'💼', title:'ИНОСТРАННЫЕ ИНВЕСТИЦИИ', desc:'Пускать в стратегические отрасли?', left:{label:'ОТКРЫТЬ', stats:{fin:20, sec:-10}}, right:{label:'ЗАПРЕТИТЬ', stats:{fin:-10, sec:5}} },
+            { emoji:'⚡', title:'ЭНЕРГЕТИКА', desc:'Переходить на зеленую энергию?', left:{label:'ДА', stats:{fin:-20, mor:15, pop:5}}, right:{label:'НЕТ', stats:{fin:10, mor:-10}} },
+            { emoji:'🚢', title:'ПОРТОВЫЙ КОНФЛИКТ', desc:'Национализировать порт?', left:{label:'НАЦИОНАЛИЗИРОВАТЬ', stats:{fin:15, sec:5, pop:10}}, right:{label:'ЧАСТНИКАМ', stats:{fin:-10, pop:-5}} },
+            { emoji:'🏛️', title:'БЮДЖЕТНЫЙ ДЕФИЦИТ', desc:'Сократить социальные программы?', left:{label:'СОХРАНИТЬ', stats:{fin:-25, pop:15}}, right:{label:'СОКРАТИТЬ', stats:{fin:15, pop:-20}} },
+
+            // СОЦИАЛЬНЫЕ (15)
+            { emoji:'🎓', title:'ОБРАЗОВАНИЕ', desc:'Бесплатное высшее?', left:{label:'ДА', stats:{fin:-20, pop:15, mor:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-15}} },
+            { emoji:'🏥', title:'МЕДИЦИНА', desc:'Приватизировать больницы?', left:{label:'ДА', stats:{fin:15, pop:-20}}, right:{label:'НЕТ', stats:{fin:-15, pop:10}} },
+            { emoji:'👵', title:'ПЕНСИИ', desc:'Повысить пенсионный возраст?', left:{label:'ДА', stats:{fin:15, pop:-20}}, right:{label:'НЕТ', stats:{fin:-20, pop:10}} },
+            { emoji:'👶', title:'ДЕМОГРАФИЯ', desc:'Стимулировать рождаемость?', left:{label:'ПРЕМИИ', stats:{fin:-15, pop:10}}, right:{label:'НИЧЕГО', stats:{pop:-10, fin:5}} },
+            { emoji:'🚻', title:'ЛГБТ ПРАВА', desc:'Легализовать однополые браки?', left:{label:'ДА', stats:{mor:-20, pop:10}}, right:{label:'НЕТ', stats:{mor:15, pop:-10}} },
+            { emoji:'⚧️', title:'ГЕНДЕРНОЕ РАВЕНСТВО', desc:'Ввести квоты?', left:{label:'ДА', stats:{mor:10, pop:5}}, right:{label:'НЕТ', stats:{mor:-5, pop:-5}} },
+            { emoji:'📱', title:'СОЦСЕТИ', desc:'Регулировать контент?', left:{label:'ЦЕНЗУРА', stats:{sec:10, pop:-15}}, right:{label:'СВОБОДА', stats:{pop:10, sec:-5, mor:-5}} },
+            { emoji:'🎮', title:'ГЕЙМЕРЫ', desc:'Поддерживать киберспорт?', left:{label:'ДА', stats:{pop:15, fin:-10}}, right:{label:'НЕТ', stats:{pop:-10, fin:5}} },
+            { emoji:'🏛️', title:'МОНУМЕНТ', desc:'Снести статую тирана?', left:{label:'СНЕСТИ', stats:{mor:10, pop:5}}, right:{label:'ОСТАВИТЬ', stats:{mor:-10, pop:-5}} },
+            { emoji:'📺', title:'ПРОПАГАНДА', desc:'Увеличить бюджет?', left:{label:'ДА', stats:{mor:15, fin:-10, pop:-5}}, right:{label:'НЕТ', stats:{fin:5, mor:-10}} },
+            { emoji:'🎭', title:'ИСКУССТВО', desc:'Финансировать авангард?', left:{label:'ДА', stats:{mor:10, fin:-5}}, right:{label:'НЕТ', stats:{mor:-5, fin:5}} },
+            { emoji:'⚽', title:'ЧЕМПИОНАТ', desc:'Проводить мировое событие?', left:{label:'ДА', stats:{fin:-25, pop:20, mor:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-10}} },
+            { emoji:'📚', title:'ЦЕНЗУРА КНИГ', desc:'Запретить опасные книги?', left:{label:'ЗАПРЕТИТЬ', stats:{mor:10, pop:-5}}, right:{label:'СВОБОДА', stats:{mor:-10, pop:5}} },
+            { emoji:'🏘️', title:'ЖИЛИЩНЫЙ КРИЗИС', desc:'Строить социальное жилье?', left:{label:'ДА', stats:{fin:-20, pop:15}}, right:{label:'НЕТ', stats:{fin:10, pop:-15}} },
+            { emoji:'🚇', title:'МЕТРО', desc:'Строить новые линии?', left:{label:'ДА', stats:{fin:-15, pop:10}}, right:{label:'НЕТ', stats:{fin:5, pop:-5}} },
+
+            // ВОЕННЫЕ (10)
+            { emoji:'🪖', title:'ПРИЗЫВ', desc:'Ввести всеобщую воинскую повинность?', left:{label:'ДА', stats:{sec:20, pop:-15, mor:-10}}, right:{label:'НЕТ', stats:{sec:-15, pop:10}} },
+            { emoji:'🚀', title:'ЯДЕРНАЯ ПРОГРАММА', desc:'Разрабатывать ядерное оружие?', left:{label:'ДА', stats:{sec:25, fin:-20, mor:-15}}, right:{label:'НЕТ', stats:{sec:-10, mor:10, fin:5}} },
+            { emoji:'🛰️', title:'КОСМИЧЕСКИЕ ВОЙСКА', desc:'Создать космический флот?', left:{label:'ДА', stats:{sec:15, fin:-25}}, right:{label:'НЕТ', stats:{fin:10, sec:-5}} },
+            { emoji:'🔫', title:'ОРУЖИЕ', desc:'Разрешить гражданское оружие?', left:{label:'ДА', stats:{sec:10, pop:-10, mor:-5}}, right:{label:'НЕТ', stats:{sec:-5, pop:5}} },
+            { emoji:'🕵️‍♂️', title:'ШПИОНАЖ', desc:'Увеличить бюджет разведки?', left:{label:'ДА', stats:{sec:15, fin:-10}}, right:{label:'НЕТ', stats:{sec:-10, fin:5}} },
+            { emoji:'⚔️', title:'ПРИГРАНИЧНЫЙ КОНФЛИКТ', desc:'Ответить агрессией?', left:{label:'АТАКОВАТЬ', stats:{sec:10, fin:-15, pop:-10}}, right:{label:'ПЕРЕГОВОРЫ', stats:{sec:-5, mor:5}} },
+            { emoji:'🛡️', title:'ВОЕННЫЙ БЛОК', desc:'Вступать в альянс?', left:{label:'ДА', stats:{sec:15, fin:-10, mor:-5}}, right:{label:'НЕТ', stats:{sec:-10, mor:5}} },
+            { emoji:'💣', title:'ТЕРРОРИЗМ', desc:'Ввести комендантский час?', left:{label:'ДА', stats:{sec:15, pop:-20, mor:-10}}, right:{label:'НЕТ', stats:{sec:-10, pop:5}} },
+            { emoji:'🪖', title:'НАЕМНИКИ', desc:'Нанять частную армию?', left:{label:'ДА', stats:{sec:20, fin:-15}}, right:{label:'НЕТ', stats:{sec:-10, fin:5}} },
+            { emoji:'🚁', title:'ВОЕННЫЙ ПАРАД', desc:'Провести масштабный парад?', left:{label:'ДА', stats:{sec:10, fin:-10, pop:5}}, right:{label:'НЕТ', stats:{sec:-5, fin:5}} },
+
+            // ТЕХНОЛОГИЧЕСКИЕ (15)
+            { emoji:'🧬', title:'ГЕННАЯ ИНЖЕНЕРИЯ', desc:'Разрешить модификацию эмбрионов?', left:{label:'РАЗРЕШИТЬ', stats:{mor:-20, pop:10}}, right:{label:'ЗАПРЕТИТЬ', stats:{mor:15, pop:-5}} },
+            { emoji:'🤖', title:'РОБОТИЗАЦИЯ', desc:'Заменить рабочих роботами?', left:{label:'ДА', stats:{fin:15, pop:-20}}, right:{label:'НЕТ', stats:{pop:10, fin:-10}} },
+            { emoji:'🧠', title:'НЕЙРОИНТЕРФЕЙС', desc:'Внедрить чипы гражданам?', left:{label:'ДА', stats:{sec:20, mor:-25, pop:-10}}, right:{label:'НЕТ', stats:{mor:10, pop:5}} },
+            { emoji:'🌐', title:'ЦИФРОВОЕ ГОСУДАРСТВО', desc:'Перевести все услуги онлайн?', left:{label:'ДА', stats:{fin:10, pop:5, mor:-5}}, right:{label:'НЕТ', stats:{pop:-5, fin:-5}} },
+            { emoji:'🔋', title:'ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ', desc:'Доверить ИИ управление?', left:{label:'ДА', stats:{fin:20, sec:10, mor:-20}}, right:{label:'НЕТ', stats:{mor:10, fin:-5}} },
+            { emoji:'🦾', title:'КИБОРГИ', desc:'Финансировать кибернетику?', left:{label:'ДА', stats:{sec:15, fin:-15, mor:-10}}, right:{label:'НЕТ', stats:{mor:5, fin:5}} },
+            { emoji:'🧪', title:'БЕССМЕРТИЕ', desc:'Инвестировать в исследования?', left:{label:'ДА', stats:{fin:-30, mor:-15, pop:10}}, right:{label:'НЕТ', stats:{mor:10, fin:5}} },
+            { emoji:'🚁', title:'ЛЕТАЮЩИЕ МАШИНЫ', desc:'Строить инфраструктуру?', left:{label:'ДА', stats:{fin:-20, pop:5}}, right:{label:'НЕТ', stats:{fin:5, pop:-5}} },
+            { emoji:'🌍', title:'КОЛОНИЗАЦИЯ МАРСА', desc:'Финансировать программу?', left:{label:'ДА', stats:{fin:-40, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:10, pop:-5}} },
+            { emoji:'🔬', title:'НАУЧНЫЙ ПРОРЫВ', desc:'Вложить в исследования?', left:{label:'ИНВЕСТИРОВАТЬ', stats:{fin:-20, mor:5, pop:5}}, right:{label:'ЭКОНОМИТЬ', stats:{fin:5, mor:-5}} },
+            { emoji:'📡', title:'5G СЕТИ', desc:'Разрешить повсеместное внедрение?', left:{label:'ДА', stats:{pop:5, fin:5, mor:-10}}, right:{label:'НЕТ', stats:{pop:-5, mor:5}} },
+            { emoji:'💻', title:'КРИПТОВАЛЮТА', desc:'Легализовать как платежное средство?', left:{label:'ДА', stats:{fin:15, sec:-10}}, right:{label:'НЕТ', stats:{sec:5, fin:-5}} },
+            { emoji:'🔭', title:'ТЕЛЕСКОП', desc:'Построить супертелескоп?', left:{label:'ДА', stats:{fin:-25, mor:5}}, right:{label:'НЕТ', stats:{fin:10, mor:-5}} },
+            { emoji:'⚛️', title:'АДРОННЫЙ КОЛЛАЙДЕР', desc:'Финансировать исследования?', left:{label:'ДА', stats:{fin:-30, mor:10}}, right:{label:'НЕТ', stats:{fin:10, mor:-10}} },
+            { emoji:'🧩', title:'КВАНТОВЫЙ КОМПЬЮТЕР', desc:'Разрабатывать национальный проект?', left:{label:'ДА', stats:{fin:-20, sec:10}}, right:{label:'НЕТ', stats:{fin:5, sec:-5}} },
+
+            // ЭКОЛОГИЧЕСКИЕ (10)
+            { emoji:'🌡️', title:'ГЛОБАЛЬНОЕ ПОТЕПЛЕНИЕ', desc:'Снижать выбросы?', left:{label:'ДА', stats:{fin:-15, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:10, mor:-15, pop:-5}} },
+            { emoji:'🐝', title:'ВЫМИРАНИЕ ВИДОВ', desc:'Создать заповедники?', left:{label:'ДА', stats:{fin:-10, mor:10}}, right:{label:'НЕТ', stats:{fin:5, mor:-10}} },
+            { emoji:'🌲', title:'ЛЕСА', desc:'Остановить вырубку?', left:{label:'ДА', stats:{fin:-10, mor:15}}, right:{label:'НЕТ', stats:{fin:10, mor:-15}} },
+            { emoji:'🏭', title:'ЗАГРЯЗНЕНИЕ', desc:'Штрафовать заводы?', left:{label:'ДА', stats:{fin:5, pop:10, mor:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-10, mor:-10}} },
+            { emoji:'🚗', title:'ЭЛЕКТРОМОБИЛИ', desc:'Субсидировать покупку?', left:{label:'ДА', stats:{fin:-15, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:5, mor:-5}} },
+            { emoji:'🗑️', title:'МУСОРНЫЙ КРИЗИС', desc:'Ввести раздельный сбор?', left:{label:'ДА', stats:{fin:-5, mor:10, pop:5}}, right:{label:'НЕТ', stats:{mor:-10, pop:-5}} },
+            { emoji:'💧', title:'ВОДНЫЙ КРИЗИС', desc:'Ограничить потребление?', left:{label:'ДА', stats:{pop:-10, mor:5}}, right:{label:'НЕТ', stats:{pop:5, mor:-10}} },
+            { emoji:'☀️', title:'СОЛНЕЧНЫЕ ПАНЕЛИ', desc:'Массово устанавливать?', left:{label:'ДА', stats:{fin:-10, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:5, mor:-5}} },
+            { emoji:'🌪️', title:'КЛИМАТИЧЕСКИЕ БЕЖЕНЦЫ', desc:'Принимать мигрантов?', left:{label:'ДА', stats:{pop:10, fin:-10, mor:5}}, right:{label:'НЕТ', stats:{pop:-5, mor:-10}} },
+            { emoji:'🔄', title:'ЦИРКУЛЯРНАЯ ЭКОНОМИКА', desc:'Переходить на переработку?', left:{label:'ДА', stats:{fin:-10, mor:15, pop:5}}, right:{label:'НЕТ', stats:{fin:5, mor:-10}} },
+
+            // ФАНТАСТИЧЕСКИЕ (10)
+            { emoji:'👁️', title:'ТРЕТИЙ ГЛАЗ', desc:'Люди мутируют?', left:{label:'ИЗОЛИРОВАТЬ', stats:{sec:10, mor:-15, pop:-10}}, right:{label:'ПРИНЯТЬ', stats:{mor:10, pop:5, sec:-5}} },
+            { emoji:'🕰️', title:'МАШИНА ВРЕМЕНИ', desc:'Использовать для предсказаний?', left:{label:'ДА', stats:{sec:20, mor:-20}}, right:{label:'УНИЧТОЖИТЬ', stats:{mor:15, sec:-10}} },
+            { emoji:'🧿', title:'ПАРАЛЛЕЛЬНЫЕ МИРЫ', desc:'Установить контакт?', left:{label:'ДА', stats:{mor:-20, fin:15, sec:5}}, right:{label:'НЕТ', stats:{mor:10, sec:-5}} },
+            { emoji:'🔮', title:'МАГИЯ', desc:'Легализовать колдовство?', left:{label:'ДА', stats:{mor:-25, pop:15}}, right:{label:'НЕТ', stats:{mor:15, pop:-10}} },
+            { emoji:'👻', title:'ПРИЗРАКИ', desc:'Финансировать исследования?', left:{label:'ДА', stats:{fin:-10, mor:-5, pop:5}}, right:{label:'НЕТ', stats:{mor:5, fin:5}} },
+            { emoji:'🦄', title:'МИФИЧЕСКИЕ СУЩЕСТВА', desc:'Защищать или истреблять?', left:{label:'ЗАЩИЩАТЬ', stats:{mor:10, sec:-5}}, right:{label:'ИСТРЕБЛЯТЬ', stats:{sec:10, mor:-10}} },
+            { emoji:'🌈', title:'ПОРТАЛ', desc:'Исследовать аномалию?', left:{label:'ДА', stats:{fin:-20, sec:10, mor:-10}}, right:{label:'ЗАКРЫТЬ', stats:{sec:-5, mor:5}} },
+            { emoji:'🎪', title:'ЦИРК МУТАНТОВ', desc:'Разрешить выступления?', left:{label:'ДА', stats:{pop:10, mor:-10}}, right:{label:'НЕТ', stats:{pop:-5, mor:5}} },
+            { emoji:'🧞', title:'ДЖИНН', desc:'Исполнить три желания?', left:{label:'БОГАТСТВО', stats:{fin:50, mor:-30}}, right:{label:'МИР', stats:{mor:30, pop:20, fin:-20}} },
+            { emoji:'🦹', title:'СУПЕРЗЛОДЕЙ', desc:'Договориться или бороться?', left:{label:'ДОГОВОР', stats:{sec:-15, fin:10}}, right:{label:'БОРОТЬСЯ', stats:{sec:15, fin:-20, pop:-10}} },
+
+            // КРИЗИСНЫЕ (10)
+            { emoji:'☢️', title:'РАДИАЦИОННАЯ АВАРИЯ', desc:'Эвакуировать город?', left:{label:'ДА', stats:{pop:10, fin:-20, mor:5}}, right:{label:'НЕТ', stats:{pop:-25, fin:5, mor:-15}} },
+            { emoji:'🌪️', title:'УРАГАН', desc:'Строить убежища?', left:{label:'ДА', stats:{fin:-15, pop:10, sec:5}}, right:{label:'НЕТ', stats:{fin:5, pop:-15}} },
+            { emoji:'🌋', title:'ВУЛКАН', desc:'Эвакуировать регион?', left:{label:'ДА', stats:{pop:15, fin:-20}}, right:{label:'НЕТ', stats:{pop:-30, fin:10}} },
+            { emoji:'❄️', title:'ЛЕДНИКОВЫЙ ПЕРИОД', desc:'Строить подземные города?', left:{label:'ДА', stats:{fin:-30, pop:10, sec:5}}, right:{label:'НЕТ', stats:{pop:-20, fin:10}} },
+            { emoji:'☠️', title:'ПАНДЕМИЯ', desc:'Ввести карантин?', left:{label:'ДА', stats:{pop:5, fin:-20, mor:5}}, right:{label:'НЕТ', stats:{pop:-25, fin:5, mor:-10}} },
+            { emoji:'🪐', title:'АСТЕРОИД', desc:'Строить систему защиты?', left:{label:'ДА', stats:{fin:-35, sec:15, pop:5}}, right:{label:'НЕТ', stats:{fin:10, pop:-10}} },
+            { emoji:'⚡', title:'ЭЛЕКТРОМАГНИТНЫЙ ИМПУЛЬС', desc:'Защищать инфраструктуру?', left:{label:'ДА', stats:{fin:-20, sec:10}}, right:{label:'НЕТ', stats:{fin:5, sec:-15}} },
+            { emoji:'🏚️', title:'ЗЕМЛЕТРЯСЕНИЕ', desc:'Масштабная реконструкция?', left:{label:'ДА', stats:{fin:-25, pop:15}}, right:{label:'МЕДЛЕННО', stats:{pop:-10, fin:5}} },
+            { emoji:'🌅', title:'ВЕЧНАЯ НОЧЬ', desc:'Искусственное солнце?', left:{label:'ДА', stats:{fin:-30, pop:10, mor:5}}, right:{label:'АДАПТИРОВАТЬ', stats:{pop:-15, mor:-10}} },
+            { emoji:'🌀', title:'ПРОСТРАНСТВЕННЫЙ РАЗРЫВ', desc:'Закрыть аномалию?', left:{label:'ДА', stats:{sec:15, fin:-20}}, right:{label:'ИССЛЕДОВАТЬ', stats:{fin:-30, sec:-10, mor:10}} }
         ];
 
         const CHAIN_EVENTS = {
-            'ufo_1': { emoji:'🛸', title:'КОЛОНИЯ', desc:'Пришельцы строят базу.', left:{label:'СНЕСТИ', stats:{sec:-20, pop:10}}, right:{label:'ТЕРПЕТЬ', stats:{pop:-10, fin:5}} }
+            'ufo_1': { emoji:'🛸', title:'КОЛОНИЯ', desc:'Пришельцы строят базу.', left:{label:'СНЕСТИ', stats:{sec:-20, pop:10}}, right:{label:'ТЕРПЕТЬ', stats:{pop:-10, fin:5}} },
+            'rebellion_1': { emoji:'⚔️', title:'ГРАЖДАНСКАЯ ВОЙНА', desc:'Повстанцы захватывают города.', left:{label:'ПЕРЕГОВОРЫ', stats:{pop:15, sec:-20}}, right:{label:'ПОДАВИТЬ', stats:{pop:-25, sec:15}} },
+            'ai_revolution': { emoji:'🤖', title:'ВОССТАНИЕ МАШИН', desc:'ИИ выходит из-под контроля.', left:{label:'ОТКЛЮЧИТЬ', stats:{fin:-30, mor:10}}, right:{label:'ДОГОВОР', stats:{sec:-15, fin:10}} },
+            'mutant_epidemic': { emoji:'🧬', title:'ЭПИДЕМИЯ МУТАЦИЙ', desc:'Мутации распространяются.', left:{label:'КАРАНТИН', stats:{pop:-20, sec:10}}, right:{label:'ЛЕЧИТЬ', stats:{fin:-25, pop:10}} },
+            'zombie_apocalypse': { emoji:'🧟', title:'ЗОМБИ-АПОКАЛИПСИС', desc:'Началась эпидемия зомби.', left:{label:'УНИЧТОЖИТЬ', stats:{pop:-30, sec:20}}, right:{label:'ВАКЦИНА', stats:{fin:-40, pop:15}} }
         };
 
         const DEATHS = [
             { id: 'pop_low', name: 'СВЕРГНУТ ТОЛПОЙ' }, { id: 'pop_high', name: 'УБИТ ФАНАТИКОМ' },
             { id: 'fin_low', name: 'БАНКРОТСТВО' }, { id: 'fin_high', name: 'КРАХ ОЛИГАРХИИ' },
             { id: 'sec_low', name: 'ВТОРЖЕНИЕ ВРАГА' }, { id: 'sec_high', name: 'ВОЕННЫЙ ПЕРЕВОРОТ' },
-            { id: 'mor_low', name: 'ПУБЛИЧНАЯ КАЗНЬ' }, { id: 'mor_high', name: 'СВЯТОЙ МУЧЕНИК' }
+            { id: 'mor_low', name: 'ПУБЛИЧНАЯ КАЗНЬ' }, { id: 'mor_high', name: 'СВЯТОЙ МУЧЕНИК' },
+            { id: 'alien_invasion', name: 'ПОРАБОЩЕН ПРИШЕЛЬЦАМИ' },
+            { id: 'ai_takeover', name: 'ЗАМЕНЕН ИСКУССТВЕННЫМ ИНТЕЛЛЕКТОМ' },
+            { id: 'zombie_apocalypse', name: 'СТАЛ ЖЕРТВОЙ ЗОМБИ' },
+            { id: 'time_paradox', name: 'СТЕРТ ИЗ РЕАЛЬНОСТИ' },
+            { id: 'reality_collapse', name: 'ПОГЛОЩЕН ХАОСОМ' }
         ];
 
         const SHOP_ITEMS = [
@@ -408,7 +517,10 @@
                 const startGame = () => {
                     playSound('click');
                     stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
-                    deck.value = [...SCENARIOS].sort(()=>0.5-Math.random());
+                    // Берем случайные 30 сценариев из всего пула для каждой игры
+                    deck.value = [...SCENARIOS]
+                        .sort(() => 0.5 - Math.random())
+                        .slice(0, 30);
                     cardIdx.value = 0; moves.value = 0; earnedBits.value = 0;
                     deathReason.value = null; reviveTriggered.value = false; flyDir.value = null;
                     screen.value = 'playing';
@@ -416,10 +528,20 @@
 
                 const checkDeath = () => {
                     const s = stats.value;
-                    if(s.pop<=0) return {id:'pop_low',t:"СВЕРГНУТ ТОЛПОЙ"}; if(s.pop>=100) return {id:'pop_high',t:"УБИТ ФАНАТИКОМ"};
-                    if(s.fin<=0) return {id:'fin_low',t:"БАНКРОТСТВО"}; if(s.fin>=100) return {id:'fin_high',t:"КРАХ ОЛИГАРХИИ"};
-                    if(s.sec<=0) return {id:'sec_low',t:"ВТОРЖЕНИЕ ВРАГА"}; if(s.sec>=100) return {id:'sec_high',t:"ВОЕННЫЙ ПЕРЕВОРОТ"};
-                    if(s.mor<=0) return {id:'mor_low',t:"ПУБЛИЧНАЯ КАЗНЬ"}; if(s.mor>=100) return {id:'mor_high',t:"СВЯТОЙ МУЧЕНИК"};
+                    if(s.pop<=0) return {id:'pop_low',t:"СВЕРГНУТ ТОЛПОЙ"}; 
+                    if(s.pop>=100) return {id:'pop_high',t:"УБИТ ФАНАТИКОМ"};
+                    if(s.fin<=0) return {id:'fin_low',t:"БАНКРОТСТВО"}; 
+                    if(s.fin>=100) return {id:'fin_high',t:"КРАХ ОЛИГАРХИИ"};
+                    if(s.sec<=0) return {id:'sec_low',t:"ВТОРЖЕНИЕ ВРАГА"}; 
+                    if(s.sec>=100) return {id:'sec_high',t:"ВОЕННЫЙ ПЕРЕВОРОТ"};
+                    if(s.mor<=0) return {id:'mor_low',t:"ПУБЛИЧНАЯ КАЗНЬ"}; 
+                    if(s.mor>=100) return {id:'mor_high',t:"СВЯТОЙ МУЧЕНИК"};
+                    
+                    // Особые смерти
+                    if(moves.value > 50 && s.sec <= 10 && s.pop <= 15) return {id:'alien_invasion',t:"ПОРАБОЩЕН ПРИШЕЛЬЦАМИ"};
+                    if(moves.value > 40 && s.fin >= 90 && s.mor <= 10) return {id:'ai_takeover',t:"ЗАМЕНЕН ИСКУССТВЕННЫМ ИНТЕЛЛЕКТОМ"};
+                    if(moves.value > 35 && s.pop <= 20 && s.mor <= 20) return {id:'zombie_apocalypse',t:"СТАЛ ЖЕРТВОЙ ЗОМБИ"};
+                    
                     return null;
                 };
 
@@ -462,7 +584,13 @@
                             flyDir.value = null;
                             cardIdx.value++; moves.value++;
                             if(anomalyActive.value) playSound('anomaly');
-                            if(cardIdx.value >= deck.value.length) deck.value.push(...SCENARIOS.sort(()=>0.5-Math.random()));
+                            if(cardIdx.value >= deck.value.length) {
+                                // Добавляем еще случайных сценариев когда колода заканчивается
+                                const newCards = [...SCENARIOS]
+                                    .sort(() => 0.5 - Math.random())
+                                    .slice(0, 15);
+                                deck.value.push(...newCards);
+                            }
                         }
                     }, 300);
                 };
