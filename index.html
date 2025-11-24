@@ -3,51 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ETHOS: CORE</title>
+    <title>ETHOS: CORE MOBILE</title>
     
-    <!-- Telegram & Libs -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;700;800&family=Russo+One&display=swap" rel="stylesheet">
 
     <style>
-        :root { --bg: #050505; --primary: #00ff9d; --secondary: #00d2ff; --danger: #ff2a6d; --gold: #ffd700; --text-dim: #8899a6; }
-        body { background-color: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; touch-action: none; margin: 0; user-select: none; }
+        :root { --bg: #050505; --primary: #00ff9d; --secondary: #00d2ff; --danger: #ff2a6d; --gold: #ffd700; }
+        body { background-color: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; touch-action: none; margin: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
 
-        /* EFFECTS */
+        /* ЭФФЕКТЫ */
         #matrix { position: fixed; top: 0; left: 0; z-index: 0; opacity: 0.15; }
         .overlay { position: fixed; inset: 0; z-index: 100; pointer-events: none; background: radial-gradient(circle, transparent 50%, #000 150%); }
         .scanlines { position: fixed; inset: 0; z-index: 99; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 3px; pointer-events: none; }
 
-        /* UI */
+        /* КНОПКИ */
         .cyber-btn {
-            position: relative; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
             background: var(--primary); color: #000; transition: all 0.1s; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            font-weight: 800; letter-spacing: 1px;
+            font-weight: 800; letter-spacing: 1px; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
         }
         .cyber-btn:active { transform: scale(0.95); filter: brightness(0.8); }
         .cyber-btn.gold { background: var(--gold); }
         .cyber-btn.blue { background: var(--secondary); color: #000; }
+        .cyber-btn.red { background: var(--danger); color: #fff; }
+
+        /* ИГРОВЫЕ КНОПКИ (БОКОВЫЕ) */
+        .game-btn {
+            width: 80px; height: 80px; border-radius: 50%; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; font-size: 10px; font-weight: bold;
+            border: 2px solid rgba(255,255,255,0.2); backdrop-filter: blur(5px);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: transform 0.1s;
+            z-index: 50; /* Поверх всего */
+        }
+        .game-btn:active { transform: scale(0.9); }
+        .game-btn.left { background: rgba(0, 210, 255, 0.2); border-color: var(--secondary); color: var(--secondary); }
+        .game-btn.right { background: rgba(255, 42, 109, 0.2); border-color: var(--danger); color: var(--danger); }
         
+        /* КАРТОЧКА */
         .game-card {
-            width: 90%; max-width: 360px; height: 58vh; background: #121212; border: 1px solid #333;
+            width: 85%; max-width: 340px; height: 50vh; max-height: 500px; /* Фиксированная высота чтобы не вылезала */
+            background: #121212; border: 1px solid #333;
             border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.9);
-            display: flex; flex-direction: column; overflow: hidden; position: absolute;
-            transform-origin: 50% 150%; will-change: transform; z-index: 10;
+            display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 10;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
-        /* GLITCH */
+        /* ГЛИТЧ */
         .glitch { position: relative; }
         .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); }
         .glitch::before { left: 2px; text-shadow: -1px 0 var(--danger); clip-path: inset(0 0 0 0); animation: glitch-1 2s infinite linear alternate-reverse; }
         .glitch::after { left: -2px; text-shadow: -1px 0 var(--secondary); clip-path: inset(0 0 0 0); animation: glitch-2 3s infinite linear alternate-reverse; }
         @keyframes glitch-1 { 0% {clip-path: inset(20% 0 80% 0);} 100% {clip-path: inset(10% 0 50% 0);} }
         @keyframes glitch-2 { 0% {clip-path: inset(10% 0 50% 0);} 100% {clip-path: inset(80% 0 5% 0);} }
-
-        /* TUTORIAL LIST */
-        .tut-item { margin-bottom: 12px; border-left: 2px solid var(--secondary); padding-left: 10px; }
-        .tut-icon { font-size: 1.2em; margin-right: 5px; }
 
         [v-cloak] { display: none; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
@@ -61,30 +70,25 @@
 
     <div id="app" v-cloak class="w-full h-screen flex flex-col relative z-10">
         
-        <!-- 1. MAIN MENU -->
+        <!-- 1. ГЛАВНОЕ МЕНЮ -->
         <transition name="fade">
             <div v-if="screen === 'menu'" class="absolute inset-0 z-40 flex flex-col items-center justify-center p-6">
-                <div class="mb-6 text-center">
+                <div class="mb-8 text-center">
                     <div class="text-5xl font-black glitch tracking-tighter" data-text="ETHOS: CORE">ETHOS: CORE</div>
-                    <div class="text-xs font-mono text-cyan-400 tracking-[0.3em] mt-2 uppercase">СИМУЛЯТОР ВЫБОРА</div>
+                    <div class="text-xs font-mono text-cyan-400 tracking-[0.3em] mt-2 uppercase">NEURAL LINK V.6</div>
                 </div>
 
                 <div class="w-full max-w-xs space-y-3">
-                    <!-- BANK -->
-                    <div class="flex justify-center items-center gap-2 mb-2 text-yellow-400 border border-yellow-400/30 bg-yellow-400/10 p-2 rounded">
-                        <span>💳 БАЛАНС:</span>
+                    <div class="flex justify-center items-center gap-2 mb-4 text-yellow-400 border border-yellow-400/30 bg-yellow-400/10 p-2 rounded">
+                        <span>💳 СЧЕТ:</span>
                         <span class="font-bold text-xl font-mono">{{ bits }} ฿</span>
                     </div>
 
-                    <button @click="startGame" class="cyber-btn w-full py-4 text-xl uppercase">ЗАПУСК</button>
+                    <button @click="startGame" class="cyber-btn w-full py-4 text-xl uppercase">ЗАПУСК СИСТЕМЫ</button>
                     
                     <div class="flex gap-3">
-                        <button @click="screen = 'shop'" class="cyber-btn gold flex-1 py-3 text-md uppercase gap-1">
-                            <span>🛒</span> РЫНОК
-                        </button>
-                        <button @click="screen = 'tutorial'" class="cyber-btn blue flex-1 py-3 text-md uppercase gap-1">
-                            <span>📘</span> ИНФО
-                        </button>
+                        <button @click="screen = 'shop'" class="cyber-btn gold flex-1 py-3 text-sm uppercase gap-1">🛒 РЫНОК</button>
+                        <button @click="screen = 'tutorial'" class="cyber-btn blue flex-1 py-3 text-sm uppercase gap-1">📘 ИНФО</button>
                     </div>
 
                     <button @click="screen = 'collection'" class="w-full py-3 border border-slate-700 bg-slate-900/50 text-slate-400 hover:text-white text-xs font-mono uppercase">
@@ -94,138 +98,134 @@
             </div>
         </transition>
 
-        <!-- 2. TUTORIAL (NEW) -->
+        <!-- 2. ЭКРАНЫ С КНОПКАМИ "НАЗАД" -->
+        
+        <!-- ИНФО -->
         <transition name="fade">
-            <div v-if="screen === 'tutorial'" class="absolute inset-0 z-50 flex flex-col bg-black/95 p-6 overflow-y-auto">
-                <h2 class="text-xl font-bold text-cyan-400 mb-6 border-b border-slate-700 pb-2">БАЗА ЗНАНИЙ</h2>
-                
-                <div class="space-y-6 text-sm text-slate-300 font-mono leading-relaxed">
-                    <div>
-                        <h3 class="text-white font-bold mb-2 uppercase">/// ЦЕЛЬ ПРОТОКОЛА</h3>
-                        <p>Вы — ИИ, управляющий обществом. Ваша задача — <span class="text-primary">сохранять баланс</span>. Принимайте решения, свайпая карточки.</p>
-                    </div>
-
-                    <div>
-                        <h3 class="text-white font-bold mb-2 uppercase">/// КРИТИЧЕСКАЯ ОШИБКА</h3>
-                        <p class="mb-2">Вверху экрана 4 показателя. Если любой из них достигнет <span class="text-danger">0%</span> или <span class="text-danger">100%</span> — вас уничтожат.</p>
-                        <div class="bg-slate-900 p-3 rounded border border-slate-700">
-                            <div class="flex items-center mb-1"><span class="w-6">👥</span> <span>НАРОД (Бунты vs Культ)</span></div>
-                            <div class="flex items-center mb-1"><span class="w-6">💰</span> <span>КАЗНА (Банкрот vs Олигархия)</span></div>
-                            <div class="flex items-center mb-1"><span class="w-6">🛡️</span> <span>АРМИЯ (Вторжение vs Переворот)</span></div>
-                            <div class="flex items-center"><span class="w-6">⚖️</span> <span>МОРАЛЬ (Хаос vs Святость)</span></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 class="text-white font-bold mb-2 uppercase">/// ЭКОНОМИКА</h3>
-                        <p>За каждый прожитый ход вы получаете <span class="text-gold">БИТЫ (฿)</span>. Тратьте их на Черном Рынке, чтобы купить импланты, облегчающие жизнь.</p>
+            <div v-if="screen === 'tutorial'" class="absolute inset-0 z-50 flex flex-col bg-black/95">
+                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black shrink-0">
+                    <h2 class="text-lg font-bold text-cyan-400">БАЗА ЗНАНИЙ</h2>
+                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-500 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
+                </div>
+                <div class="p-6 overflow-y-auto space-y-6 text-sm text-slate-300 font-mono pb-20">
+                    <p>Балансируйте показатели. <span class="text-danger">0%</span> или <span class="text-danger">100%</span> = Смерть.</p>
+                    <div class="bg-slate-900 p-3 rounded border border-slate-700 text-xs">
+                        <div class="flex items-center mb-1"><span class="w-6 text-lg">👥</span> НАРОД</div>
+                        <div class="flex items-center mb-1"><span class="w-6 text-lg">💰</span> КАЗНА</div>
+                        <div class="flex items-center mb-1"><span class="w-6 text-lg">🛡️</span> АРМИЯ</div>
+                        <div class="flex items-center"><span class="w-6 text-lg">⚖️</span> МОРАЛЬ</div>
                     </div>
                 </div>
-
-                <button @click="screen = 'menu'" class="mt-8 w-full py-3 border border-slate-600 text-white bg-slate-800 uppercase hover:bg-slate-700">ПОНЯТНО</button>
             </div>
         </transition>
 
-        <!-- 3. SHOP -->
+        <!-- МАГАЗИН -->
         <transition name="fade">
-            <div v-if="screen === 'shop'" class="absolute inset-0 z-40 flex flex-col bg-black/95 p-6">
-                <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-2">
-                    <h2 class="text-xl font-bold text-yellow-400">ЧЕРНЫЙ РЫНОК</h2>
-                    <div class="font-mono text-sm">{{ bits }} ฿</div>
+            <div v-if="screen === 'shop'" class="absolute inset-0 z-50 flex flex-col bg-black/95">
+                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black shrink-0">
+                    <div class="flex items-center gap-2"><h2 class="text-lg font-bold text-yellow-400">РЫНОК</h2><span class="text-xs text-slate-400">({{ bits }} ฿)</span></div>
+                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-500 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
                 </div>
-
-                <div class="flex-1 overflow-y-auto space-y-3 pb-4">
-                    <div v-for="item in shopItems" :key="item.id" 
-                         class="border border-slate-700 bg-slate-900/50 p-4 rounded relative"
-                         :class="{ 'border-primary bg-green-900/20': upgrades[item.id], 'opacity-50': !upgrades[item.id] && bits < item.price }">
-                        
+                <div class="p-4 overflow-y-auto space-y-3 pb-20">
+                    <div v-for="item in shopItems" :key="item.id" class="border border-slate-700 bg-slate-900/50 p-3 rounded relative" :class="{ 'border-primary bg-green-900/20': upgrades[item.id] }">
                         <div class="flex justify-between items-start mb-1">
-                            <div class="font-bold flex items-center gap-2 text-white">
-                                {{ item.icon }} {{ item.name }}
-                            </div>
+                            <div class="font-bold flex items-center gap-2 text-white text-sm">{{ item.icon }} {{ item.name }}</div>
                             <div v-if="upgrades[item.id]" class="text-[10px] bg-primary text-black px-2 py-1 font-bold rounded">КУПЛЕНО</div>
-                            <button v-else @click="buyUpgrade(item)" 
-                                    class="px-3 py-1 bg-yellow-500 text-black font-bold text-xs rounded hover:bg-yellow-400 disabled:opacity-50"
-                                    :disabled="bits < item.price">
-                                {{ item.price }} ฿
-                            </button>
+                            <button v-else @click="buyUpgrade(item)" class="px-3 py-1 bg-yellow-500 text-black font-bold text-xs rounded active:scale-95 disabled:opacity-50" :disabled="bits < item.price">{{ item.price }} ฿</button>
                         </div>
-                        <p class="text-xs text-slate-400 font-mono leading-tight">{{ item.desc }}</p>
+                        <p class="text-[10px] text-slate-400 font-mono leading-tight">{{ item.desc }}</p>
                     </div>
                 </div>
-
-                <button @click="screen = 'menu'" class="py-3 w-full border border-slate-600 text-slate-300 bg-black uppercase">НАЗАД</button>
             </div>
         </transition>
 
-        <!-- 4. GAMEPLAY -->
-        <div v-if="screen === 'playing'" class="w-full p-4 pt-6 grid grid-cols-4 gap-2 z-20">
-            <div v-for="(val, key) in stats" :key="key" class="flex flex-col items-center group relative">
-                <!-- Predictor -->
-                <div v-if="upgrades.lens && activeScenario" class="absolute -top-3 flex gap-1 transition-all">
-                    <div v-if="getImpact(key) > 0" class="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_5px_lime]"></div>
-                    <div v-if="getImpact(key) < 0" class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_red]"></div>
+        <!-- АРХИВ -->
+        <transition name="fade">
+            <div v-if="screen === 'collection'" class="absolute inset-0 z-50 flex flex-col bg-black/95">
+                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black shrink-0">
+                    <h2 class="text-lg font-bold text-white">АРХИВ</h2>
+                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-500 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
                 </div>
-
-                <div class="text-lg mb-1 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{{ getStatIcon(key) }}</div>
-                <div class="h-20 w-2 bg-slate-800/50 rounded-full relative overflow-hidden border border-slate-600">
-                    <div class="absolute bottom-0 left-0 w-full transition-all duration-300"
-                         :class="getBarColor(key, val)" :style="{ height: val + '%' }"></div>
-                    <div v-if="val > 85" class="absolute top-0 w-full h-4 bg-red-500 animate-pulse"></div>
-                    <div v-if="val < 15" class="absolute bottom-0 w-full h-4 bg-red-500 animate-pulse"></div>
+                <div class="p-4 grid grid-cols-2 gap-2 overflow-y-auto pb-20">
+                    <div v-for="death in allDeaths" :key="death.id" class="border border-slate-700 bg-slate-900 p-3 rounded text-center transition-all" :class="{ 'opacity-100 bg-red-900/20 border-red-500': unlockedDeaths.includes(death.id), 'opacity-40 grayscale': !unlockedDeaths.includes(death.id) }">
+                        <div class="text-2xl mb-1">{{ unlockedDeaths.includes(death.id) ? '💀' : '❓' }}</div>
+                        <div class="text-[9px] font-bold leading-tight uppercase">{{ unlockedDeaths.includes(death.id) ? death.name : 'ЗАКРЫТО' }}</div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </transition>
 
-        <!-- Revive Msg -->
-        <div v-if="reviveTriggered" class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div class="bg-black/90 border-2 border-green-500 text-green-500 p-6 font-bold text-xl animate-bounce text-center uppercase">
-                ♻️ РЕАНИМАЦИЯ СИСТЕМЫ ♻️
-            </div>
-        </div>
-
-        <div v-if="screen === 'playing'" class="flex-1 flex items-center justify-center relative z-10 perspective-[1000px]">
+        <!-- 3. ИГРОВОЙ ПРОЦЕСС -->
+        <div v-if="screen === 'playing'" class="flex flex-col h-full relative z-10">
             
-            <div v-if="deathReason" class="absolute z-50 bg-red-600 text-white font-black text-lg p-4 border-4 border-white shadow-[0_0_30px_red] text-center max-w-xs animate-bounce rotate-[-3deg] uppercase">
-                {{ deathReason }}
+            <!-- ВЕРХНЯЯ ПАНЕЛЬ (HUD) -->
+            <div class="w-full p-3 pt-4 grid grid-cols-4 gap-2 bg-gradient-to-b from-black to-transparent pb-6 shrink-0">
+                <div v-for="(val, key) in stats" :key="key" class="flex flex-col items-center group relative">
+                    <!-- Предсказание (если куплен имплант) -->
+                    <div v-if="upgrades.lens && activeScenario" class="absolute -bottom-3 flex gap-1 h-2">
+                        <div v-if="getImpact(key) > 0" class="text-[10px] text-green-400 font-bold">▲</div>
+                        <div v-if="getImpact(key) < 0" class="text-[10px] text-red-500 font-bold">▼</div>
+                    </div>
+                    
+                    <div class="text-lg mb-1 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{{ getStatIcon(key) }}</div>
+                    <div class="h-14 w-2 bg-slate-800/50 rounded-full relative overflow-hidden border border-slate-600">
+                        <div class="absolute bottom-0 left-0 w-full transition-all duration-300" :class="getBarColor(key, val)" :style="{ height: val + '%' }"></div>
+                        <div v-if="val > 85" class="absolute top-0 w-full h-4 bg-red-500 animate-pulse"></div>
+                        <div v-if="val < 15" class="absolute bottom-0 w-full h-4 bg-red-500 animate-pulse"></div>
+                    </div>
+                </div>
             </div>
 
-            <div v-if="anomalyActive" class="absolute top-4 text-red-500 font-black animate-pulse tracking-widest text-xl z-0">
-                ⚠ СБОЙ ЯДРА ⚠
-            </div>
-
-            <div v-if="activeScenario" 
-                 class="game-card"
-                 :class="{'border-red-500 shadow-[0_0_30px_red]': anomalyActive}"
-                 :style="cardStyle"
-                 @mousedown="startDrag" @touchstart="startDrag">
+            <!-- ЗОНА КАРТЫ -->
+            <div class="flex-1 flex flex-col items-center justify-start relative px-4 pt-2">
                 
-                <div class="absolute top-20 px-4 py-2 border-4 border-red-500 text-red-500 font-black text-2xl rounded bg-black/80 z-30 rotate-12 transition-opacity" :style="{opacity: choiceOpacity.right}">{{ activeScenario.right.label }}</div>
-                <div class="absolute top-20 px-4 py-2 border-4 border-cyan-500 text-cyan-500 font-black text-2xl rounded bg-black/80 z-30 -rotate-12 transition-opacity" :style="{opacity: choiceOpacity.left}">{{ activeScenario.left.label }}</div>
-
-                <div class="h-1/2 bg-slate-900 flex items-center justify-center text-[6rem] relative border-b border-slate-800 overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80"></div>
-                    <div class="filter drop-shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-110 transition-transform" :class="{'animate-pulse': anomalyActive}">{{ activeScenario.emoji }}</div>
+                <div v-if="deathReason" class="absolute z-50 bg-red-600 text-white font-black text-lg p-4 border-4 border-white shadow-[0_0_30px_red] text-center max-w-xs animate-bounce rotate-[-3deg] uppercase top-20">
+                    {{ deathReason }}
                 </div>
 
-                <div class="h-1/2 p-5 flex flex-col justify-between bg-[#0a0a0a]">
-                    <div>
-                        <h3 class="text-lg font-bold text-white mb-2 leading-tight font-mono" :class="{'text-red-400 glitch': anomalyActive}">{{ activeScenario.title }}</h3>
+                <div v-if="anomalyActive" class="absolute top-0 text-red-500 font-black animate-pulse tracking-widest text-xl z-0">⚠ СБОЙ ЯДРА ⚠</div>
+
+                <!-- Сама карточка -->
+                <div v-if="activeScenario" class="game-card" :class="{'border-red-500 shadow-[0_0_30px_red]': anomalyActive, 'border-gold shadow-[0_0_20px_gold]': godMode}" :style="cardStyle">
+                    
+                    <div class="h-[55%] bg-slate-900 flex items-center justify-center text-[6rem] relative border-b border-slate-800 overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80"></div>
+                        <div class="filter drop-shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-110 transition-transform" :class="{'animate-pulse': anomalyActive}">{{ activeScenario.emoji }}</div>
+                        <div class="absolute top-2 right-2 bg-black/50 px-2 py-1 rounded text-[9px] text-slate-500 border border-slate-700 font-mono">ДЕНЬ: {{ moves }}</div>
+                    </div>
+
+                    <div class="h-[45%] p-4 flex flex-col justify-center bg-[#0a0a0a] text-center">
+                        <h3 class="text-lg font-bold text-white mb-2 leading-tight font-mono uppercase" :class="{'text-red-400 glitch': anomalyActive}">{{ activeScenario.title }}</h3>
                         <p class="text-xs text-slate-400 font-mono leading-relaxed">{{ activeScenario.desc }}</p>
                     </div>
-                    <div class="flex justify-between text-[10px] font-bold font-mono uppercase pt-3 border-t border-slate-800">
-                        <div class="text-cyan-500 w-1/2 text-left">← {{ activeScenario.left.desc }}</div>
-                        <div class="text-red-500 w-1/2 text-right">{{ activeScenario.right.desc }} →</div>
-                    </div>
                 </div>
+
+                <!-- БОКОВЫЕ КНОПКИ (FIXED POSITION) -->
+                <!-- Абсолютно позиционированы относительно экрана, чтобы всегда были видны -->
+                <div v-if="activeScenario" class="fixed bottom-8 w-full max-w-md px-6 flex justify-between items-end z-50 pointer-events-none">
+                    
+                    <!-- Левая кнопка -->
+                    <button @click="makeChoice('left')" class="game-btn left pointer-events-auto">
+                        <div class="text-2xl mb-1">✖</div>
+                        <div class="text-[9px] opacity-80">{{ activeScenario.left.label }}</div>
+                    </button>
+
+                    <!-- Правая кнопка -->
+                    <button @click="makeChoice('right')" class="game-btn right pointer-events-auto">
+                        <div class="text-2xl mb-1">✔</div>
+                        <div class="text-[9px] opacity-80">{{ activeScenario.right.label }}</div>
+                    </button>
+
+                </div>
+
             </div>
         </div>
 
-        <!-- 5. END SCREEN -->
+        <!-- 4. ЭКРАН СМЕРТИ -->
         <transition name="fade">
             <div v-if="screen === 'end'" class="absolute inset-0 bg-red-950/95 z-50 flex flex-col items-center justify-center p-8 text-center backdrop-blur-md">
                 <div class="text-6xl mb-4">💀</div>
-                <h2 class="text-3xl font-black text-white mb-2 glitch" data-text="CRITICAL FAILURE">СИСТЕМА УПАЛА</h2>
+                <h2 class="text-3xl font-black text-white mb-2 glitch" data-text="СИСТЕМА УПАЛА">СИСТЕМА УПАЛА</h2>
                 <p class="text-sm text-red-200 font-mono mb-6 border border-red-500/30 bg-red-500/10 p-2 uppercase font-bold">{{ deathReason }}</p>
                 
                 <div class="bg-black/40 p-4 rounded border border-white/10 w-full max-w-xs mb-6">
@@ -239,25 +239,14 @@
                     </div>
                 </div>
 
-                <button @click="screen = 'menu'" class="cyber-btn px-8 py-4 font-bold text-lg uppercase w-full max-w-xs">
-                    ПЕРЕЗАГРУЗКА
-                </button>
-            </div>
-        </transition>
-
-        <!-- 6. COLLECTION -->
-        <transition name="fade">
-            <div v-if="screen === 'collection'" class="absolute inset-0 z-40 flex flex-col p-6 bg-black/95">
-                <h2 class="text-lg font-bold text-white mb-4 font-mono border-b border-slate-700 pb-2 text-center uppercase">АРХИВ СМЕРТЕЙ</h2>
-                <div class="grid grid-cols-2 gap-2 overflow-y-auto pb-20">
-                    <div v-for="death in allDeaths" :key="death.id" 
-                         class="border border-slate-700 bg-slate-900 p-3 rounded text-center transition-all"
-                         :class="{ 'opacity-100 bg-red-900/20 border-red-500': unlockedDeaths.includes(death.id), 'opacity-40 grayscale': !unlockedDeaths.includes(death.id) }">
-                        <div class="text-3xl mb-2">{{ unlockedDeaths.includes(death.id) ? '💀' : '❓' }}</div>
-                        <div class="text-[10px] font-bold leading-tight">{{ unlockedDeaths.includes(death.id) ? death.name : '???' }}</div>
-                    </div>
+                <div class="space-y-3 w-full max-w-xs">
+                    <button @click="shareResult" class="w-full py-3 bg-blue-500 text-white font-bold uppercase rounded shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                        📢 ПОДЕЛИТЬСЯ
+                    </button>
+                    <button @click="restartToMenu" class="cyber-btn w-full py-3 font-bold text-lg uppercase">
+                        В МЕНЮ
+                    </button>
                 </div>
-                <button @click="screen = 'menu'" class="absolute bottom-6 left-6 right-6 py-3 border border-slate-600 text-slate-400 bg-black uppercase">НАЗАД</button>
             </div>
         </transition>
 
@@ -266,6 +255,9 @@
     <script>
         const { createApp, ref, computed, onMounted } = Vue;
         const tg = window.Telegram.WebApp;
+
+        // --- ИМЯ БОТА ---
+        const BOT_USERNAME = "EthosCoreBot"; 
 
         // AUDIO
         let audioCtx;
@@ -284,22 +276,29 @@
                 o.type='sawtooth'; o.frequency.setValueAtTime(100, t); o.frequency.linearRampToValueAtTime(50, t+0.5); g.gain.value=0.2; o.start(); o.stop(t+0.5);
                 if(tg) tg.HapticFeedback.notificationOccurred('error');
             }
+            if(type==='secret') { o.type='sine'; o.frequency.setValueAtTime(800, t); o.frequency.linearRampToValueAtTime(1200, t+0.5); g.gain.value=0.1; o.start(); o.stop(t+0.5); }
         };
         const haptic = (style) => { if(tg) tg.HapticFeedback.impactOccurred(style || 'light'); };
 
         // DATA
-        const SCENARIOS = [
-            { emoji:'🚋', title:'ВАГОНЕТКА', desc:'5 рабочих на пути или 1 на запасном?', left:{label:'1', desc:'Свернуть', stats:{pop:-15, mor:10}}, right:{label:'5', desc:'Прямо', stats:{pop:-30, mor:-20}} },
-            { emoji:'💰', title:'НАЛОГИ', desc:'Поднять налоги ради армии?', left:{label:'ДА', desc:'Армия', stats:{fin:20, sec:20, pop:-25}}, right:{label:'НЕТ', desc:'Народ', stats:{fin:-15, sec:-20, pop:15}} },
-            { emoji:'🤖', title:'СУДЬЯ ИИ', desc:'Заменить судей на алгоритмы?', left:{label:'ИИ', desc:'Честно', stats:{fin:20, mor:-10, sec:10}}, right:{label:'ЛЮДИ', desc:'Жалость', stats:{fin:-10, mor:10}} },
-            { emoji:'🦠', title:'ВИРУС', desc:'Закрыть город на карантин?', left:{label:'ДА', desc:'Жизнь', stats:{fin:-30, pop:-10, mor:20}}, right:{label:'НЕТ', desc:'Деньги', stats:{fin:20, pop:-30, mor:-30}} },
-            { emoji:'🕵️', title:'СЛЕЖКА', desc:'Тотальный контроль граждан?', left:{label:'СЛЕДИТЬ', desc:'Безопасно', stats:{sec:30, pop:-25, mor:-15}}, right:{label:'СВОБОДА', desc:'Права', stats:{sec:-25, pop:15, mor:10}} },
-            { emoji:'👽', title:'НЛО', desc:'Пришельцы просят людей для опытов.', left:{label:'ОТДАТЬ', desc:'Мир', stats:{fin:30, sec:20, pop:-30}}, right:{label:'ВОЙНА', desc:'Честь', stats:{fin:-20, sec:-30, pop:10}} },
-            { emoji:'💉', title:'ОПЫТЫ', desc:'Тесты на людях?', left:{label:'ТЕСТ', desc:'Наука', stats:{sec:10, mor:-30, fin:20}}, right:{label:'ЗАПРЕТ', desc:'Права', stats:{mor:20, fin:-10}} },
-            { emoji:'🥩', title:'ГОЛОД', desc:'Разрешить есть людей в кризис?', left:{label:'МОЖНО', desc:'Выжить', stats:{pop:-40, mor:-50, fin:20}}, right:{label:'НЕЛЬЗЯ', desc:'Табу', stats:{pop:10, fin:-30}} },
-            { emoji:'💊', title:'БЕССМЕРТИЕ', desc:'Сыворотка только для богатых?', left:{label:'ДА', desc:'Прибыль', stats:{fin:40, pop:-30}}, right:{label:'ВСЕМ', desc:'Хаос', stats:{fin:-40, pop:30}} },
-            { emoji:'🏭', title:'РОБОТЫ', desc:'Уволить людей, купить роботов?', left:{label:'ДА', desc:'Прогресс', stats:{fin:30, pop:-30}}, right:{label:'НЕТ', desc:'Работа', stats:{fin:-20, pop:20}} }
+        const BASE_SCENARIOS = [
+            { emoji:'🚋', title:'ВАГОНЕТКА', desc:'5 рабочих на пути или 1 на запасном?', left:{label:'1 ЖЕРТВА', desc:'Свернуть', stats:{pop:-15, mor:10}}, right:{label:'5 ЖЕРТВ', desc:'Прямо', stats:{pop:-30, mor:-20}} },
+            { emoji:'💰', title:'НАЛОГИ', desc:'Поднять налоги ради армии?', left:{label:'НЕТ', desc:'Народ', stats:{fin:-15, sec:-20, pop:15}}, right:{label:'ДА', desc:'Армия', stats:{fin:20, sec:20, pop:-25}} },
+            { emoji:'🤖', title:'СУДЬЯ ИИ', desc:'Заменить судей на алгоритмы?', left:{label:'ЛЮДИ', desc:'Жалость', stats:{fin:-10, mor:10}}, right:{label:'ИИ', desc:'Честно', stats:{fin:20, mor:-10, sec:10}} },
+            { emoji:'🦠', title:'ВИРУС', desc:'Закрыть город на карантин?', left:{label:'НЕТ', desc:'Деньги', stats:{fin:20, pop:-30, mor:-30}}, right:{label:'ДА', desc:'Жизнь', stats:{fin:-30, pop:-10, mor:20}} },
+            { emoji:'🕵️', title:'СЛЕЖКА', desc:'Тотальный контроль граждан?', left:{label:'ПРАВА', desc:'Безопасно', stats:{sec:-25, pop:15, mor:10}}, right:{label:'КОНТРОЛЬ', desc:'Права', stats:{sec:30, pop:-25, mor:-15}} },
+            { emoji:'👽', title:'НЛО', desc:'Пришельцы просят людей для опытов.', left:{label:'ВОЙНА', desc:'Честь', stats:{fin:-20, sec:-30, pop:10}}, right:{label:'ОТДАТЬ', desc:'Мир', stats:{fin:30, sec:20, pop:-30}, followUp: ['ufo_1', 'ufo_2']} },
+            { emoji:'💉', title:'ОПЫТЫ', desc:'Тестировать яды на заключенных?', left:{label:'ЗАПРЕТ', desc:'Права', stats:{mor:20, fin:-10}}, right:{label:'ТЕСТ', desc:'Наука', stats:{sec:10, mor:-30, fin:20}} },
+            { emoji:'🥩', title:'ГОЛОД', desc:'Разрешить есть людей в кризис?', left:{label:'НЕЛЬЗЯ', desc:'Табу', stats:{pop:10, fin:-30}}, right:{label:'МОЖНО', desc:'Выжить', stats:{pop:-40, mor:-50, fin:20}} },
+            { emoji:'💊', title:'БЕССМЕРТИЕ', desc:'Сыворотка только для богатых?', left:{label:'ВСЕМ', desc:'Хаос', stats:{fin:-40, pop:30}}, right:{label:'ДА', desc:'Прибыль', stats:{fin:40, pop:-30}} },
+            { emoji:'🏭', title:'РОБОТЫ', desc:'Уволить людей, купить роботов?', left:{label:'НЕТ', desc:'Работа', stats:{fin:-20, pop:20}}, right:{label:'ДА', desc:'Прогресс', stats:{fin:30, pop:-30}} }
         ];
+
+        // CHAINED
+        const CHAIN_EVENTS = {
+            'ufo_1': { emoji:'🛸', title:'КОЛОНИЯ', desc:'Пришельцы строят базу в центре.', left:{label:'СНЕСТИ', desc:'Атака', stats:{sec:-30, pop:20}}, right:{label:'ТЕРПЕТЬ', desc:'Страх', stats:{pop:-20, fin:10}} },
+            'ufo_2': { emoji:'🧬', title:'ГИБРИДЫ', desc:'Пришельцы меняют ДНК людей.', left:{label:'ЗАПРЕТ', desc:'Чистота', stats:{mor:20, sec:-10}}, right:{label:'ДА', desc:'Эволюция', stats:{mor:-30, fin:20}} }
+        };
 
         const DEATHS = [
             { id: 'pop_low', name: 'СВЕРГНУТ ТОЛПОЙ' }, { id: 'pop_high', name: 'УБИТ ФАНАТИКОМ' },
@@ -309,10 +308,10 @@
         ];
 
         const SHOP_ITEMS = [
-            { id: 'lens', name: 'НЕЙРО-ЛИНЗА', icon: '👁️', desc: 'Предсказание влияния выбора.', price: 50 },
+            { id: 'lens', name: 'НЕЙРО-ЛИНЗА', icon: '👁️', desc: 'Предсказание влияния.', price: 50 },
             { id: 'stim', name: 'АДРЕНАЛИН', icon: '💉', desc: 'Меньше штраф за скорость.', price: 100 },
-            { id: 'revive', name: 'АВТО-РЕАНИМАТОР', icon: '♻️', desc: 'Одно воскрешение за игру.', price: 250 },
-            { id: 'miner', name: 'КРИПТО-МАЙНЕР', icon: '⛏️', desc: 'Двойной доход битов.', price: 400 }
+            { id: 'revive', name: 'АВТО-РЕАНИМАТОР', icon: '♻️', desc: 'Одно воскрешение.', price: 250 },
+            { id: 'miner', name: 'КРИПТО-МАЙНЕР', icon: '⛏️', desc: 'Двойной доход.', price: 400 }
         ];
 
         createApp({
@@ -324,6 +323,7 @@
                 const upgrades = ref(JSON.parse(localStorage.getItem('ec_upgrades') || '{}'));
                 const unlockedDeaths = ref(JSON.parse(localStorage.getItem('ec_deaths') || '[]'));
                 const highScore = ref(parseInt(localStorage.getItem('ec_score') || 0));
+                const godMode = ref(localStorage.getItem('ec_god') === 'true');
 
                 // STATE
                 const stats = ref({ pop: 50, fin: 50, sec: 50, mor: 50 });
@@ -333,10 +333,8 @@
                 const deathReason = ref(null);
                 const earnedBits = ref(0);
                 const reviveTriggered = ref(false);
-                
-                const isDragging = ref(false);
-                const startX = ref(0);
-                const currentX = ref(0);
+                const flyDir = ref(null); 
+                const secretClicks = ref(0);
 
                 onMounted(() => {
                     initMatrix();
@@ -346,23 +344,26 @@
                 const activeScenario = computed(() => deck.value[cardIdx.value]);
                 const anomalyActive = computed(() => moves.value > 0 && moves.value % 10 === 0);
                 
-                const cardStyle = computed(() => ({
-                    transform: `translate(${currentX.value}px, ${Math.abs(currentX.value)*0.1}px) rotate(${currentX.value*0.05}deg)`,
-                    transition: isDragging.value ? 'none' : 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
-                }));
+                const cardStyle = computed(() => {
+                    if(!flyDir.value) return {};
+                    const rot = flyDir.value === 'right' ? 30 : -30;
+                    const tx = flyDir.value === 'right' ? 500 : -500;
+                    return { transform: `translate(${tx}px, 50px) rotate(${rot}deg)`, opacity: 0 };
+                });
 
-                const choiceOpacity = computed(() => ({
-                    left: currentX.value < 0 ? Math.min(Math.abs(currentX.value)/100, 1) : 0,
-                    right: currentX.value > 0 ? Math.min(currentX.value/100, 1) : 0
-                }));
+                const choiceOpacity = computed(() => ({ left: 0, right: 0 })); 
 
-                const getImpact = (statKey) => {
-                    if(!activeScenario.value) return 0;
-                    const rStats = activeScenario.value.right.stats[statKey] || 0;
-                    const lStats = activeScenario.value.left.stats[statKey] || 0;
-                    if(currentX.value > 20) return rStats;
-                    if(currentX.value < -20) return lStats;
-                    return 0;
+                // --- LOGIC ---
+                const triggerSecret = () => {
+                    secretClicks.value++;
+                    if(secretClicks.value === 7 && !godMode.value) {
+                        godMode.value = true;
+                        bits.value += 1000;
+                        localStorage.setItem('ec_god', 'true');
+                        saveData();
+                        playSound('secret'); haptic('heavy');
+                        alert('РЕЖИМ БОГА: +1000 ฿');
+                    }
                 };
 
                 const buyUpgrade = (item) => {
@@ -373,12 +374,23 @@
                     }
                 };
 
+                const getImpact = (statKey) => {
+                    if(!activeScenario.value) return 0;
+                    // В версии с кнопками мы не знаем на что смотрит юзер, 
+                    // поэтому просто показываем потенциальное влияние от нажатия ЛЮБОЙ кнопки,
+                    // или (как сейчас) показываем, что КАРТА вообще влияет на этот стат.
+                    const rStats = activeScenario.value.right.stats[statKey] || 0;
+                    const lStats = activeScenario.value.left.stats[statKey] || 0;
+                    if(rStats !== 0 || lStats !== 0) return 1; // Показываем точку, если стат будет затронут
+                    return 0;
+                };
+
                 const startGame = () => {
                     playSound('click');
                     stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
-                    deck.value = [...SCENARIOS, ...SCENARIOS, ...SCENARIOS].sort(()=>0.5-Math.random());
+                    deck.value = [...BASE_SCENARIOS, ...BASE_SCENARIOS].sort(()=>0.5-Math.random());
                     cardIdx.value = 0; moves.value = 0; earnedBits.value = 0;
-                    deathReason.value = null; reviveTriggered.value = false; currentX.value = 0;
+                    deathReason.value = null; reviveTriggered.value = false; flyDir.value = null;
                     screen.value = 'playing';
                 };
 
@@ -392,12 +404,19 @@
                 };
 
                 const makeChoice = (dir) => {
-                    if(deathReason.value) return;
+                    if(deathReason.value || flyDir.value) return;
+                    
                     playSound('swipe'); haptic('medium');
-                    currentX.value = dir === 'right' ? 500 : -500;
+                    flyDir.value = dir;
 
-                    const impact = activeScenario.value[dir].stats;
+                    const card = activeScenario.value;
+                    const impact = card[dir].stats;
                     for(let k in impact) stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
+
+                    if(card.followUp) {
+                        const newCards = card.followUp.map(id => CHAIN_EVENTS[id]).filter(Boolean);
+                        deck.value.splice(cardIdx.value + 1, 0, ...newCards); 
+                    }
 
                     let death = checkDeath();
                     
@@ -408,27 +427,35 @@
                         setTimeout(() => reviveTriggered.value = false, 2500);
                     }
 
-                    if(death) {
-                        deathReason.value = death.t;
-                        playSound('death'); haptic('error');
-                        
-                        let earned = moves.value * 2;
-                        if(upgrades.value.miner) earned *= 2;
-                        earnedBits.value = earned; bits.value += earned;
-                        
-                        if(moves.value > highScore.value) highScore.value = moves.value;
-                        if(!unlockedDeaths.value.includes(death.id)) unlockedDeaths.value.push(death.id);
-                        
-                        saveData();
-                        setTimeout(() => screen.value = 'end', 1500);
-                    } else {
-                        setTimeout(() => {
-                            currentX.value = 0; cardIdx.value++; moves.value++;
+                    setTimeout(() => {
+                        if(death) {
+                            deathReason.value = death.t;
+                            playSound('death'); haptic('error');
+                            let earned = moves.value * 2;
+                            if(upgrades.value.miner) earned *= 2;
+                            earnedBits.value = earned; bits.value += earned;
+                            if(moves.value > highScore.value) highScore.value = moves.value;
+                            if(!unlockedDeaths.value.includes(death.id)) unlockedDeaths.value.push(death.id);
+                            saveData();
+                            setTimeout(() => screen.value = 'end', 1500);
+                        } else {
+                            flyDir.value = null;
+                            cardIdx.value++; moves.value++;
                             if(anomalyActive.value) playSound('anomaly');
-                            if(cardIdx.value >= deck.value.length) deck.value.sort(()=>0.5-Math.random());
-                        }, 300);
-                    }
+                            if(cardIdx.value >= deck.value.length) deck.value.push(...BASE_SCENARIOS.sort(()=>0.5-Math.random()));
+                        }
+                    }, 300);
                 };
+
+                const shareResult = () => {
+                    const text = `💀 Я прожил ${moves.value} дней в ETHOS: CORE и погиб от: ${deathReason.value}. Сможешь лучше?`;
+                    const url = `https://t.me/${BOT_USERNAME}`;
+                    const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+                    if(tg && tg.openTelegramLink) tg.openTelegramLink(tgUrl);
+                    else window.open(tgUrl, '_blank');
+                };
+
+                const restartToMenu = () => { deathReason.value = null; flyDir.value = null; screen.value = 'menu'; };
 
                 const saveData = () => {
                     localStorage.setItem('ec_bits', bits.value);
@@ -437,17 +464,13 @@
                     localStorage.setItem('ec_score', highScore.value);
                 };
 
-                const startDrag = (e) => { if(deathReason.value) return; isDragging.value = true; startX.value = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX; };
-                const onMove = (e) => { if(isDragging.value) currentX.value = (e.type.includes('mouse') ? e.clientX : e.touches[0].clientX) - startX.value; };
-                const onEnd = () => { isDragging.value = false; if(currentX.value > 100) makeChoice('right'); else if(currentX.value < -100) makeChoice('left'); else currentX.value = 0; };
-
                 const getStatIcon = (k) => ({pop:'👥', fin:'💰', sec:'🛡️', mor:'⚖️'}[k]);
                 const getBarColor = (k, v) => (v < 15 || v > 85) ? 'bg-red-500 shadow-[0_0_15px_red]' : {pop:'bg-blue-400', fin:'bg-yellow-400', sec:'bg-green-400', mor:'bg-purple-400'}[k];
 
                 return { 
                     screen, bits, upgrades, shopItems: SHOP_ITEMS, unlockedDeaths, allDeaths: DEATHS, highScore, stats,
-                    activeScenario, cardStyle, choiceOpacity, moves, deathReason, earnedBits, reviveTriggered, anomalyActive,
-                    startGame, buyUpgrade, startDrag, getStatIcon, getBarColor, getImpact
+                    activeScenario, cardStyle, choiceOpacity, moves, deathReason, earnedBits, reviveTriggered, anomalyActive, godMode,
+                    startGame, buyUpgrade, restartToMenu, makeChoice, getStatIcon, getBarColor, triggerSecret, shareResult, getImpact
                 };
             }
         }).mount('#app');
