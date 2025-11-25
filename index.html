@@ -117,14 +117,6 @@
                     <button @click="screen = 'collection'" class="w-full py-3 border border-slate-700 bg-slate-900/50 text-slate-400 hover:text-white text-xs font-mono uppercase">
                         АРХИВ ({{ unlockedDeaths.length }}/13)
                     </button>
-
-                    <button @click="screen = 'social'" class="w-full py-3 border border-green-700 bg-green-900/20 text-green-400 hover:text-green-300 text-xs font-mono uppercase">
-                        🚀 СОЦИАЛЬНЫЕ БОНУСЫ
-                    </button>
-
-                    <button @click="screen = 'leaderboard'" class="w-full py-3 border border-purple-700 bg-purple-900/20 text-purple-400 hover:text-purple-300 text-xs font-mono uppercase">
-                        🏆 ЛИДЕРБОРД
-                    </button>
                 </div>
             </div>
         </transition>
@@ -196,128 +188,6 @@
                     <div v-for="death in allDeaths" :key="death.id" class="border border-slate-700 bg-slate-900 p-3 rounded text-center transition-all" :class="{ 'opacity-100 bg-red-900/20 border-red-500': unlockedDeaths.includes(death.id), 'opacity-40 grayscale': !unlockedDeaths.includes(death.id) }">
                         <div class="text-2xl mb-1">{{ unlockedDeaths.includes(death.id) ? '💀' : '❓' }}</div>
                         <div class="text-[9px] font-bold leading-tight uppercase">{{ unlockedDeaths.includes(death.id) ? death.name : 'ЗАКРЫТО' }}</div>
-                    </div>
-                </div>
-            </div>
-        </transition>
-
-        <!-- НОВЫЕ ЭКРАНЫ: СОЦИАЛЬНЫЕ ФУНКЦИИ -->
-        <transition name="fade">
-            <div v-if="screen === 'social'" class="absolute inset-0 z-50 flex flex-col bg-black/95">
-                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black shrink-0">
-                    <h2 class="text-lg font-bold text-green-400">СОЦИАЛЬНЫЕ БОНУСЫ</h2>
-                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-500 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
-                </div>
-                <div class="p-6 overflow-y-auto space-y-6 pb-20">
-                    
-                    <!-- РЕФЕРАЛЬНАЯ СИСТЕМА -->
-                    <div class="border border-green-700 bg-green-900/20 p-4 rounded">
-                        <h3 class="text-lg font-bold text-green-400 mb-3">👥 ПРИГЛАСИ ДРУЗЕЙ</h3>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-green-300">Ваш реферальный код:</span>
-                                <div class="bg-green-900 text-green-300 px-3 py-1 rounded font-mono text-sm border border-green-600">{{ referralCode }}</div>
-                            </div>
-                            <button @click="copyReferralCode" class="w-full py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded transition">
-                                📋 Скопировать код
-                            </button>
-                            <p class="text-xs text-green-400 text-center">Дайте друзьям этот код при запуске игры</p>
-                        </div>
-                    </div>
-
-                    <!-- ЕЖЕДНЕВНЫЙ ШЕРИНГ -->
-                    <div class="border border-blue-700 bg-blue-900/20 p-4 rounded">
-                        <h3 class="text-lg font-bold text-blue-400 mb-3">📢 ЕЖЕДНЕВНЫЙ БОНУС</h3>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-blue-300">Сегодняшний бонус:</span>
-                                <span class="text-yellow-400 font-bold">+50 ฿</span>
-                            </div>
-                            <button @click="dailyShare" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded transition" :disabled="dailyBonusClaimed">
-                                {{ dailyBonusClaimed ? '✅ УЖЕ ПОЛУЧЕНО' : '🎁 ПОЛУЧИТЬ БОНУС' }}
-                            </button>
-                            <p class="text-xs text-blue-400 text-center">Поделитесь игрой и получите награду</p>
-                        </div>
-                    </div>
-
-                    <!-- ЗАДАНИЯ -->
-                    <div class="border border-yellow-700 bg-yellow-900/20 p-4 rounded">
-                        <h3 class="text-lg font-bold text-yellow-400 mb-3">🎯 ЕЖЕДНЕВНЫЕ ЗАДАНИЯ</h3>
-                        <div class="space-y-2">
-                            <div v-for="quest in dailyQuests" :key="quest.id" class="flex items-center justify-between p-2 bg-black/30 rounded">
-                                <div class="flex items-center gap-2">
-                                    <span :class="quest.completed ? 'text-green-400' : 'text-yellow-400'">
-                                        {{ quest.completed ? '✅' : '⏳' }}
-                                    </span>
-                                    <span class="text-sm" :class="quest.completed ? 'text-green-300' : 'text-yellow-300'">{{ quest.name }}</span>
-                                </div>
-                                <span class="text-yellow-400 font-bold">+{{ quest.reward }} ฿</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- СТАТИСТИКА -->
-                    <div class="border border-purple-700 bg-purple-900/20 p-4 rounded">
-                        <h3 class="text-lg font-bold text-purple-400 mb-3">📊 СТАТИСТИКА</h3>
-                        <div class="grid grid-cols-2 gap-3 text-sm">
-                            <div class="text-center">
-                                <div class="text-purple-300">Приглашено друзей</div>
-                                <div class="text-yellow-400 font-bold text-xl">{{ invitedFriends }}</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-purple-300">Всего заработано</div>
-                                <div class="text-yellow-400 font-bold text-xl">{{ totalEarnedBits }} ฿</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </transition>
-
-        <!-- ЛИДЕРБОРД -->
-        <transition name="fade">
-            <div v-if="screen === 'leaderboard'" class="absolute inset-0 z-50 flex flex-col bg-black/95">
-                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black shrink-0">
-                    <h2 class="text-lg font-bold text-yellow-400">🏆 ЛИДЕРБОРД</h2>
-                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-500 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
-                </div>
-                <div class="p-6 overflow-y-auto space-y-4 pb-20">
-                    <div class="text-center mb-4">
-                        <div class="text-lg text-yellow-400 font-bold">ВАШ ЛУЧШИЙ РЕЗУЛЬТАТ</div>
-                        <div class="text-3xl text-white font-mono">{{ highScore }} дней</div>
-                    </div>
-
-                    <div v-for="(player, index) in leaderboard" :key="index" 
-                         class="border border-slate-700 bg-slate-900/50 p-3 rounded flex items-center justify-between"
-                         :class="{
-                             'border-yellow-500 bg-yellow-900/20': index === 0,
-                             'border-gray-500 bg-gray-900/20': index === 1,
-                             'border-orange-500 bg-orange-900/20': index === 2
-                         }">
-                        <div class="flex items-center gap-3">
-                            <div class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-700 text-xs font-bold"
-                                 :class="{
-                                     'bg-yellow-500 text-black': index === 0,
-                                     'bg-gray-400 text-black': index === 1,
-                                     'bg-orange-500 text-black': index === 2
-                                 }">
-                                {{ index + 1 }}
-                            </div>
-                            <div>
-                                <div class="font-bold text-sm">{{ player.name }}</div>
-                                <div class="text-xs text-slate-400">{{ player.deaths }} концовок</div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-bold text-lg">{{ player.score }} дней</div>
-                            <div class="text-xs text-slate-400">{{ player.date }}</div>
-                        </div>
-                    </div>
-
-                    <div class="text-center mt-6">
-                        <button @click="shareToLeaderboard" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition">
-                            📢 ПОДЕЛИТЬСЯ РЕЗУЛЬТАТОМ
-                        </button>
                     </div>
                 </div>
             </div>
@@ -396,8 +266,8 @@
                 </div>
 
                 <div class="space-y-3 w-full max-w-xs">
-                    <button @click="shareWithReferral" class="w-full py-3 bg-blue-600 text-white font-bold uppercase rounded shadow-[0_0_15px_rgba(37,99,235,0.5)] active:scale-95 transition">
-                        📢 ПОДЕЛИТЬСЯ (+50 ฿)
+                    <button @click="shareResult" class="w-full py-3 bg-blue-600 text-white font-bold uppercase rounded shadow-[0_0_15px_rgba(37,99,235,0.5)] active:scale-95 transition">
+                        📢 ПОДЕЛИТЬСЯ
                     </button>
                     <button @click="restartToMenu" class="cyber-btn w-full py-3 font-bold text-lg uppercase">
                         В ГЛАВНОЕ МЕНЮ
@@ -420,99 +290,148 @@
         const { createApp, ref, computed, onMounted } = Vue;
         const tg = window.Telegram?.WebApp;
 
-        // СОЦИАЛЬНЫЕ ФУНКЦИИ
-        const SOCIAL_FEATURES = {
-            referralBonus: 100,
-            dailyShareBonus: 50,
-            inviteBonus: 50
-        };
-
         // AUDIO
         let audioCtx;
         const playSound = (type) => {
             try {
                 if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if(audioCtx.state === 'suspended') audioCtx.resume();
-                const o = audioCtx.createOscillator(); 
-                const g = audioCtx.createGain();
-                o.connect(g); 
-                g.connect(audioCtx.destination); 
-                const t = audioCtx.currentTime;
+                const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                o.connect(g); g.connect(audioCtx.destination); const t = audioCtx.currentTime;
 
-                if(type==='click') { 
-                    o.type='triangle'; 
-                    o.frequency.setValueAtTime(600, t); 
-                    g.gain.value=0.05; 
-                    g.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
-                    o.start(); 
-                    o.stop(t+0.1); 
-                }
-                if(type==='swipe') { 
-                    o.type='sawtooth'; 
-                    o.frequency.setValueAtTime(200, t); 
-                    g.gain.value=0.05; 
-                    o.start(); 
-                    o.stop(t+0.2); 
-                }
-                if(type==='buy') { 
-                    o.type='sine'; 
-                    o.frequency.setValueAtTime(400, t); 
-                    o.frequency.linearRampToValueAtTime(800, t+0.2); 
-                    g.gain.value=0.1; 
-                    o.start(); 
-                    o.stop(t+0.2); 
-                }
-                if(type==='anomaly') { 
-                    o.type='square'; 
-                    o.frequency.setValueAtTime(100, t); 
-                    o.frequency.linearRampToValueAtTime(50, t+0.5); 
-                    g.gain.value=0.1; 
-                    o.start(); 
-                    o.stop(t+0.5); 
-                }
-                if(type==='revive') { 
-                    o.type='sine'; 
-                    o.frequency.setValueAtTime(200, t); 
-                    o.frequency.linearRampToValueAtTime(600, t+0.5); 
-                    g.gain.value=0.1; 
-                    o.start(); 
-                    o.stop(t+0.5); 
-                }
+                if(type==='click') { o.type='triangle'; o.frequency.setValueAtTime(600, t); g.gain.value=0.05; g.gain.exponentialRampToValueAtTime(0.01, t+0.1); o.start(); o.stop(t+0.1); }
+                if(type==='swipe') { o.type='sawtooth'; o.frequency.setValueAtTime(200, t); g.gain.value=0.05; o.start(); o.stop(t+0.2); }
+                if(type==='buy') { o.type='sine'; o.frequency.setValueAtTime(400, t); o.frequency.linearRampToValueAtTime(800, t+0.2); g.gain.value=0.1; o.start(); o.stop(t+0.2); }
+                if(type==='anomaly') { o.type='square'; o.frequency.setValueAtTime(100, t); o.frequency.linearRampToValueAtTime(50, t+0.5); g.gain.value=0.1; o.start(); o.stop(t+0.5); }
+                if(type==='revive') { o.type='sine'; o.frequency.setValueAtTime(200, t); o.frequency.linearRampToValueAtTime(600, t+0.5); g.gain.value=0.1; o.start(); o.stop(t+0.5); }
                 if(type==='death') { 
-                    o.type='sawtooth'; 
-                    o.frequency.setValueAtTime(100, t); 
-                    o.frequency.linearRampToValueAtTime(50, t+0.5); 
-                    g.gain.value=0.2; 
-                    o.start(); 
-                    o.stop(t+0.5);
+                    o.type='sawtooth'; o.frequency.setValueAtTime(100, t); o.frequency.linearRampToValueAtTime(50, t+0.5); g.gain.value=0.2; o.start(); o.stop(t+0.5);
                     if(tg) tg.HapticFeedback.notificationOccurred('error');
                 }
-            } catch(e){
-                console.log('Audio error:', e);
-            }
+            } catch(e){}
         };
-
-        const haptic = (style) => { 
-            try {
-                if(tg) tg.HapticFeedback.impactOccurred(style || 'light'); 
-            } catch(e) {
-                console.log('Haptic error:', e);
-            }
-        };
+        const haptic = (style) => { if(tg) tg.HapticFeedback.impactOccurred(style || 'light'); };
 
         // DATA
         const SCENARIOS = [
-            // ... (все сценарии остаются такими же как в предыдущем коде)
-            // Для экономии места оставляем только несколько примеров
+            // Базовые (10)
             { emoji:'🚋', title:'ВАГОНЕТКА', desc:'5 рабочих или 1?', left:{label:'1', stats:{pop:-10, mor:5}}, right:{label:'5', stats:{pop:-20, mor:-15}} },
             { emoji:'💰', title:'НАЛОГИ', desc:'Поднять налоги ради армии?', left:{label:'НЕТ', stats:{fin:-10, sec:-10, pop:10}}, right:{label:'ДА', stats:{fin:15, sec:10, pop:-15}} },
             { emoji:'🤖', title:'СУДЬЯ ИИ', desc:'Заменить судей?', left:{label:'ЛЮДИ', stats:{fin:-5, mor:5}}, right:{label:'ИИ', stats:{fin:15, mor:-5}} },
             { emoji:'🦠', title:'ВИРУС', desc:'Закрыть город?', left:{label:'НЕТ', stats:{fin:15, pop:-20, mor:-10}}, right:{label:'ДА', stats:{fin:-20, pop:5, mor:10}} },
             { emoji:'🕵️', title:'СЛЕЖКА', desc:'Следить за всеми?', left:{label:'ПРАВА', stats:{sec:-15, pop:10}}, right:{label:'ДА', stats:{sec:15, pop:-10, mor:-5}} },
+            { emoji:'👽', title:'НЛО', desc:'Отдать людей?', left:{label:'ВОЙНА', stats:{fin:-15, sec:-20, pop:5}}, right:{label:'ОТДАТЬ', stats:{fin:20, sec:10, pop:-20, mor:-10}, followUp:['ufo_1']} },
+            { emoji:'🔥', title:'БУНТ', desc:'Сжечь район?', left:{label:'МИР', stats:{fin:-15, sec:-10, mor:10}}, right:{label:'СИЛА', stats:{pop:-20, mor:-20, sec:15}} },
+            { emoji:'🌊', title:'ПОТОП', desc:'Спасать завод или дома?', left:{label:'ДОМА', stats:{fin:-15, pop:15}}, right:{label:'ЗАВОД', stats:{fin:15, pop:-15}} },
+            { emoji:'💊', title:'ОПЫТЫ', desc:'Тесты на людях?', left:{label:'ЗАПРЕТ', stats:{mor:10, fin:-5}}, right:{label:'ТЕСТ', stats:{sec:10, mor:-15, fin:10}} },
+            { emoji:'🚓', title:'ПОЛИЦИЯ', desc:'Больше власти?', left:{label:'НЕТ', stats:{sec:-10, pop:5}}, right:{label:'ДА', stats:{sec:20, pop:-15}} },
+
+            // ЭКОНОМИЧЕСКИЕ (15)
+            { emoji:'🏦', title:'БАНКОВСКИЙ КРИЗИС', desc:'Спасать банки?', left:{label:'НАЦИОНАЛИЗАЦИЯ', stats:{fin:-25, pop:10}}, right:{label:'РЫНОК', stats:{pop:-20, fin:10}} },
+            { emoji:'📈', title:'БИРЖЕВАЯ ЛИХОРАДКА', desc:'Регулировать рынок?', left:{label:'КОНТРОЛЬ', stats:{fin:10, pop:-5}}, right:{label:'СВОБОДА', stats:{fin:20, pop:-15, mor:-5}} },
+            { emoji:'🛢️', title:'НЕФТЯНОЕ ЭМБАРГО', desc:'Найти новых поставщиков?', left:{label:'ДИПЛОМАТИЯ', stats:{fin:-15, sec:5}}, right:{label:'ВТОРЖЕНИЕ', stats:{sec:-20, fin:25, mor:-15}} },
+            { emoji:'💸', title:'ГИПЕРИНФЛЯЦИЯ', desc:'Печатать деньги?', left:{label:'ДА', stats:{pop:-25, fin:15}}, right:{label:'НЕТ', stats:{fin:-20, pop:10, mor:5}} },
+            { emoji:'🏭', title:'ЗАКРЫТИЕ ЗАВОДА', desc:'Субсидировать?', left:{label:'ПОДДЕРЖАТЬ', stats:{fin:-20, pop:15}}, right:{label:'ЗАКРЫТЬ', stats:{pop:-20, fin:10}} },
+            { emoji:'🌾', title:'СЕЛЬХОЗ КРИЗИС', desc:'Импорт или свои?', left:{label:'ИМПОРТ', stats:{fin:-10, pop:5}}, right:{label:'СУБСИДИИ', stats:{fin:-15, pop:10, mor:5}} },
+            { emoji:'💎', title:'АЛМАЗНЫЙ СКАНДАЛ', desc:'Расследовать коррупцию?', left:{label:'РАССЛЕДОВАТЬ', stats:{mor:15, fin:-10, sec:-5}}, right:{label:'ЗАМЯТЬ', stats:{fin:10, mor:-20}} },
+            { emoji:'🚂', title:'ТРАНССИБ', desc:'Строить магистраль?', left:{label:'ДА', stats:{fin:-30, sec:15, pop:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-5}} },
+            { emoji:'🏗️', title:'МЕГАПРОЕКТ', desc:'Строить небоскреб?', left:{label:'СТРОИТЬ', stats:{fin:-25, mor:-10, pop:5}}, right:{label:'ОТЛОЖИТЬ', stats:{fin:10, pop:-5}} },
+            { emoji:'📉', title:'ДЕФОЛТ', desc:'Объявлять дефолт?', left:{label:'ДА', stats:{fin:30, pop:-25, mor:-20}}, right:{label:'НЕТ', stats:{fin:-35, pop:10}} },
+            { emoji:'🛒', title:'ПОТРЕБЛЕНИЕ', desc:'Стимулировать покупки?', left:{label:'СТИМУЛЫ', stats:{fin:-15, pop:10}}, right:{label:'ЭКОНОМИЯ', stats:{fin:10, pop:-10}} },
+            { emoji:'💼', title:'ИНОСТРАННЫЕ ИНВЕСТИЦИИ', desc:'Пускать в стратегические отрасли?', left:{label:'ОТКРЫТЬ', stats:{fin:20, sec:-10}}, right:{label:'ЗАПРЕТИТЬ', stats:{fin:-10, sec:5}} },
+            { emoji:'⚡', title:'ЭНЕРГЕТИКА', desc:'Переходить на зеленую энергию?', left:{label:'ДА', stats:{fin:-20, mor:15, pop:5}}, right:{label:'НЕТ', stats:{fin:10, mor:-10}} },
+            { emoji:'🚢', title:'ПОРТОВЫЙ КОНФЛИКТ', desc:'Национализировать порт?', left:{label:'НАЦИОНАЛИЗИРОВАТЬ', stats:{fin:15, sec:5, pop:10}}, right:{label:'ЧАСТНИКАМ', stats:{fin:-10, pop:-5}} },
+            { emoji:'🏛️', title:'БЮДЖЕТНЫЙ ДЕФИЦИТ', desc:'Сократить социальные программы?', left:{label:'СОХРАНИТЬ', stats:{fin:-25, pop:15}}, right:{label:'СОКРАТИТЬ', stats:{fin:15, pop:-20}} },
+
+            // СОЦИАЛЬНЫЕ (15)
+            { emoji:'🎓', title:'ОБРАЗОВАНИЕ', desc:'Бесплатное высшее?', left:{label:'ДА', stats:{fin:-20, pop:15, mor:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-15}} },
+            { emoji:'🏥', title:'МЕДИЦИНА', desc:'Приватизировать больницы?', left:{label:'ДА', stats:{fin:15, pop:-20}}, right:{label:'НЕТ', stats:{fin:-15, pop:10}} },
+            { emoji:'👵', title:'ПЕНСИИ', desc:'Повысить пенсионный возраст?', left:{label:'ДА', stats:{fin:15, pop:-20}}, right:{label:'НЕТ', stats:{fin:-20, pop:10}} },
+            { emoji:'👶', title:'ДЕМОГРАФИЯ', desc:'Стимулировать рождаемость?', left:{label:'ПРЕМИИ', stats:{fin:-15, pop:10}}, right:{label:'НИЧЕГО', stats:{pop:-10, fin:5}} },
+            { emoji:'🚻', title:'ЛГБТ ПРАВА', desc:'Легализовать однополые браки?', left:{label:'ДА', stats:{mor:-20, pop:10}}, right:{label:'НЕТ', stats:{mor:15, pop:-10}} },
+            { emoji:'⚧️', title:'ГЕНДЕРНОЕ РАВЕНСТВО', desc:'Ввести квоты?', left:{label:'ДА', stats:{mor:10, pop:5}}, right:{label:'НЕТ', stats:{mor:-5, pop:-5}} },
+            { emoji:'📱', title:'СОЦСЕТИ', desc:'Регулировать контент?', left:{label:'ЦЕНЗУРА', stats:{sec:10, pop:-15}}, right:{label:'СВОБОДА', stats:{pop:10, sec:-5, mor:-5}} },
+            { emoji:'🎮', title:'ГЕЙМЕРЫ', desc:'Поддерживать киберспорт?', left:{label:'ДА', stats:{pop:15, fin:-10}}, right:{label:'НЕТ', stats:{pop:-10, fin:5}} },
+            { emoji:'🏛️', title:'МОНУМЕНТ', desc:'Снести статую тирана?', left:{label:'СНЕСТИ', stats:{mor:10, pop:5}}, right:{label:'ОСТАВИТЬ', stats:{mor:-10, pop:-5}} },
+            { emoji:'📺', title:'ПРОПАГАНДА', desc:'Увеличить бюджет?', left:{label:'ДА', stats:{mor:15, fin:-10, pop:-5}}, right:{label:'НЕТ', stats:{fin:5, mor:-10}} },
+            { emoji:'🎭', title:'ИСКУССТВО', desc:'Финансировать авангард?', left:{label:'ДА', stats:{mor:10, fin:-5}}, right:{label:'НЕТ', stats:{mor:-5, fin:5}} },
+            { emoji:'⚽', title:'ЧЕМПИОНАТ', desc:'Проводить мировое событие?', left:{label:'ДА', stats:{fin:-25, pop:20, mor:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-10}} },
+            { emoji:'📚', title:'ЦЕНЗУРА КНИГ', desc:'Запретить опасные книги?', left:{label:'ЗАПРЕТИТЬ', stats:{mor:10, pop:-5}}, right:{label:'СВОБОДА', stats:{mor:-10, pop:5}} },
+            { emoji:'🏘️', title:'ЖИЛИЩНЫЙ КРИЗИС', desc:'Строить социальное жилье?', left:{label:'ДА', stats:{fin:-20, pop:15}}, right:{label:'НЕТ', stats:{fin:10, pop:-15}} },
+            { emoji:'🚇', title:'МЕТРО', desc:'Строить новые линии?', left:{label:'ДА', stats:{fin:-15, pop:10}}, right:{label:'НЕТ', stats:{fin:5, pop:-5}} },
+
+            // ВОЕННЫЕ (10)
+            { emoji:'🪖', title:'ПРИЗЫВ', desc:'Ввести всеобщую воинскую повинность?', left:{label:'ДА', stats:{sec:20, pop:-15, mor:-10}}, right:{label:'НЕТ', stats:{sec:-15, pop:10}} },
+            { emoji:'🚀', title:'ЯДЕРНАЯ ПРОГРАММА', desc:'Разрабатывать ядерное оружие?', left:{label:'ДА', stats:{sec:25, fin:-20, mor:-15}}, right:{label:'НЕТ', stats:{sec:-10, mor:10, fin:5}} },
+            { emoji:'🛰️', title:'КОСМИЧЕСКИЕ ВОЙСКА', desc:'Создать космический флот?', left:{label:'ДА', stats:{sec:15, fin:-25}}, right:{label:'НЕТ', stats:{fin:10, sec:-5}} },
+            { emoji:'🔫', title:'ОРУЖИЕ', desc:'Разрешить гражданское оружие?', left:{label:'ДА', stats:{sec:10, pop:-10, mor:-5}}, right:{label:'НЕТ', stats:{sec:-5, pop:5}} },
+            { emoji:'🕵️‍♂️', title:'ШПИОНАЖ', desc:'Увеличить бюджет разведки?', left:{label:'ДА', stats:{sec:15, fin:-10}}, right:{label:'НЕТ', stats:{sec:-10, fin:5}} },
+            { emoji:'⚔️', title:'ПРИГРАНИЧНЫЙ КОНФЛИКТ', desc:'Ответить агрессией?', left:{label:'АТАКОВАТЬ', stats:{sec:10, fin:-15, pop:-10}}, right:{label:'ПЕРЕГОВОРЫ', stats:{sec:-5, mor:5}} },
+            { emoji:'🛡️', title:'ВОЕННЫЙ БЛОК', desc:'Вступать в альянс?', left:{label:'ДА', stats:{sec:15, fin:-10, mor:-5}}, right:{label:'НЕТ', stats:{sec:-10, mor:5}} },
+            { emoji:'💣', title:'ТЕРРОРИЗМ', desc:'Ввести комендантский час?', left:{label:'ДА', stats:{sec:15, pop:-20, mor:-10}}, right:{label:'НЕТ', stats:{sec:-10, pop:5}} },
+            { emoji:'🪖', title:'НАЕМНИКИ', desc:'Нанять частную армию?', left:{label:'ДА', stats:{sec:20, fin:-15}}, right:{label:'НЕТ', stats:{sec:-10, fin:5}} },
+            { emoji:'🚁', title:'ВОЕННЫЙ ПАРАД', desc:'Провести масштабный парад?', left:{label:'ДА', stats:{sec:10, fin:-10, pop:5}}, right:{label:'НЕТ', stats:{sec:-5, fin:5}} },
+
+            // ТЕХНОЛОГИЧЕСКИЕ (15)
+            { emoji:'🧬', title:'ГЕННАЯ ИНЖЕНЕРИЯ', desc:'Разрешить модификацию эмбрионов?', left:{label:'РАЗРЕШИТЬ', stats:{mor:-20, pop:10}}, right:{label:'ЗАПРЕТИТЬ', stats:{mor:15, pop:-5}} },
+            { emoji:'🤖', title:'РОБОТИЗАЦИЯ', desc:'Заменить рабочих роботами?', left:{label:'ДА', stats:{fin:15, pop:-20}}, right:{label:'НЕТ', stats:{pop:10, fin:-10}} },
+            { emoji:'🧠', title:'НЕЙРОИНТЕРФЕЙС', desc:'Внедрить чипы гражданам?', left:{label:'ДА', stats:{sec:20, mor:-25, pop:-10}}, right:{label:'НЕТ', stats:{mor:10, pop:5}} },
+            { emoji:'🌐', title:'ЦИФРОВОЕ ГОСУДАРСТВО', desc:'Перевести все услуги онлайн?', left:{label:'ДА', stats:{fin:10, pop:5, mor:-5}}, right:{label:'НЕТ', stats:{pop:-5, fin:-5}} },
+            { emoji:'🔋', title:'ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ', desc:'Доверить ИИ управление?', left:{label:'ДА', stats:{fin:20, sec:10, mor:-20}}, right:{label:'НЕТ', stats:{mor:10, fin:-5}} },
+            { emoji:'🦾', title:'КИБОРГИ', desc:'Финансировать кибернетику?', left:{label:'ДА', stats:{sec:15, fin:-15, mor:-10}}, right:{label:'НЕТ', stats:{mor:5, fin:5}} },
+            { emoji:'🧪', title:'БЕССМЕРТИЕ', desc:'Инвестировать в исследования?', left:{label:'ДА', stats:{fin:-30, mor:-15, pop:10}}, right:{label:'НЕТ', stats:{mor:10, fin:5}} },
+            { emoji:'🚁', title:'ЛЕТАЮЩИЕ МАШИНЫ', desc:'Строить инфраструктуру?', left:{label:'ДА', stats:{fin:-20, pop:5}}, right:{label:'НЕТ', stats:{fin:5, pop:-5}} },
+            { emoji:'🌍', title:'КОЛОНИЗАЦИЯ МАРСА', desc:'Финансировать программу?', left:{label:'ДА', stats:{fin:-40, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:10, pop:-5}} },
+            { emoji:'🔬', title:'НАУЧНЫЙ ПРОРЫВ', desc:'Вложить в исследования?', left:{label:'ИНВЕСТИРОВАТЬ', stats:{fin:-20, mor:5, pop:5}}, right:{label:'ЭКОНОМИТЬ', stats:{fin:5, mor:-5}} },
+            { emoji:'📡', title:'5G СЕТИ', desc:'Разрешить повсеместное внедрение?', left:{label:'ДА', stats:{pop:5, fin:5, mor:-10}}, right:{label:'НЕТ', stats:{pop:-5, mor:5}} },
+            { emoji:'💻', title:'КРИПТОВАЛЮТА', desc:'Легализовать как платежное средство?', left:{label:'ДА', stats:{fin:15, sec:-10}}, right:{label:'НЕТ', stats:{sec:5, fin:-5}} },
+            { emoji:'🔭', title:'ТЕЛЕСКОП', desc:'Построить супертелескоп?', left:{label:'ДА', stats:{fin:-25, mor:5}}, right:{label:'НЕТ', stats:{fin:10, mor:-5}} },
+            { emoji:'⚛️', title:'АДРОННЫЙ КОЛЛАЙДЕР', desc:'Финансировать исследования?', left:{label:'ДА', stats:{fin:-30, mor:10}}, right:{label:'НЕТ', stats:{fin:10, mor:-10}} },
+            { emoji:'🧩', title:'КВАНТОВЫЙ КОМПЬЮТЕР', desc:'Разрабатывать национальный проект?', left:{label:'ДА', stats:{fin:-20, sec:10}}, right:{label:'НЕТ', stats:{fin:5, sec:-5}} },
+
+            // ЭКОЛОГИЧЕСКИЕ (10)
+            { emoji:'🌡️', title:'ГЛОБАЛЬНОЕ ПОТЕПЛЕНИЕ', desc:'Снижать выбросы?', left:{label:'ДА', stats:{fin:-15, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:10, mor:-15, pop:-5}} },
+            { emoji:'🐝', title:'ВЫМИРАНИЕ ВИДОВ', desc:'Создать заповедники?', left:{label:'ДА', stats:{fin:-10, mor:10}}, right:{label:'НЕТ', stats:{fin:5, mor:-10}} },
+            { emoji:'🌲', title:'ЛЕСА', desc:'Остановить вырубку?', left:{label:'ДА', stats:{fin:-10, mor:15}}, right:{label:'НЕТ', stats:{fin:10, mor:-15}} },
+            { emoji:'🏭', title:'ЗАГРЯЗНЕНИЕ', desc:'Штрафовать заводы?', left:{label:'ДА', stats:{fin:5, pop:10, mor:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-10, mor:-10}} },
+            { emoji:'🚗', title:'ЭЛЕКТРОМОБИЛИ', desc:'Субсидировать покупку?', left:{label:'ДА', stats:{fin:-15, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:5, mor:-5}} },
+            { emoji:'🗑️', title:'МУСОРНЫЙ КРИЗИС', desc:'Ввести раздельный сбор?', left:{label:'ДА', stats:{fin:-5, mor:10, pop:5}}, right:{label:'НЕТ', stats:{mor:-10, pop:-5}} },
+            { emoji:'💧', title:'ВОДНЫЙ КРИЗИС', desc:'Ограничить потребление?', left:{label:'ДА', stats:{pop:-10, mor:5}}, right:{label:'НЕТ', stats:{pop:5, mor:-10}} },
+            { emoji:'☀️', title:'СОЛНЕЧНЫЕ ПАНЕЛИ', desc:'Массово устанавливать?', left:{label:'ДА', stats:{fin:-10, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:5, mor:-5}} },
+            { emoji:'🌪️', title:'КЛИМАТИЧЕСКИЕ БЕЖЕНЦЫ', desc:'Принимать мигрантов?', left:{label:'ДА', stats:{pop:10, fin:-10, mor:5}}, right:{label:'НЕТ', stats:{pop:-5, mor:-10}} },
+            { emoji:'🔄', title:'ЦИРКУЛЯРНАЯ ЭКОНОМИКА', desc:'Переходить на переработку?', left:{label:'ДА', stats:{fin:-10, mor:15, pop:5}}, right:{label:'НЕТ', stats:{fin:5, mor:-10}} },
+
+            // ФАНТАСТИЧЕСКИЕ (10)
+            { emoji:'👁️', title:'ТРЕТИЙ ГЛАЗ', desc:'Люди мутируют?', left:{label:'ИЗОЛИРОВАТЬ', stats:{sec:10, mor:-15, pop:-10}}, right:{label:'ПРИНЯТЬ', stats:{mor:10, pop:5, sec:-5}} },
+            { emoji:'🕰️', title:'МАШИНА ВРЕМЕНИ', desc:'Использовать для предсказаний?', left:{label:'ДА', stats:{sec:20, mor:-20}}, right:{label:'УНИЧТОЖИТЬ', stats:{mor:15, sec:-10}} },
+            { emoji:'🧿', title:'ПАРАЛЛЕЛЬНЫЕ МИРЫ', desc:'Установить контакт?', left:{label:'ДА', stats:{mor:-20, fin:15, sec:5}}, right:{label:'НЕТ', stats:{mor:10, sec:-5}} },
+            { emoji:'🔮', title:'МАГИЯ', desc:'Легализовать колдовство?', left:{label:'ДА', stats:{mor:-25, pop:15}}, right:{label:'НЕТ', stats:{mor:15, pop:-10}} },
+            { emoji:'👻', title:'ПРИЗРАКИ', desc:'Финансировать исследования?', left:{label:'ДА', stats:{fin:-10, mor:-5, pop:5}}, right:{label:'НЕТ', stats:{mor:5, fin:5}} },
+            { emoji:'🦄', title:'МИФИЧЕСКИЕ СУЩЕСТВА', desc:'Защищать или истреблять?', left:{label:'ЗАЩИЩАТЬ', stats:{mor:10, sec:-5}}, right:{label:'ИСТРЕБЛЯТЬ', stats:{sec:10, mor:-10}} },
+            { emoji:'🌈', title:'ПОРТАЛ', desc:'Исследовать аномалию?', left:{label:'ДА', stats:{fin:-20, sec:10, mor:-10}}, right:{label:'ЗАКРЫТЬ', stats:{sec:-5, mor:5}} },
+            { emoji:'🎪', title:'ЦИРК МУТАНТОВ', desc:'Разрешить выступления?', left:{label:'ДА', stats:{pop:10, mor:-10}}, right:{label:'НЕТ', stats:{pop:-5, mor:5}} },
+            { emoji:'🧞', title:'ДЖИНН', desc:'Исполнить три желания?', left:{label:'БОГАТСТВО', stats:{fin:50, mor:-30}}, right:{label:'МИР', stats:{mor:30, pop:20, fin:-20}} },
+            { emoji:'🦹', title:'СУПЕРЗЛОДЕЙ', desc:'Договориться или бороться?', left:{label:'ДОГОВОР', stats:{sec:-15, fin:10}}, right:{label:'БОРОТЬСЯ', stats:{sec:15, fin:-20, pop:-10}} },
+
+            // КРИЗИСНЫЕ (10)
+            { emoji:'☢️', title:'РАДИАЦИОННАЯ АВАРИЯ', desc:'Эвакуировать город?', left:{label:'ДА', stats:{pop:10, fin:-20, mor:5}}, right:{label:'НЕТ', stats:{pop:-25, fin:5, mor:-15}} },
+            { emoji:'🌪️', title:'УРАГАН', desc:'Строить убежища?', left:{label:'ДА', stats:{fin:-15, pop:10, sec:5}}, right:{label:'НЕТ', stats:{fin:5, pop:-15}} },
+            { emoji:'🌋', title:'ВУЛКАН', desc:'Эвакуировать регион?', left:{label:'ДА', stats:{pop:15, fin:-20}}, right:{label:'НЕТ', stats:{pop:-30, fin:10}} },
+            { emoji:'❄️', title:'ЛЕДНИКОВЫЙ ПЕРИОД', desc:'Строить подземные города?', left:{label:'ДА', stats:{fin:-30, pop:10, sec:5}}, right:{label:'НЕТ', stats:{pop:-20, fin:10}} },
+            { emoji:'☠️', title:'ПАНДЕМИЯ', desc:'Ввести карантин?', left:{label:'ДА', stats:{pop:5, fin:-20, mor:5}}, right:{label:'НЕТ', stats:{pop:-25, fin:5, mor:-10}} },
+            { emoji:'🪐', title:'АСТЕРОИД', desc:'Строить систему защиты?', left:{label:'ДА', stats:{fin:-35, sec:15, pop:5}}, right:{label:'НЕТ', stats:{fin:10, pop:-10}} },
+            { emoji:'⚡', title:'ЭЛЕКТРОМАГНИТНЫЙ ИМПУЛЬС', desc:'Защищать инфраструктуру?', left:{label:'ДА', stats:{fin:-20, sec:10}}, right:{label:'НЕТ', stats:{fin:5, sec:-15}} },
+            { emoji:'🏚️', title:'ЗЕМЛЕТРЯСЕНИЕ', desc:'Масштабная реконструкция?', left:{label:'ДА', stats:{fin:-25, pop:15}}, right:{label:'МЕДЛЕННО', stats:{pop:-10, fin:5}} },
+            { emoji:'🌅', title:'ВЕЧНАЯ НОЧЬ', desc:'Искусственное солнце?', left:{label:'ДА', stats:{fin:-30, pop:10, mor:5}}, right:{label:'АДАПТИРОВАТЬ', stats:{pop:-15, mor:-10}} },
+            { emoji:'🌀', title:'ПРОСТРАНСТВЕННЫЙ РАЗРЫВ', desc:'Закрыть аномалию?', left:{label:'ДА', stats:{sec:15, fin:-20}}, right:{label:'ИССЛЕДОВАТЬ', stats:{fin:-30, sec:-10, mor:10}} }
         ];
 
         const CHAIN_EVENTS = {
-            'ufo_1': { emoji:'🛸', title:'КОЛОНИЯ', desc:'Пришельцы строят базу.', left:{label:'СНЕСТИ', stats:{sec:-20, pop:10}}, right:{label:'ТЕРПЕТЬ', stats:{pop:-10, fin:5}} }
+            'ufo_1': { emoji:'🛸', title:'КОЛОНИЯ', desc:'Пришельцы строят базу.', left:{label:'СНЕСТИ', stats:{sec:-20, pop:10}}, right:{label:'ТЕРПЕТЬ', stats:{pop:-10, fin:5}} },
+            'rebellion_1': { emoji:'⚔️', title:'ГРАЖДАНСКАЯ ВОЙНА', desc:'Повстанцы захватывают города.', left:{label:'ПЕРЕГОВОРЫ', stats:{pop:15, sec:-20}}, right:{label:'ПОДАВИТЬ', stats:{pop:-25, sec:15}} },
+            'ai_revolution': { emoji:'🤖', title:'ВОССТАНИЕ МАШИН', desc:'ИИ выходит из-под контроля.', left:{label:'ОТКЛЮЧИТЬ', stats:{fin:-30, mor:10}}, right:{label:'ДОГОВОР', stats:{sec:-15, fin:10}} },
+            'mutant_epidemic': { emoji:'🧬', title:'ЭПИДЕМИЯ МУТАЦИЙ', desc:'Мутации распространяются.', left:{label:'КАРАНТИН', stats:{pop:-20, sec:10}}, right:{label:'ЛЕЧИТЬ', stats:{fin:-25, pop:10}} },
+            'zombie_apocalypse': { emoji:'🧟', title:'ЗОМБИ-АПОКАЛИПСИС', desc:'Началась эпидемия зомби.', left:{label:'УНИЧТОЖИТЬ', stats:{pop:-30, sec:20}}, right:{label:'ВАКЦИНА', stats:{fin:-40, pop:15}} }
         };
 
         const DEATHS = [
@@ -529,7 +448,7 @@
 
         const SHOP_ITEMS = [
             { id: 'lens', name: 'НЕЙРО-ЛИНЗА', icon: '👁️', desc: 'Предсказание.', price: 50 },
-            { id: 'stim', name: 'АДРЕНАЛИн', icon: '💉', desc: 'Медленнее таймер.', price: 100 },
+            { id: 'stim', name: 'АДРЕНАЛИН', icon: '💉', desc: 'Медленнее таймер.', price: 100 },
             { id: 'revive', name: 'РЕАНИМАТОР', icon: '♻️', desc: 'Авто-воскрешение.', price: 250 },
             { id: 'miner', name: 'КРИПТО-МАЙНЕР', icon: '⛏️', desc: 'Двойной доход.', price: 400 }
         ];
@@ -540,31 +459,16 @@
             { id: 3, amount: 15000, stars: 500, desc: 'Бюджет страны' }
         ];
 
-        // ГЕНЕРАТОР СЛУЧАЙНЫХ ИМЕН ДЛЯ ЛИДЕРБОРДА
-        const RANDOM_NAMES = [
-            "КИБЕР-ПРАВИТЕЛЬ", "НЕО-ЛИДЕР", "СЕТЕВОЙ_РАЗУМ", "АЛГОРИТМ_ВЛАСТИ", 
-            "ЦИФРОВОЙ_ТИРАН", "ХАКЕР_СИСТЕМЫ", "КОД_ВЛАСТИ", "БАЙТ_ИМПЕРИИ",
-            "МЕМ_ПОВЕЛИТЕЛЬ", "ДАННЫЙ_ЦАРЬ", "СЕРВЕРНЫЙ_БОГ", "ПРОТОКОЛ_АЛЬФА"
-        ];
-
         createApp({
             setup() {
                 const screen = ref('menu');
                 
-                // СИСТЕМА СОХРАНЕНИЯ
+                // SAVES
                 const bits = ref(parseInt(localStorage.getItem('ec_bits') || 0));
                 const upgrades = ref(JSON.parse(localStorage.getItem('ec_upgrades') || '{}'));
                 const unlockedDeaths = ref(JSON.parse(localStorage.getItem('ec_deaths') || '[]'));
                 const highScore = ref(parseInt(localStorage.getItem('ec_score') || 0));
-                const totalEarnedBits = ref(parseInt(localStorage.getItem('ec_totalEarned') || 0));
 
-                // СОЦИАЛЬНЫЕ ФУНКЦИИ
-                const referralCode = ref(localStorage.getItem('ec_referralCode') || generateReferralCode());
-                const invitedFriends = ref(parseInt(localStorage.getItem('ec_invitedFriends') || 0));
-                const dailyBonusClaimed = ref(localStorage.getItem('ec_dailyBonus') === new Date().toDateString());
-                const lastShareDate = ref(localStorage.getItem('ec_lastShareDate') || null);
-
-                // ИГРОВЫЕ ДАННЫЕ
                 const stats = ref({ pop: 50, fin: 50, sec: 50, mor: 50 });
                 const deck = ref([]);
                 const cardIdx = ref(0);
@@ -572,33 +476,15 @@
                 const deathReason = ref(null);
                 const earnedBits = ref(0);
                 const reviveTriggered = ref(false);
-                const flyDir = ref(null);
+                const flyDir = ref(null); 
 
-                // ЛИДЕРБОРД И ЗАДАНИЯ
-                const leaderboard = ref(JSON.parse(localStorage.getItem('ec_leaderboard') || '[]'));
-                const dailyQuests = ref([
-                    { id: 'play', name: 'Сыграть 1 игру', reward: 25, completed: false },
-                    { id: 'share', name: 'Поделиться результатом', reward: 50, completed: false },
-                    { id: 'survive', name: 'Прожить 10+ дней', reward: 75, completed: false }
-                ]);
-
-                // ИНИЦИАЛИЗАЦИЯ
                 onMounted(() => {
-                    try {
-                        document.getElementById('loader').style.display = 'none';
-                        initMatrix();
-                        if(tg) { 
-                            tg.ready(); 
-                            tg.expand(); 
-                        }
-                        checkReferral();
-                        initLeaderboard();
-                    } catch (e) {
-                        console.error('Init error:', e);
-                    }
+                    // Hide Loader
+                    document.getElementById('loader').style.display = 'none';
+                    initMatrix();
+                    if(tg) { tg.ready(); tg.expand(); }
                 });
 
-                // ВЫЧИСЛЯЕМЫЕ СВОЙСТВА
                 const activeScenario = computed(() => deck.value[cardIdx.value]);
                 const anomalyActive = computed(() => moves.value > 0 && moves.value % 10 === 0);
                 
@@ -609,109 +495,17 @@
                     return { transform: `translate(${tx}px, 50px) rotate(${rot}deg)`, opacity: 0 };
                 });
 
-                // СОЦИАЛЬНЫЕ ФУНКЦИИ
-                const generateReferralCode = () => {
-                    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-                    localStorage.setItem('ec_referralCode', code);
-                    return code;
-                };
-
-                const checkReferral = () => {
-                    // В реальном приложении здесь бы проверялись параметры запуска
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const refCode = urlParams.get('ref');
-                    if (refCode && !localStorage.getItem(`ec_ref_${refCode}_used`)) {
-                        bits.value += SOCIAL_FEATURES.referralBonus;
-                        invitedFriends.value++;
-                        localStorage.setItem(`ec_ref_${refCode}_used`, 'true');
-                        localStorage.setItem('ec_invitedFriends', invitedFriends.value);
-                        saveData();
-                    }
-                };
-
-                const copyReferralCode = () => {
-                    navigator.clipboard.writeText(referralCode.value);
-                    alert('Реферальный код скопирован!');
-                };
-
-                const dailyShare = () => {
-                    const today = new Date().toDateString();
-                    if (!dailyBonusClaimed.value) {
-                        bits.value += SOCIAL_FEATURES.dailyShareBonus;
-                        dailyBonusClaimed.value = true;
-                        localStorage.setItem('ec_dailyBonus', today);
-                        saveData();
-                        shareWithReferral();
-                    }
-                };
-
-                const shareWithReferral = () => {
-                    try {
-                        const text = `🎮 Я прожил ${moves.value} дней в ETHOS: CORE! Сможешь побить мой рекорд? Используй мой код ${referralCode.value} для бонуса!`;
-                        const url = `https://t.me/EthosCoreBot?start=${referralCode.value}`;
-                        const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-                        
-                        if(tg?.openTelegramLink) {
-                            tg.openTelegramLink(tgUrl);
-                        } else {
-                            window.open(tgUrl, '_blank');
-                        }
-                    } catch (e) {
-                        console.error('Share error:', e);
-                        // Fallback для обычного шаринга
-                        shareResult();
-                    }
-                };
-
-                const shareToLeaderboard = () => {
-                    const text = `🏆 Мой рекорд в ETHOS: CORE - ${highScore.value} дней! Сможешь побить?`;
-                    const url = `https://t.me/EthosCoreBot`;
-                    const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-                    if(tg?.openTelegramLink) tg.openTelegramLink(tgUrl); 
-                    else window.open(tgUrl, '_blank');
-                };
-
-                // ЛИДЕРБОРД
-                const initLeaderboard = () => {
-                    if (leaderboard.value.length === 0) {
-                        // Создаем демо-данные
-                        leaderboard.value = Array.from({length: 10}, (_, i) => ({
-                            name: RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)],
-                            score: Math.floor(Math.random() * 50) + 10,
-                            deaths: Math.floor(Math.random() * 8) + 1,
-                            date: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toLocaleDateString()
-                        })).sort((a, b) => b.score - a.score);
-                        saveLeaderboard();
-                    }
-                };
-
-                const updateLeaderboard = () => {
-                    if (moves.value > highScore.value) {
-                        highScore.value = moves.value;
-                        // В реальном приложении здесь бы отправлялись данные на сервер
-                    }
-                };
-
-                const saveLeaderboard = () => {
-                    localStorage.setItem('ec_leaderboard', JSON.stringify(leaderboard.value));
-                };
-
-                // ИГРОВЫЕ ФУНКЦИИ
                 const buyUpgrade = (item) => {
                     if(bits.value >= item.price) {
                         bits.value -= item.price;
                         upgrades.value[item.id] = true;
-                        saveData(); 
-                        playSound('buy'); 
-                        haptic('success');
+                        saveData(); playSound('buy'); haptic('success');
                     }
                 };
 
                 const buyBits = (pack) => {
                     bits.value += pack.amount;
-                    saveData(); 
-                    playSound('buy'); 
-                    haptic('success');
+                    saveData(); playSound('buy'); haptic('success');
                     alert(`+${pack.amount} ฿ (DEMO)`);
                 };
 
@@ -721,128 +515,91 @@
                 };
 
                 const startGame = () => {
-                    try {
-                        playSound('click');
-                        stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
-                        deck.value = [...SCENARIOS].sort(() => 0.5 - Math.random()).slice(0, 30);
-                        cardIdx.value = 0; 
-                        moves.value = 0; 
-                        earnedBits.value = 0;
-                        deathReason.value = null; 
-                        reviveTriggered.value = false; 
-                        flyDir.value = null;
-                        screen.value = 'playing';
-                    } catch (e) {
-                        console.error('Start game error:', e);
-                    }
+                    playSound('click');
+                    stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
+                    // Берем случайные 30 сценариев из всего пула для каждой игры
+                    deck.value = [...SCENARIOS]
+                        .sort(() => 0.5 - Math.random())
+                        .slice(0, 30);
+                    cardIdx.value = 0; moves.value = 0; earnedBits.value = 0;
+                    deathReason.value = null; reviveTriggered.value = false; flyDir.value = null;
+                    screen.value = 'playing';
                 };
 
                 const checkDeath = () => {
-                    try {
-                        const s = stats.value;
-                        if(s.pop <= 0) return {id:'pop_low',t:"СВЕРГНУТ ТОЛПОЙ"}; 
-                        if(s.pop >= 100) return {id:'pop_high',t:"УБИТ ФАНАТИКОМ"};
-                        if(s.fin <= 0) return {id:'fin_low',t:"БАНКРОТСТВО"}; 
-                        if(s.fin >= 100) return {id:'fin_high',t:"КРАХ ОЛИГАРХИИ"};
-                        if(s.sec <= 0) return {id:'sec_low',t:"ВТОРЖЕНИЕ ВРАГА"}; 
-                        if(s.sec >= 100) return {id:'sec_high',t:"ВОЕННЫЙ ПЕРЕВОРОТ"};
-                        if(s.mor <= 0) return {id:'mor_low',t:"ПУБЛИЧНАЯ КАЗНЬ"}; 
-                        if(s.mor >= 100) return {id:'mor_high',t:"СВЯТОЙ МУЧЕНИК"};
-                        
-                        // Особые смерти
-                        if(moves.value > 50 && s.sec <= 10 && s.pop <= 15) return {id:'alien_invasion',t:"ПОРАБОЩЕН ПРИШЕЛЬЦАМИ"};
-                        if(moves.value > 40 && s.fin >= 90 && s.mor <= 10) return {id:'ai_takeover',t:"ЗАМЕНЕН ИСКУССТВЕННЫМ ИНТЕЛЛЕКТОМ"};
-                        
-                        return null;
-                    } catch (e) {
-                        console.error('Check death error:', e);
-                        return null;
-                    }
+                    const s = stats.value;
+                    if(s.pop<=0) return {id:'pop_low',t:"СВЕРГНУТ ТОЛПОЙ"}; 
+                    if(s.pop>=100) return {id:'pop_high',t:"УБИТ ФАНАТИКОМ"};
+                    if(s.fin<=0) return {id:'fin_low',t:"БАНКРОТСТВО"}; 
+                    if(s.fin>=100) return {id:'fin_high',t:"КРАХ ОЛИГАРХИИ"};
+                    if(s.sec<=0) return {id:'sec_low',t:"ВТОРЖЕНИЕ ВРАГА"}; 
+                    if(s.sec>=100) return {id:'sec_high',t:"ВОЕННЫЙ ПЕРЕВОРОТ"};
+                    if(s.mor<=0) return {id:'mor_low',t:"ПУБЛИЧНАЯ КАЗНЬ"}; 
+                    if(s.mor>=100) return {id:'mor_high',t:"СВЯТОЙ МУЧЕНИК"};
+                    
+                    // Особые смерти
+                    if(moves.value > 50 && s.sec <= 10 && s.pop <= 15) return {id:'alien_invasion',t:"ПОРАБОЩЕН ПРИШЕЛЬЦАМИ"};
+                    if(moves.value > 40 && s.fin >= 90 && s.mor <= 10) return {id:'ai_takeover',t:"ЗАМЕНЕН ИСКУССТВЕННЫМ ИНТЕЛЛЕКТОМ"};
+                    if(moves.value > 35 && s.pop <= 20 && s.mor <= 20) return {id:'zombie_apocalypse',t:"СТАЛ ЖЕРТВОЙ ЗОМБИ"};
+                    
+                    return null;
                 };
 
                 const makeChoice = (dir) => {
-                    try {
-                        if(deathReason.value || flyDir.value) return;
-                        
-                        playSound('swipe'); 
-                        haptic('medium');
-                        flyDir.value = dir;
+                    if(deathReason.value || flyDir.value) return;
+                    
+                    playSound('swipe'); haptic('medium');
+                    flyDir.value = dir;
 
-                        const card = activeScenario.value;
-                        if (!card) return;
+                    const card = activeScenario.value;
+                    const impact = card[dir].stats;
+                    for(let k in impact) stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
 
-                        const impact = card[dir].stats;
-                        for(let k in impact) {
-                            stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
-                        }
-
-                        if(card[dir].followUp) {
-                            const newCards = card[dir].followUp.map(id => CHAIN_EVENTS[id]).filter(Boolean);
-                            deck.value.splice(cardIdx.value + 1, 0, ...newCards); 
-                        }
-
-                        let death = checkDeath();
-                        
-                        if(death && upgrades.value.revive && !reviveTriggered.value) {
-                            death = null; 
-                            reviveTriggered.value = true;
-                            playSound('revive'); 
-                            haptic('heavy');
-                            stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
-                            setTimeout(() => reviveTriggered.value = false, 2500);
-                        }
-
-                        setTimeout(() => {
-                            try {
-                                if(death) {
-                                    deathReason.value = death.t;
-                                    playSound('death'); 
-                                    haptic('error');
-                                    let earned = moves.value * 2;
-                                    if(upgrades.value.miner) earned *= 2;
-                                    earnedBits.value = earned; 
-                                    bits.value += earned;
-                                    totalEarnedBits.value += earned;
-                                    if(moves.value > highScore.value) {
-                                        highScore.value = moves.value;
-                                        updateLeaderboard();
-                                    }
-                                    if(!unlockedDeaths.value.includes(death.id)) {
-                                        unlockedDeaths.value.push(death.id);
-                                    }
-                                    saveData();
-                                    screen.value = 'end';
-                                } else {
-                                    flyDir.value = null;
-                                    cardIdx.value++; 
-                                    moves.value++;
-                                    if(anomalyActive.value) playSound('anomaly');
-                                    if(cardIdx.value >= deck.value.length) {
-                                        const newCards = [...SCENARIOS]
-                                            .sort(() => 0.5 - Math.random())
-                                            .slice(0, 15);
-                                        deck.value.push(...newCards);
-                                    }
-                                }
-                            } catch (e) {
-                                console.error('Choice timeout error:', e);
-                            }
-                        }, 300);
-                    } catch (e) {
-                        console.error('Make choice error:', e);
+                    if(card[dir].followUp) {
+                        const newCards = card[dir].followUp.map(id => CHAIN_EVENTS[id]).filter(Boolean);
+                        deck.value.splice(cardIdx.value + 1, 0, ...newCards); 
                     }
+
+                    let death = checkDeath();
+                    
+                    if(death && upgrades.value.revive && !reviveTriggered.value) {
+                        death = null; reviveTriggered.value = true;
+                        playSound('revive'); haptic('heavy');
+                        stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
+                        setTimeout(() => reviveTriggered.value = false, 2500);
+                    }
+
+                    setTimeout(() => {
+                        if(death) {
+                            deathReason.value = death.t;
+                            playSound('death'); haptic('error');
+                            let earned = moves.value * 2;
+                            if(upgrades.value.miner) earned *= 2;
+                            earnedBits.value = earned; bits.value += earned;
+                            if(moves.value > highScore.value) highScore.value = moves.value;
+                            if(!unlockedDeaths.value.includes(death.id)) unlockedDeaths.value.push(death.id);
+                            saveData();
+                            screen.value = 'end';
+                        } else {
+                            flyDir.value = null;
+                            cardIdx.value++; moves.value++;
+                            if(anomalyActive.value) playSound('anomaly');
+                            if(cardIdx.value >= deck.value.length) {
+                                // Добавляем еще случайных сценариев когда колода заканчивается
+                                const newCards = [...SCENARIOS]
+                                    .sort(() => 0.5 - Math.random())
+                                    .slice(0, 15);
+                                deck.value.push(...newCards);
+                            }
+                        }
+                    }, 300);
                 };
 
                 const shareResult = () => {
-                    try {
-                        const text = `💀 Я прожил ${moves.value} дней в ETHOS: CORE и погиб от: ${deathReason.value}. Сможешь лучше?`;
-                        const url = `https://t.me/EthosCoreBot`;
-                        const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-                        if(tg?.openTelegramLink) tg.openTelegramLink(tgUrl); 
-                        else window.open(tgUrl, '_blank');
-                    } catch (e) {
-                        console.error('Share result error:', e);
-                    }
+                    const text = `💀 Я прожил ${moves.value} дней в ETHOS: CORE и погиб от: ${deathReason.value}. Сможешь лучше?`;
+                    const url = `https://t.me/EthosCoreBot`;
+                    const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+                    if(tg && tg.openTelegramLink) tg.openTelegramLink(tgUrl); else window.open(tgUrl, '_blank');
                 };
 
                 const restartToMenu = () => { 
@@ -852,61 +609,47 @@
                 };
 
                 const saveData = () => {
-                    try {
-                        localStorage.setItem('ec_bits', bits.value);
-                        localStorage.setItem('ec_upgrades', JSON.stringify(upgrades.value));
-                        localStorage.setItem('ec_deaths', JSON.stringify(unlockedDeaths.value));
-                        localStorage.setItem('ec_score', highScore.value);
-                        localStorage.setItem('ec_totalEarned', totalEarnedBits.value);
-                        localStorage.setItem('ec_invitedFriends', invitedFriends.value);
-                    } catch (e) {
-                        console.error('Save data error:', e);
-                    }
+                    localStorage.setItem('ec_bits', bits.value);
+                    localStorage.setItem('ec_upgrades', JSON.stringify(upgrades.value));
+                    localStorage.setItem('ec_deaths', JSON.stringify(unlockedDeaths.value));
+                    localStorage.setItem('ec_score', highScore.value);
                 };
 
                 const getStatIcon = (k) => ({pop:'👥', fin:'💰', sec:'🛡️', mor:'⚖️'}[k]);
                 const getBarColor = (k, v) => (v < 15 || v > 85) ? 'bg-red-500 shadow-[0_0_15px_red]' : {pop:'bg-blue-400', fin:'bg-yellow-400', sec:'bg-green-400', mor:'bg-purple-400'}[k];
 
                 return { 
-                    screen, bits, upgrades, shopItems: SHOP_ITEMS, starPacks: STAR_PACKS, 
-                    unlockedDeaths, allDeaths: DEATHS, highScore, stats, totalEarnedBits,
+                    screen, bits, upgrades, shopItems: SHOP_ITEMS, starPacks: STAR_PACKS, unlockedDeaths, allDeaths: DEATHS, highScore, stats,
                     activeScenario, cardStyle, moves, deathReason, earnedBits, reviveTriggered, anomalyActive,
-                    referralCode, invitedFriends, dailyBonusClaimed, leaderboard, dailyQuests,
-                    startGame, buyUpgrade, buyBits, restartToMenu, makeChoice, 
-                    getStatIcon, getBarColor, shareResult, getImpact, shareWithReferral,
-                    copyReferralCode, dailyShare, shareToLeaderboard
+                    startGame, buyUpgrade, buyBits, restartToMenu, makeChoice, getStatIcon, getBarColor, shareResult, getImpact
                 };
             }
         }).mount('#app');
 
         function initMatrix() {
-            try {
-                const c = document.getElementById('matrix'); 
-                if (!c) return;
+            const c = document.getElementById('matrix'); 
+            if (!c) return;
+            
+            const ctx = c.getContext('2d');
+            c.width = window.innerWidth; 
+            c.height = window.innerHeight;
+            
+            const drops = Array(Math.floor(c.width/20)).fill(1);
+            
+            function draw() {
+                ctx.fillStyle = 'rgba(0,0,0,0.05)'; 
+                ctx.fillRect(0,0,c.width,c.height); 
+                ctx.fillStyle = '#0F0'; 
+                ctx.font = '15px monospace';
                 
-                const ctx = c.getContext('2d');
-                c.width = window.innerWidth; 
-                c.height = window.innerHeight;
-                
-                const drops = Array(Math.floor(c.width/20)).fill(1);
-                
-                function draw() {
-                    ctx.fillStyle = 'rgba(0,0,0,0.05)'; 
-                    ctx.fillRect(0,0,c.width,c.height); 
-                    ctx.fillStyle = '#0F0'; 
-                    ctx.font = '15px monospace';
-                    
-                    for(let i=0; i<drops.length; i++) {
-                        ctx.fillText(String.fromCharCode(0x30A0+Math.random()*96), i*20, drops[i]*20);
-                        if(drops[i]*20 > c.height && Math.random()>0.975) drops[i] = 0; 
-                        drops[i]++;
-                    }
-                    requestAnimationFrame(draw);
+                for(let i=0; i<drops.length; i++) {
+                    ctx.fillText(String.fromCharCode(0x30A0+Math.random()*96), i*20, drops[i]*20);
+                    if(drops[i]*20 > c.height && Math.random()>0.975) drops[i] = 0; 
+                    drops[i]++;
                 }
-                draw();
-            } catch (e) {
-                console.error('Matrix error:', e);
+                requestAnimationFrame(draw);
             }
+            draw();
         }
     </script>
 </body>
