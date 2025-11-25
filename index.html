@@ -466,7 +466,7 @@
                     if(activeScenario.value.news) newsText.value = activeScenario.value.news;
                 };
 
-                const makeChoice = (dir) => {
+                                const makeChoice = (dir) => {
                     if(flyDir.value || activeEvent.value) return;
                     if(tg) tg.HapticFeedback.impactOccurred('medium');
                     playSound('click');
@@ -476,7 +476,10 @@
                     if(activeScenario.value.type === 'project' && activeScenario.value[dir].project) {
                         projectProgress.value += activeScenario.value[dir].project;
                         playSound('win');
-                        if(projectProgress.value >= 100) { setTimeout(() => { screen.value = 'win'; unlockAchievement('win'); }, 500); return; }
+                        if(projectProgress.value >= 100) { 
+                            setTimeout(() => { screen.value = 'win'; unlockAchievement('win'); }, 500); 
+                            return; 
+                        }
                     }
 
                     let hasDamage = false;
@@ -484,10 +487,20 @@
                         stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
                         if(impact[k] < 0) hasDamage = true;
                     }
-                    if(hasDamage) { isShaking.value = true; setTimeout(() => isShaking.value = false, 400); }
+                    if(hasDamage) { 
+                        isShaking.value = true; 
+                        setTimeout(() => isShaking.value = false, 400); 
+                    }
                     moves.value++;
                     checkAchievements();
-                    setTimeout(() => { if(checkDeath()) return; if(Math.random() < 0.15 && moves.value > 3) triggerEvent(); else pickCard(); }, 300);
+
+                    setTimeout(() => {
+                        flyDir.value = null;
+                        activeScenario.value = null;           // ← ВАЖНО: убираем старую карту
+                        if(checkDeath()) return;
+                        if(Math.random() < 0.15 && moves.value > 3) triggerEvent();
+                        else pickCard();
+                    }, 300);
                 };
 
                 const checkDeath = () => {
@@ -542,7 +555,13 @@
                     });
                 };
 
-                const triggerEvent = () => { const rand = Math.floor(Math.random() * CRISES.length); activeEvent.value = CRISES[rand]; newsText.value = "⚠ ВНИМАНИЕ! УГРОЗА! ⚠"; if(tg) tg.HapticFeedback.notificationOccurred('warning'); };
+                                const triggerEvent = () => { 
+                    activeScenario.value = null;  // ← убираем обычную карту под кризисом
+                    const rand = Math.floor(Math.random() * CRISES.length); 
+                    activeEvent.value = CRISES[rand]; 
+                    newsText.value = "⚠ ВНИМАНИЕ! УГРОЗА! ⚠"; 
+                    if(tg) tg.HapticFeedback.notificationOccurred('warning'); 
+                };
                 const resolveEvent = (choice) => { playSound('click'); const success = Math.random() <= choice.chance; if(success) finishEvent(true, choice.successMsg); else { if(choice.fail === 'death') { deathReason.value = choice.failMsg; playSound('death'); setTimeout(()=>screen.value='end', 500); } else finishEvent(false, choice.failMsg); } };
                 const startMinigame = (type) => { minigameType.value = type; screen.value = 'minigame'; if(type === 'hack') initHackGame(); if(type === 'lock') initLockGame(); };
                 
@@ -552,7 +571,20 @@
                 const checkLock = () => { clearInterval(lockInterval); finishMinigame(lockPos.value>=lockTarget.value && lockPos.value<=(lockTarget.value+lockSize.value)); };
                 
                 const finishMinigame = (win) => { screen.value = 'game'; const evt = activeEvent.value; if(win) { if(evt.winImpact) for(let k in evt.winImpact) stats.value[k]+=evt.winImpact[k]; finishEvent(true, evt.successMsg); } else { if(evt.failImpact) for(let k in evt.failImpact) stats.value[k]+=evt.failImpact[k]; finishEvent(false, evt.failMsg); } };
-                const finishEvent = (success, msg) => { activeEvent.value = null; eventResult.value = { success, msg }; if(success) playSound('win'); else playSound('death'); };
+                                const finishEvent = (success, msg) => { 
+                    activeEvent.value = null; 
+                    eventResult.value = { success, msg }; 
+                    if(success) playSound('win'); 
+                    else playSound('death'); 
+
+                    // ← автоматически продолжаем игру после показа результата
+                    setTimeout(() => {
+                        eventResult.value = null;
+                        if(checkDeath()) return;
+                        if(Math.random() < 0.15 && moves.value > 3) triggerEvent();
+                        else pickCard();
+                    }, 800);
+                };
                 const closeEventResult = () => { eventResult.value = null; if(checkDeath()) return; pickCard(); };
                 const registerUser = () => { localStorage.setItem('ec_city', cityName.value); playSound('click'); screen.value = 'menu'; };
                 const buyItem = (i) => { if(bits.value>=i.price){bits.value-=i.price;upgrades.value[i.id]=true; localStorage.setItem('ec_bits',bits.value); localStorage.setItem('ec_upgrades',JSON.stringify(upgrades.value)); playSound('win'); }};
