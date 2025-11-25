@@ -3,22 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ETHOS: CORE</title>
+    <title>ETHOS: CRISIS</title>
     
-    <!-- БИБЛИОТЕКИ -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
 
     <style>
-        /* СТИЛИ (CYBERPUNK) */
-        :root { --bg: #050505; --primary: #00ff9d; --secondary: #00d2ff; --danger: #ff2a6d; --gold: #ffd700; }
+        :root { --bg: #050505; --primary: #00ff9d; --secondary: #00d2ff; --danger: #ff2a6d; }
         body { background-color: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent; }
-        
         [v-cloak] { display: none; }
-        
-        /* Кнопки со скошенными углами */
+
+        /* UI БАЗА */
         .cyber-btn {
             background: var(--primary); color: #000; 
             clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
@@ -26,15 +23,15 @@
         }
         .cyber-btn:active { transform: scale(0.96); filter: brightness(0.8); }
         
-        /* Карточка */
+        /* КАРТОЧКА */
         .game-card {
             width: 90%; max-width: 360px; height: 55vh; max-height: 500px;
             background: #111; border: 1px solid #333; border-radius: 16px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.9); overflow: hidden; position: relative;
-            transition: transform 0.3s ease-out; will-change: transform;
+            transition: transform 0.3s ease-out; will-change: transform; z-index: 10;
         }
         
-        /* Кнопки выбора */
+        /* КНОПКИ ВЫБОРА */
         .choice-btn {
             flex: 1; height: 65px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
             background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
@@ -45,111 +42,95 @@
         .choice-btn.left { border-bottom: 4px solid var(--danger); }
         .choice-btn.right { border-bottom: 4px solid var(--primary); }
         
-        /* Полоски статов */
-        .stat-bar { height: 100%; transition: width 0.4s ease; }
+        /* АНИМАЦИИ КРИЗИСА */
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 42, 109, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 42, 109, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 42, 109, 0); } }
+        .crisis-overlay { background: radial-gradient(circle, transparent 0%, rgba(255,0,0,0.2) 100%); animation: pulse-bg 1s infinite; }
+        @keyframes pulse-bg { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         
-        /* Эффекты */
+        .stat-bar { height: 100%; transition: width 0.4s ease; }
         .scanlines { background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%); background-size: 100% 4px; position: fixed; inset: 0; pointer-events: none; z-index: 50; opacity: 0.2; }
         .cyber-input { background: #111; border: 1px solid #333; color: var(--primary); padding: 15px; width: 100%; font-family: inherit; text-transform: uppercase; text-align: center; outline: none; letter-spacing: 2px; }
-        .cyber-input:focus { border-color: var(--primary); box-shadow: 0 0 15px var(--primary); }
     </style>
 </head>
 <body>
-    
-    <!-- ФОНОВЫЕ ЭФФЕКТЫ -->
-    <canvas id="matrix" class="fixed inset-0 opacity-10 pointer-events-none"></canvas>
     <div class="scanlines"></div>
-
-    <!-- VUE APP -->
     <div id="app" v-cloak class="h-screen flex flex-col relative z-10">
         
-        <!-- 1. ЭКРАН РЕГИСТРАЦИИ -->
+        <!-- 1. РЕГИСТРАЦИЯ -->
         <div v-if="screen === 'reg'" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black p-6">
-            <div class="text-4xl mb-4">🏙️</div>
-            <h1 class="text-2xl font-bold text-white mb-2">ИДЕНТИФИКАЦИЯ</h1>
+            <h1 class="text-3xl font-bold text-white mb-2">ИДЕНТИФИКАЦИЯ</h1>
             <p class="text-xs text-gray-500 mb-8 uppercase tracking-widest">Назовите свой город</p>
-            
             <input v-model="cityName" maxlength="12" placeholder="НАЗВАНИЕ..." class="cyber-input mb-6 rounded" />
-            
-            <button @click="registerUser" :disabled="!cityName" class="cyber-btn w-full py-4 text-lg disabled:opacity-30 disabled:grayscale">
-                ПОДТВЕРДИТЬ
-            </button>
+            <button @click="registerUser" :disabled="!cityName" class="cyber-btn w-full py-4 text-lg disabled:opacity-30">ПОДТВЕРДИТЬ</button>
         </div>
 
-        <!-- 2. ГЛАВНОЕ МЕНЮ -->
+        <!-- 2. МЕНЮ -->
         <div v-if="screen === 'menu'" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/95 p-6 backdrop-blur">
             <h1 class="text-6xl font-black text-white mb-0 tracking-tighter text-center">ETHOS</h1>
-            <div class="text-[#00ff9d] text-xs tracking-[0.6em] mb-10 uppercase">CORE SYSTEM</div>
-            
+            <div class="text-[#00ff9d] text-xs tracking-[0.6em] mb-10 uppercase">CRISIS CORE</div>
             <div class="w-full max-w-xs space-y-3">
-                <!-- Инфо игрока -->
                 <div class="flex justify-between items-center bg-[#111] p-4 rounded border border-[#333] mb-2">
-                    <div>
-                        <div class="text-[10px] text-gray-500 uppercase">Правитель</div>
-                        <div class="text-sm font-bold">{{ cityName }}</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-[10px] text-gray-500 uppercase">Баланс</div>
-                        <div class="font-bold text-yellow-500 font-mono">{{ bits }} ฿</div>
-                    </div>
+                    <div><div class="text-[10px] text-gray-500 uppercase">Правитель</div><div class="text-sm font-bold">{{ cityName }}</div></div>
+                    <div class="text-right"><div class="text-[10px] text-gray-500 uppercase">Баланс</div><div class="font-bold text-yellow-500 font-mono">{{ bits }} ฿</div></div>
                 </div>
-                
-                <button @click="startGame" class="cyber-btn w-full py-5 text-xl shadow-[0_0_15px_rgba(0,255,157,0.3)]">ИГРАТЬ</button>
-                
+                <button @click="startGame" class="cyber-btn w-full py-5 text-xl">ИГРАТЬ</button>
                 <div class="grid grid-cols-2 gap-3">
-                    <button @click="screen='shop'" class="cyber-btn bg-[#00d2ff] py-4 text-sm">🛒 МАГАЗИН</button>
-                    <button @click="openLeaderboard" class="cyber-btn bg-purple-600 text-white py-4 text-sm">🏆 РЕЙТИНГ</button>
+                    <button @click="screen='shop'" class="cyber-btn bg-[#00d2ff] py-4 text-sm">МАГАЗИН</button>
+                    <button @click="openLeaderboard" class="cyber-btn bg-purple-600 text-white py-4 text-sm">РЕЙТИНГ</button>
                 </div>
-
-                <!-- Кнопка звука -->
-                <button @click="toggleSound" class="w-full py-3 border border-gray-800 text-gray-500 text-xs flex justify-center gap-2 items-center rounded hover:bg-gray-900 transition">
-                    <span>{{ soundEnabled ? '🔊 ЗВУК ВКЛЮЧЕН' : '🔇 ЗВУК ВЫКЛЮЧЕН' }}</span>
-                </button>
             </div>
         </div>
 
         <!-- 3. ЭКРАН ИГРЫ -->
         <div v-if="screen === 'game'" class="flex-1 flex flex-col relative overflow-hidden">
-            
-            <!-- Статы сверху -->
+            <!-- Статы -->
             <div class="px-4 py-4 bg-black border-b border-white/10 grid grid-cols-4 gap-3 z-30">
                 <div v-for="(val, key) in stats" :key="key" class="flex flex-col items-center">
                     <span class="text-xl mb-1">{{ icons[key] }}</span>
-                    <div class="h-1.5 bg-[#222] w-full rounded-full overflow-hidden">
-                        <div class="stat-bar" :class="getBarColor(val)" :style="{width: val + '%'}"></div>
-                    </div>
+                    <div class="h-1.5 bg-[#222] w-full rounded-full overflow-hidden"><div class="stat-bar" :class="getBarColor(val)" :style="{width: val + '%'}"></div></div>
                 </div>
             </div>
             
-            <!-- Зона карточки -->
+            <!-- Зона игры -->
             <div class="flex-1 flex items-center justify-center px-4 relative">
-                
-                <!-- Уведомление о смерти -->
-                <div v-if="deathReason" class="absolute z-[60] bg-red-600 text-white p-6 text-center font-black text-xl border-4 border-white rotate-[-3deg] shadow-[0_0_50px_rgba(255,0,0,0.8)] uppercase max-w-xs">
-                    {{ deathReason }}
+                <!-- ОВЕРЛЕЙ КРИЗИСА -->
+                <div v-if="activeEvent" class="absolute inset-0 z-20 crisis-overlay flex flex-col items-center justify-center pointer-events-none">
+                    <div class="text-red-500 font-black text-4xl tracking-[0.5em] animate-pulse opacity-20 rotate-[-45deg] absolute">CRITICAL ERROR</div>
                 </div>
 
-                <!-- Сама карточка -->
-                <div v-if="activeScenario" class="game-card" :style="cardStyle">
-                    <div class="h-3/5 bg-[#151515] flex items-center justify-center text-[8rem] relative border-b border-[#333]">
-                        <!-- Градиент -->
-                        <div class="absolute inset-0 bg-gradient-to-t from-[#111] to-transparent opacity-80"></div>
-                        <!-- Эмодзи -->
-                        <div class="transform scale-110 filter drop-shadow-2xl">{{ activeScenario.emoji }}</div>
-                        <!-- Счетчик дней -->
-                        <div class="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded text-[10px] font-mono text-gray-400 border border-gray-800">
-                            ДЕНЬ {{ moves }}
-                        </div>
+                <!-- КАРТОЧКА ОБЫЧНАЯ -->
+                <div v-if="activeScenario && !activeEvent" class="game-card" :style="cardStyle">
+                    <div class="h-3/5 bg-[#151515] flex items-center justify-center text-[8rem] border-b border-[#333] relative">
+                        {{ activeScenario.emoji }}
+                        <div class="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded text-[10px] font-mono text-gray-400 border border-gray-800">ДЕНЬ {{ moves }}</div>
                     </div>
                     <div class="h-2/5 p-6 flex flex-col items-center text-center bg-[#111] justify-center">
-                        <h3 class="text-lg font-bold text-[#00ff9d] mb-3 uppercase leading-tight tracking-wide">{{ activeScenario.title }}</h3>
+                        <h3 class="text-lg font-bold text-[#00ff9d] mb-3 uppercase leading-tight">{{ activeScenario.title }}</h3>
                         <p class="text-sm text-gray-300 font-mono leading-relaxed">{{ activeScenario.desc }}</p>
+                    </div>
+                </div>
+
+                <!-- КАРТОЧКА СОБЫТИЯ (КРИЗИСА) -->
+                <div v-if="activeEvent" class="game-card border-red-500 shadow-[0_0_50px_red] z-50">
+                    <div class="h-full p-6 flex flex-col bg-black items-center text-center relative">
+                        <div class="text-6xl mb-4 animate-bounce">{{ activeEvent.emoji }}</div>
+                        <h3 class="text-2xl font-black text-red-500 mb-2 uppercase glitch">⚠ {{ activeEvent.title }} ⚠</h3>
+                        <p class="text-sm text-white font-mono mb-8 leading-relaxed">{{ activeEvent.desc }}</p>
+                        
+                        <div class="w-full space-y-3 mt-auto">
+                            <button v-for="(choice, idx) in activeEvent.choices" :key="idx" @click="resolveEvent(choice)" 
+                                class="w-full py-4 border border-red-500/50 bg-red-900/20 hover:bg-red-900/40 text-white font-bold text-sm uppercase rounded relative overflow-hidden group transition">
+                                <span class="relative z-10">{{ choice.text }}</span>
+                                <div v-if="choice.chance" class="text-[9px] text-red-400 mt-1">Шанс успеха: {{ Math.floor(choice.chance * 100) }}%</div>
+                                <div v-if="choice.req" class="text-[9px] text-yellow-400 mt-1">Требуется: {{ icons[choice.req.stat] }} {{ choice.req.val }}%</div>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Кнопки выбора -->
-            <div v-if="activeScenario && !deathReason" class="pb-8 px-6 flex gap-4 z-40">
+            <!-- Кнопки выбора (только для обычных карт) -->
+            <div v-if="activeScenario && !deathReason && !activeEvent" class="pb-8 px-6 flex gap-4 z-40">
                 <button @click="makeChoice('left')" class="choice-btn left active:bg-red-900/20">
                     <span class="text-red-500 text-2xl mb-1">✕</span>
                     <span class="text-[10px] text-red-100 uppercase font-bold tracking-widest">{{ activeScenario.left.text }}</span>
@@ -161,104 +142,89 @@
             </div>
         </div>
 
-        <!-- 4. ТАБЛИЦА ЛИДЕРОВ -->
-        <div v-if="screen === 'ladder'" class="absolute inset-0 z-50 bg-black flex flex-col">
-            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#111]">
-                <h2 class="text-lg font-bold text-purple-400">ТОП ГОРОДОВ</h2>
-                <button @click="screen='menu'" class="text-xs border border-gray-600 px-3 py-1 rounded text-white hover:bg-gray-800">НАЗАД</button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-4 space-y-2">
-                <div v-if="loadingLadder" class="text-center text-gray-500 mt-10 animate-pulse font-mono">ЗАГРУЗКА ДАННЫХ...</div>
-                <div v-for="(player, idx) in leaderboard" :key="idx" class="flex justify-between items-center p-3 bg-[#0a0a0a] border border-gray-800 rounded" :class="{'border-purple-500 bg-purple-900/10': player.is_me}">
-                    <div class="flex items-center gap-4">
-                        <div class="font-black text-gray-600 w-6 text-center">{{ idx + 1 }}</div>
-                        <div class="text-sm font-bold text-white">{{ player.city }}</div>
-                    </div>
-                    <div class="font-mono text-yellow-500 text-sm">{{ player.score }} ДН</div>
-                </div>
-            </div>
+        <!-- 4. РЕЗУЛЬТАТ СОБЫТИЯ (POPUP) -->
+        <div v-if="eventResult" class="absolute inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center p-8 text-center backdrop-blur">
+            <div class="text-6xl mb-4">{{ eventResult.success ? '✅' : '❌' }}</div>
+            <h2 class="text-2xl font-bold mb-2" :class="eventResult.success ? 'text-green-400' : 'text-red-500'">
+                {{ eventResult.success ? 'УСПЕХ!' : 'ПРОВАЛ...' }}
+            </h2>
+            <p class="text-white mb-8">{{ eventResult.msg }}</p>
+            <button @click="closeEventResult" class="cyber-btn w-full py-4 text-lg">ПРОДОЛЖИТЬ</button>
         </div>
 
-        <!-- 5. МАГАЗИН -->
+        <!-- ОСТАЛЬНЫЕ ЭКРАНЫ (Магазин, Лидерборд, Смерть) - Стандартные -->
         <div v-if="screen === 'shop'" class="absolute inset-0 z-50 bg-black flex flex-col">
-            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#111]">
-                <div class="flex items-center gap-2">
-                    <h2 class="text-lg font-bold text-yellow-500">МАГАЗИН</h2>
-                    <span class="text-xs text-gray-500 font-mono">({{ bits }} ฿)</span>
-                </div>
-                <button @click="screen='menu'" class="text-xs border border-gray-600 px-3 py-1 rounded text-white hover:bg-gray-800">НАЗАД</button>
-            </div>
-            
-            <div class="p-4 space-y-4 overflow-y-auto pb-20">
-                <!-- Донат (Заглушка) -->
-                <div class="p-4 bg-gradient-to-r from-yellow-900/20 to-black border border-yellow-600/50 rounded-lg">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <div class="text-sm font-bold text-yellow-400">🌟 ПОДДЕРЖКА</div>
-                            <div class="text-[10px] text-gray-400">Донат через Telegram Stars</div>
-                        </div>
-                        <div class="text-2xl">⭐️</div>
-                    </div>
-                    <button @click="buyStars" class="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold text-xs py-3 rounded transition">
-                        КУПИТЬ 500 ВАЛЮТЫ
-                    </button>
-                </div>
-                
-                <div class="text-xs text-gray-500 uppercase tracking-widest mt-6 mb-2">Улучшения</div>
-                
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#111]"><h2 class="text-yellow-500 font-bold">МАГАЗИН</h2><button @click="screen='menu'" class="text-xs border border-gray-600 px-3 py-1 rounded">НАЗАД</button></div>
+            <div class="p-4 space-y-3">
                 <div v-for="item in shopItems" :key="item.id" class="border border-gray-800 bg-[#0a0a0a] p-3 rounded flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <div class="text-2xl">{{ item.icon }}</div>
-                        <div>
-                            <div class="font-bold text-xs text-white">{{ item.name }}</div>
-                            <div class="text-[10px] text-gray-500">{{ item.desc }}</div>
-                        </div>
-                    </div>
-                    
-                    <div v-if="upgrades[item.id]" class="text-green-500 text-[10px] font-bold border border-green-500 px-2 py-1 rounded bg-green-900/10">
-                        АКТИВНО
-                    </div>
-                    <button v-else @click="buyItem(item)" :disabled="bits < item.price" class="bg-[#00ff9d] text-black px-3 py-1.5 text-[10px] font-bold rounded disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition">
-                        {{ item.price }} ฿
-                    </button>
+                    <div><div class="font-bold text-sm">{{ item.icon }} {{ item.name }}</div><div class="text-[10px] text-gray-500">{{ item.desc }}</div></div>
+                    <button v-if="!upgrades[item.id]" @click="buyItem(item)" :disabled="bits < item.price" class="bg-primary text-black px-3 py-1 text-xs font-bold rounded">{{ item.price }} ฿</button>
+                    <div v-else class="text-green-500 text-xs">КУПЛЕНО</div>
+                </div>
+            </div>
+        </div>
+        
+        <div v-if="screen === 'ladder'" class="absolute inset-0 z-50 bg-black flex flex-col">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#111]"><h2 class="text-purple-400 font-bold">ТОП</h2><button @click="screen='menu'" class="text-xs border border-gray-600 px-3 py-1 rounded">НАЗАД</button></div>
+            <div class="p-4 space-y-2 overflow-y-auto">
+                <div v-for="(p, i) in leaderboard" :key="i" class="flex justify-between p-3 border border-gray-800 rounded bg-[#0a0a0a]">
+                    <div class="flex gap-3"><span class="text-gray-500">{{ i+1 }}</span><span>{{ p.city }}</span></div><span class="text-yellow-500">{{ p.score }}</span>
                 </div>
             </div>
         </div>
 
-        <!-- 6. ЭКРАН СМЕРТИ -->
-        <div v-if="screen === 'end'" class="absolute inset-0 z-[100] bg-red-950/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-md">
-            <div class="text-6xl mb-4 animate-pulse">☠️</div>
-            <h2 class="text-3xl font-black uppercase mb-2 tracking-tighter text-white">ГОРОД ПАЛ</h2>
-            <p class="text-red-300 text-xs uppercase mb-8 tracking-widest font-bold">{{ deathReason }}</p>
-            
-            <div class="flex gap-4 w-full max-w-xs mb-8">
-                <div class="bg-black/50 p-3 rounded flex-1 border border-white/10">
-                    <div class="text-[10px] text-gray-400 uppercase">Выживание</div>
-                    <div class="text-2xl font-mono text-white">{{ moves }} ДН</div>
-                </div>
-                <div class="bg-black/50 p-3 rounded flex-1 border border-white/10">
-                    <div class="text-[10px] text-yellow-500 uppercase">Доход</div>
-                    <div class="text-2xl font-mono text-yellow-400">+{{ lastEarned }} ฿</div>
-                </div>
-            </div>
-            
-            <button @click="screen='menu'" class="cyber-btn w-full max-w-xs py-4 text-lg uppercase shadow-lg">ГЛАВНОЕ МЕНЮ</button>
+        <div v-if="screen === 'end'" class="absolute inset-0 z-[100] bg-red-950/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur">
+            <div class="text-6xl mb-4">☠️</div><h2 class="text-3xl font-black mb-2">ГОРОД ПАЛ</h2><p class="text-red-300 text-xs font-bold mb-8">{{ deathReason }}</p>
+            <div class="mb-8 font-mono"><div class="text-gray-400 text-xs">Прожито</div><div class="text-3xl">{{ moves }} ДН</div></div>
+            <button @click="screen='menu'" class="cyber-btn w-full py-4 text-lg">В МЕНЮ</button>
         </div>
-
     </div>
 
     <script>
         const { createApp, ref, computed, onMounted } = Vue;
         const tg = window.Telegram?.WebApp;
+        const API_URL = "https://YOUR-BACKEND.com"; // Заглушка
 
-        // --- КОНФИГУРАЦИЯ ---
-        // Сюда вставишь ссылку на Python сервер (ngrok или хостинг), когда он будет готов
-        const API_URL = "https://YOUR-BACKEND-URL.com"; 
+        // === 1. КРИТИЧЕСКИЕ СОБЫТИЯ (CRISES) ===
+        const CRISES = [
+            {
+                id: 'assassin', emoji: '🔫', title: 'ПОКУШЕНИЕ', desc: 'Снайпер на крыше! В вас целятся.',
+                choices: [
+                    { text: 'НЫРНУТЬ В МАШИНУ', chance: 0.5, successMsg: 'Пуля разбила стекло, но вы целы.', failMsg: 'Слишком медленно...', fail: 'death' },
+                    { text: 'ОХРАНА, ЗАКРЫТЬ!', req: {stat:'sec', val:60}, successMsg: 'Охрана сработала профессионально.', failMsg: 'Ваша охрана слишком слаба.', fail: 'death' }
+                ]
+            },
+            {
+                id: 'plague', emoji: '☣️', title: 'ЧУМА', desc: 'Неизвестный вирус в центре города.',
+                choices: [
+                    { text: 'СЖЕЧЬ РАЙОН', chance: 1.0, impact:{pop:-30, mor:-20}, successMsg: 'Жестоко, но эффективно. Вирус остановлен.' },
+                    { text: 'ЛЕЧИТЬ (РИСК)', chance: 0.4, impact:{fin:-20}, successMsg: 'Врачи справились!', failMsg: 'Вакцина не помогла, эпидемия вышла из-под контроля.', fail: 'death' }
+                ]
+            },
+            {
+                id: 'casino', emoji: '🎰', title: 'СТАВКА ВСЕГО', desc: 'Безумный инвестор предлагает сыграть на бюджет страны.',
+                choices: [
+                    { text: 'ОТКАЗАТЬСЯ', chance: 1.0, impact:{fin:-5}, successMsg: 'Скучно, но безопасно.' },
+                    { text: 'ОРЕЛ ИЛИ РЕШКА', chance: 0.5, impact:{fin:50}, successMsg: 'ВЫ ВЫИГРАЛИ МИЛЛИАРДЫ!', failMsg: 'Вы проиграли всю казну.', fail:{fin:-100} }
+                ]
+            },
+            {
+                id: 'ufo', emoji: '🛸', title: 'ВТОРЖЕНИЕ', desc: 'Корабли пришельцев над городом.',
+                choices: [
+                    { text: 'АТАКОВАТЬ', req: {stat:'sec', val:70}, successMsg: 'Мы сбили их флагман!', failMsg: 'Наши ракеты не пробили их щиты.', fail: 'death' },
+                    { text: 'СДАТЬСЯ', chance: 1.0, impact:{mor:-50, pop:-20}, successMsg: 'Нас поработили, но мы живы.' }
+                ]
+            }
+        ];
 
-        // --- 100+ СЦЕНАРИЕВ ---
+        // === 2. ОБЫЧНЫЕ КАРТЫ ===
         const SCENARIOS = [
-            // === ПОЛИТИКА ===
-            { emoji:'🗳️', title:'ВЫБОРЫ', desc:'Оппозиция требует честности.', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10, mor:-10}}, right:{text:'ЧЕСТНО', s:{pop:10, sec:-10, fin:-5}} },
+            { emoji:'🗳️', title:'ВЫБОРЫ', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10}}, right:{text:'ЧЕСТНО', s:{pop:10, sec:-10}} },
+            { emoji:'💰', title:'НАЛОГИ', left:{text:'НЕТ', s:{fin:-10}}, right:{text:'ПОДНЯТЬ', s:{fin:15, pop:-15}} },
+            { emoji:'🏭', title:'ЗАВОД', left:{text:'ЗАКРЫТЬ', s:{fin:-10, pop:-10}}, right:{text:'РАБОТАТЬ', s:{fin:15, pop:-5}} },
+            { emoji:'👮', title:'ПОЛИЦИЯ', left:{text:'МЕНЬШЕ', s:{sec:-15, fin:5}}, right:{text:'БОЛЬШЕ', s:{sec:15, fin:-10}} },
+            { emoji:'🏥', title:'БОЛЬНИЦЫ', left:{text:'ПЛАТНЫЕ', s:{fin:10, pop:-15}}, right:{text:'БЕСПЛАТНО', s:{fin:-15, pop:10}} },
+             { emoji:'🗳️', title:'ВЫБОРЫ', desc:'Оппозиция требует честности.', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10, mor:-10}}, right:{text:'ЧЕСТНО', s:{pop:10, sec:-10, fin:-5}} },
             { emoji:'👑', title:'КУЛЬТ', desc:'Поставить вам памятник?', left:{text:'СКРОМНО', s:{pop:5, fin:5}}, right:{text:'ЗОЛОТОЙ', s:{pop:-10, fin:-20, sec:10}} },
             { emoji:'🤐', title:'СМИ', desc:'Цензура в интернете?', left:{text:'СВОБОДА', s:{pop:10, sec:-10}}, right:{text:'БЛОК', s:{sec:15, pop:-15, mor:-5}} },
             { emoji:'🤝', title:'ЛОББИ', desc:'Корпорации просят закон.', left:{text:'ОТКАЗ', s:{fin:-10, pop:5}}, right:{text:'ПРИНЯТЬ', s:{fin:20, pop:-10, mor:-10}} },
@@ -314,12 +280,12 @@
             { emoji:'🦖', title:'ДИНОЗАВР', desc:'Клонировали T-Rex.', left:{text:'КРУТО', s:{pop:10, sec:-10}}, right:{text:'СЪЕСТ ВСЕХ', s:{sec:5, pop:-20}} },
             { emoji:'🍆', title:'ОВОЩИ', desc:'Запретить баклажаны?', left:{text:'НЕТ', s:{pop:5}}, right:{text:'ЦЕНЗУРА', s:{pop:-5, mor:5}} },
             { emoji:'🍺', title:'ПИВО', desc:'Бесплатное пиво?', left:{text:'АЛКОГОЛИЗМ', s:{mor:-10, pop:-5}}, right:{text:'УРА!', s:{pop:20, fin:-20, sec:-10}} }
+
         ];
 
         createApp({
             setup() {
                 const screen = ref('reg');
-                const soundEnabled = ref(true);
                 const cityName = ref(localStorage.getItem('ec_city') || '');
                 const bits = ref(parseInt(localStorage.getItem('ec_bits') || 0));
                 const upgrades = ref(JSON.parse(localStorage.getItem('ec_upgrades') || '{}'));
@@ -327,74 +293,20 @@
                 const stats = ref({ pop: 50, fin: 50, sec: 50, mor: 50 });
                 const icons = { pop:'👥', fin:'💰', sec:'🛡️', mor:'⚖️' };
                 const moves = ref(0);
-                const lastEarned = ref(0);
+                
                 const activeScenario = ref(null);
+                const activeEvent = ref(null); // Текущий кризис
+                const eventResult = ref(null); // Результат кризиса
+                
                 const deathReason = ref(null);
                 const leaderboard = ref([]);
-                const loadingLadder = ref(false);
                 const flyDir = ref(null);
 
-                onMounted(() => {
-                    if(tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#000000'); }
-                    initMatrix();
-                    if(cityName.value) screen.value = 'menu';
-                });
-
-                const cardStyle = computed(() => {
-                    if(!flyDir.value) return {};
-                    const x = flyDir.value === 'right' ? 500 : -500;
-                    const rot = flyDir.value === 'right' ? 30 : -30;
-                    return { transform: `translate(${x}px, 100px) rotate(${rot}deg)`, opacity: 0 };
-                });
-
-                // --- ЗВУКОВОЙ ДВИЖОК ---
-                let audioCtx;
-                const playSound = (type) => {
-                    if(!soundEnabled.value) return;
-                    try {
-                        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        if(audioCtx.state === 'suspended') audioCtx.resume();
-                        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                        o.connect(g); g.connect(audioCtx.destination);
-                        const t = audioCtx.currentTime;
-                        
-                        if(type==='click'){ 
-                            o.type='triangle'; o.frequency.setValueAtTime(800,t); 
-                            g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.1); 
-                            o.start(t); o.stop(t+0.1); 
-                        }
-                        if(type==='death'){ 
-                            o.type='sawtooth'; o.frequency.setValueAtTime(150,t); o.frequency.linearRampToValueAtTime(50,t+0.5); 
-                            g.gain.setValueAtTime(0.2,t); g.gain.linearRampToValueAtTime(0,t+0.5); 
-                            o.start(t); o.stop(t+0.5); 
-                            if(tg) tg.HapticFeedback.notificationOccurred('error');
-                        }
-                        if(type==='coin'){
-                            o.type='sine'; o.frequency.setValueAtTime(1200,t); g.gain.setValueAtTime(0.05,t);
-                            o.start(t); o.stop(t+0.15);
-                        }
-                    } catch(e){}
-                };
-                const toggleSound = () => { soundEnabled.value = !soundEnabled.value; };
-
                 // --- ЛОГИКА ИГРЫ ---
-                const registerUser = () => {
-                    if(!cityName.value) return;
-                    localStorage.setItem('ec_city', cityName.value);
-                    // Отправка на сервер (асинхронно, чтобы не ждать)
-                    const userId = tg?.initDataUnsafe?.user?.id || 0;
-                    fetch(API_URL + '/api/register', { method: 'POST', body: JSON.stringify({tg_id: userId, city: cityName.value}) }).catch(()=>{});
-                    playSound('click');
-                    screen.value = 'menu';
-                };
-
                 const startGame = () => {
-                    playSound('click');
                     stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
-                    moves.value = 0; deathReason.value = null; lastEarned.value = 0;
-                    
-                    // Если куплен щит - активируем (логика может быть сложнее, пока просто флаг в голове)
-                    
+                    moves.value = 0; deathReason.value = null;
+                    activeEvent.value = null; eventResult.value = null;
                     pickCard();
                     screen.value = 'game';
                 };
@@ -406,149 +318,123 @@
                 };
 
                 const makeChoice = (dir) => {
-                    if(flyDir.value) return;
-                    
-                    if(tg) tg.HapticFeedback.impactOccurred('medium');
-                    playSound('click');
+                    if(flyDir.value || activeEvent.value) return;
                     flyDir.value = dir;
                     
+                    // 1. Применяем статы обычной карты
                     const impact = activeScenario.value[dir].s;
-                    for(let k in impact) {
-                        // Делим влияние на 2, чтобы игра длилась дольше (Баланс)
-                        stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + (impact[k])));
-                    }
+                    applyStats(impact);
                     moves.value++;
 
                     setTimeout(() => {
-                        const d = checkDeath();
-                        if(d) {
-                            // Игрок проиграл
-                            if(upgrades.value.shield) {
-                                // Использовать щит
-                                upgrades.value.shield = false;
-                                localStorage.setItem('ec_upgrades', JSON.stringify(upgrades.value));
-                                if(tg) tg.showPopup({message: '🛡️ ЩИТ СПАС ВАС ОТ ГИБЕЛИ!'});
-                                stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 }; // Сброс статов в норму
-                                pickCard();
-                            } else {
-                                // Смерть
-                                deathReason.value = d;
-                                playSound('death');
-                                
-                                let earned = moves.value * 2; // 2 монеты за день
-                                lastEarned.value = earned;
-                                bits.value += earned;
-                                localStorage.setItem('ec_bits', bits.value);
-                                
-                                // Сохранение рекорда на сервер
-                                const userId = tg?.initDataUnsafe?.user?.id || 0;
-                                fetch(API_URL + '/api/score', { method: 'POST', body: JSON.stringify({ tg_id: userId, score: moves.value }) }).catch(()=>{});
-                                
-                                setTimeout(() => screen.value = 'end', 1000);
-                            }
+                        if(checkDeath()) return;
+
+                        // 2. ШАНС КРИЗИСА (15%)
+                        if(Math.random() < 0.15 && moves.value > 3) {
+                            triggerEvent();
                         } else {
                             pickCard();
                         }
-                    }, 250); // Ждем завершения анимации свайпа
+                    }, 250);
+                };
+
+                // --- СИСТЕМА СОБЫТИЙ ---
+                const triggerEvent = () => {
+                    const rand = Math.floor(Math.random() * CRISES.length);
+                    activeEvent.value = CRISES[rand];
+                    if(tg) tg.HapticFeedback.notificationOccurred('warning');
+                };
+
+                const resolveEvent = (choice) => {
+                    let success = false;
+                    
+                    // Проверка условий
+                    if(choice.req) {
+                        // Проверка статов
+                        if(stats.value[choice.req.stat] >= choice.req.val) success = true;
+                        else success = false;
+                    } else {
+                        // Рандом (Шанс)
+                        success = Math.random() <= choice.chance;
+                    }
+
+                    // Результат
+                    if(success) {
+                        if(choice.impact) applyStats(choice.impact);
+                        eventResult.value = { success: true, msg: choice.successMsg };
+                    } else {
+                        if(choice.fail === 'death') {
+                            deathReason.value = choice.failMsg || "ВЫ ПОГИБЛИ ВО ВРЕМЯ КРИЗИСА";
+                            activeEvent.value = null; // Скрываем карту
+                            setTimeout(() => screen.value = 'end', 500);
+                            return;
+                        }
+                        if(typeof choice.fail === 'object') applyStats(choice.fail); // Штраф по статам
+                        eventResult.value = { success: false, msg: choice.failMsg || "Провал..." };
+                    }
+                    
+                    activeEvent.value = null; // Убираем карточку события
+                };
+
+                const closeEventResult = () => {
+                    eventResult.value = null;
+                    if(checkDeath()) return;
+                    pickCard();
+                };
+
+                // --- ВСПОМОГАТЕЛЬНЫЕ ---
+                const applyStats = (impact) => {
+                    for(let k in impact) {
+                        stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
+                    }
                 };
 
                 const checkDeath = () => {
                     const s = stats.value;
-                    if(s.pop<=0) return "СВЕРГНУТ ТОЛПОЙ"; 
-                    if(s.pop>=100) return "ХАОС АНАРХИИ";
-                    if(s.fin<=0) return "БАНКРОТСТВО"; 
-                    if(s.fin>=100) return "УБИТ ОЛИГАРХАМИ";
-                    if(s.sec<=0) return "ВТОРЖЕНИЕ ВРАГА"; 
-                    if(s.sec>=100) return "ВОЕННЫЙ ПЕРЕВОРОТ";
-                    if(s.mor<=0) return "МОРАЛЬНОЕ ДНО"; 
-                    if(s.mor>=100) return "ФАНАТИЗМ";
-                    return null;
-                };
+                    let reason = null;
+                    if(s.pop<=0 || s.pop>=100) reason = "БУНТ";
+                    if(s.fin<=0 || s.fin>=100) reason = "ЭКОНОМИКА";
+                    if(s.sec<=0 || s.sec>=100) reason = "ВОЙНА";
+                    if(s.mor<=0 || s.mor>=100) reason = "МОРАЛЬ";
 
-                // --- РЕЙТИНГ ---
-                const openLeaderboard = async () => {
-                    playSound('click');
-                    screen.value = 'ladder';
-                    loadingLadder.value = true;
-                    leaderboard.value = [];
-                    
-                    try {
-                        const res = await fetch(API_URL + '/api/ladder');
-                        if(res.ok) {
-                            leaderboard.value = await res.json();
-                        } else {
-                            throw new Error("Network");
-                        }
-                    } catch(e) {
-                        // Фейк данные для демо, если сервер недоступен
-                        setTimeout(() => {
-                            leaderboard.value = [
-                                { city: "NEO-TOKYO", score: 152, is_me: false },
-                                { city: "NIGHT-CITY", score: 98, is_me: false },
-                                { city: cityName.value, score: moves.value > 0 ? moves.value : 0, is_me: true },
-                                { city: "MOSCOW-2077", score: 45, is_me: false },
-                                { city: "CYBER-MINSK", score: 12, is_me: false },
-                            ].sort((a,b) => b.score - a.score);
-                        }, 500);
-                    } finally {
-                        loadingLadder.value = false;
-                    }
-                };
-
-                // --- МАГАЗИН ---
-                const shopItems = [
-                    {id:'lens',name:'ЛИНЗА ПРАВДЫ',icon:'👁️',desc:'Покажет влияние выбора',price:100},
-                    {id:'shield',name:'АВТО-ЩИТ',icon:'🛡️',desc:'Спасет от 1 смерти',price:500}
-                ];
-                
-                const buyItem = (item) => {
-                    if(bits.value >= item.price) {
-                        bits.value -= item.price;
-                        upgrades.value[item.id] = true;
+                    if(reason) {
+                        deathReason.value = reason;
+                        bits.value += moves.value;
                         localStorage.setItem('ec_bits', bits.value);
-                        localStorage.setItem('ec_upgrades', JSON.stringify(upgrades.value));
-                        playSound('coin');
-                        if(tg) tg.HapticFeedback.notificationOccurred('success');
-                    } else {
-                        if(tg) tg.HapticFeedback.notificationOccurred('error');
+                        setTimeout(() => screen.value = 'end', 1000);
+                        return true;
                     }
-                };
-                
-                const buyStars = () => {
-                    if(tg) tg.showPopup({message: "Донат в разработке! Пока начисляем бесплатно."});
-                    bits.value += 500;
-                    localStorage.setItem('ec_bits', bits.value);
-                    playSound('coin');
+                    return false;
                 };
 
-                const getBarColor = (v) => (v<15 || v>85) ? 'bg-red-500 shadow-[0_0_10px_red]' : 'bg-[#00ff9d]';
+                const registerUser = () => {
+                    if(!cityName.value) return;
+                    localStorage.setItem('ec_city', cityName.value);
+                    screen.value = 'menu';
+                };
+                
+                const openLeaderboard = () => {
+                    screen.value = 'ladder';
+                    leaderboard.value = [{city:cityName.value, score:moves.value}, {city:'Bot', score:50}]; // Заглушка
+                };
+
+                const cardStyle = computed(() => {
+                    if(!flyDir.value) return {};
+                    const x = flyDir.value === 'right' ? 500 : -500;
+                    return { transform: `translate(${x}px, 100px) rotate(${flyDir.value==='right'?20:-20}deg)`, opacity: 0 };
+                });
+
+                const shopItems = [{id:'lens',name:'ЛИНЗА',icon:'👁️',price:100,desc:'Показывает будущее'}];
+                const buyItem = (i) => { if(bits.value>=i.price){bits.value-=i.price;upgrades.value[i.id]=true;} };
+                const getBarColor = (v) => (v<20||v>80)?'bg-red-500':'bg-[#00ff9d]';
 
                 return { 
-                    screen, cityName, soundEnabled, bits, stats, icons, upgrades, activeScenario, cardStyle, deathReason, moves, lastEarned, leaderboard, loadingLadder, shopItems,
-                    registerUser, startGame, toggleSound, makeChoice, openLeaderboard, buyItem, buyStars, getBarColor
+                    screen, cityName, bits, stats, icons, upgrades, moves, 
+                    activeScenario, activeEvent, eventResult, deathReason, leaderboard, shopItems, cardStyle,
+                    registerUser, startGame, makeChoice, resolveEvent, closeEventResult, openLeaderboard, buyItem, getBarColor 
                 };
             }
         }).mount('#app');
-
-        // --- МАТРИЦА (ФОН) ---
-        function initMatrix() {
-            const c = document.getElementById('matrix');
-            if(!c) return;
-            const ctx = c.getContext('2d');
-            c.width = window.innerWidth; c.height = window.innerHeight;
-            const drops = Array(Math.floor(c.width/20)).fill(1);
-            function draw() {
-                ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(0,0,c.width,c.height);
-                ctx.fillStyle = '#0F0'; ctx.font = '15px monospace';
-                for(let i=0; i<drops.length; i++) {
-                    ctx.fillText(String.fromCharCode(0x30A0+Math.random()*96), i*20, drops[i]*20);
-                    if(drops[i]*20>c.height && Math.random()>0.98) drops[i]=0;
-                    drops[i]++;
-                }
-                requestAnimationFrame(draw);
-            }
-            draw();
-        }
     </script>
 </body>
 </html>
