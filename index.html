@@ -3,205 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ETHOS: TYCOON</title>
+    <title>ETHOS: MATRIX</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;800&family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;700;800&family=Russo+One&display=swap" rel="stylesheet">
 
     <style>
-        :root { --bg: #050505; --primary: #00ff9d; --secondary: #00d2ff; --danger: #ff2a6d; --gold: #ffd700; }
+        :root { --bg: #050505; --primary: #00ff41; --secondary: #008f11; --danger: #ff003c; --gold: #ffd700; }
         body { background-color: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent; margin: 0; }
         [v-cloak] { display: none !important; }
 
-        /* EFFECTS */
-        .crt::before { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); z-index: 99; background-size: 100% 2px, 3px 100%; pointer-events: none; }
-        #particles { position: fixed; top:0; left:0; width: 100%; height: 100%; z-index: 0; opacity: 0.4; }
+        /* MATRIX BG & CRT */
+        #matrix { position: fixed; top: 0; left: 0; z-index: 0; opacity: 0.3; }
+        .scanlines { position: fixed; inset: 0; z-index: 50; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%); background-size: 100% 4px; pointer-events: none; }
+        .crt-overlay { position: fixed; inset: 0; z-index: 51; background: radial-gradient(circle, transparent 50%, black 150%); pointer-events: none; }
 
-        /* UI */
-        .cyber-btn { background: var(--primary); color: #000; font-family: 'Russo One', sans-serif; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); transition: all 0.1s; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 10px rgba(0, 255, 157, 0.4); display: flex; align-items: center; justify-content: center; }
-        .cyber-btn:active { transform: scale(0.96); filter: brightness(1.2); }
-        .cyber-btn.gold { background: var(--gold); box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
-        .cyber-btn.blue { background: var(--secondary); color: black; box-shadow: 0 0 10px rgba(0, 210, 255, 0.4); }
-
-        .game-card { width: 88%; max-width: 340px; height: 52vh; max-height: 480px; background: #111; border: 1px solid #333; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); overflow: hidden; position: relative; z-index: 10; transform-style: preserve-3d; will-change: transform; }
+        /* ANIMATIONS */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
         
-        .choice-btn { flex: 1; height: 70px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.1s; }
+        .slide-enter-active, .slide-leave-active { transition: all 0.3s ease; }
+        .slide-enter-from { transform: translateY(20px); opacity: 0; }
+        .slide-leave-to { transform: translateY(-20px); opacity: 0; }
+
+        /* GLITCH EFFECT */
+        .glitch { position: relative; color: white; }
+        .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; }
+        .glitch::before { color: var(--primary); z-index: -1; animation: glitch-anim-1 3s infinite linear alternate-reverse; }
+        .glitch::after { color: var(--danger); z-index: -2; animation: glitch-anim-2 2s infinite linear alternate-reverse; }
+        @keyframes glitch-anim-1 { 0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px,0); } 100% { clip-path: inset(10% 0 50% 0); transform: translate(2px,0); } }
+        @keyframes glitch-anim-2 { 0% { clip-path: inset(10% 0 60% 0); transform: translate(2px,0); } 100% { clip-path: inset(80% 0 5% 0); transform: translate(-2px,0); } }
+
+        /* UI ELEMENTS */
+        .cyber-btn {
+            background: rgba(0, 20, 0, 0.9); color: var(--primary); border: 1px solid var(--primary);
+            font-family: 'Russo One', sans-serif; text-transform: uppercase; letter-spacing: 2px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2); position: relative; overflow: hidden;
+        }
+        .cyber-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.4), transparent);
+            transition: 0.5s;
+        }
+        .cyber-btn:hover::before { left: 100%; }
+        .cyber-btn:active { background: var(--primary); color: black; box-shadow: 0 0 20px var(--primary); transform: scale(0.98); }
+
+        .game-card {
+            width: 88%; max-width: 340px; height: 52vh; max-height: 480px;
+            background: #0a0a0a; border: 1px solid #333; border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.9); overflow: hidden; position: relative; z-index: 10;
+            transform-style: preserve-3d; will-change: transform; transition: transform 0.1s;
+        }
+
+        .choice-btn {
+            flex: 1; height: 70px; border-radius: 12px; border: 1px solid #333;
+            background: rgba(10, 10, 10, 0.9); backdrop-filter: blur(10px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: all 0.1s;
+        }
         .choice-btn:active { transform: scale(0.92); }
-        .choice-btn.left { border-bottom: 4px solid var(--danger); }
-        .choice-btn.right { border-bottom: 4px solid var(--primary); }
+        .choice-btn.left { border-bottom: 3px solid var(--danger); color: var(--danger); }
+        .choice-btn.right { border-bottom: 3px solid var(--primary); color: var(--primary); }
 
-        /* MINIGAMES */
-        .hack-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 0 auto; }
-        .hack-cell { aspect-ratio: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; cursor: pointer; transition: all 0.1s; }
-        .hack-cell.active { background: var(--secondary); box-shadow: 0 0 20px var(--secondary), inset 0 0 0 2px white; }
-        .hack-cell.wrong { background: var(--danger); animation: shake 0.3s; }
-        .lock-bar-container { width: 100%; height: 40px; background: #000; border: 2px solid #333; border-radius: 20px; position: relative; overflow: hidden; }
-        .lock-target { position: absolute; height: 100%; background: rgba(255, 215, 0, 0.3); border-left: 2px solid var(--gold); border-right: 2px solid var(--gold); z-index: 1; }
-        .lock-cursor { position: absolute; top: 0; width: 4px; height: 100%; background: #fff; box-shadow: 0 0 15px #fff; z-index: 2; }
-
-        .news-ticker-container { position: fixed; bottom: 0; left: 0; width: 100%; height: 28px; background: #000; border-top: 1px solid var(--primary); display: flex; align-items: center; overflow: hidden; z-index: 50; pointer-events: none; }
-        .news-content { white-space: nowrap; animation: ticker 25s linear infinite; color: var(--primary); font-size: 10px; text-shadow: 0 0 5px var(--primary); }
-        @keyframes ticker { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
-        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } 100% { transform: translateX(0); } }
-        .screen-shake { animation: shake 0.4s; }
+        .stat-bar { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); background: var(--primary); box-shadow: 0 0 5px var(--primary); }
+        .class-card { border: 1px solid #333; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; transition: 0.2s; }
+        .class-card.selected { border-color: var(--primary); background: rgba(0, 255, 65, 0.1); box-shadow: 0 0 15px rgba(0, 255, 65, 0.2); }
         
-        .stat-bar { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .ach-item { border: 1px solid #333; background: linear-gradient(90deg, #0a0a0a, #111); padding: 12px; border-radius: 8px; margin-bottom: 8px; opacity: 0.5; display: flex; align-items: center; gap: 12px; }
-        .ach-item.unlocked { border-color: var(--gold); opacity: 1; background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), #0a0a0a); }
-        .class-card { border: 1px solid #333; background: #0a0a0a; padding: 12px; border-radius: 12px; cursor: pointer; opacity: 0.6; transform: scale(0.95); transition: 0.2s; }
-        .class-card.selected { border-color: var(--primary); opacity: 1; transform: scale(1); box-shadow: 0 0 20px rgba(0,255,157,0.1); }
-        .cyber-input { background: #050505; border: 1px solid #333; color: var(--primary); padding: 15px; width: 100%; text-align: center; outline: none; border-radius: 8px; }
+        .cyber-input { background: black; border: 1px solid var(--primary); color: var(--primary); padding: 15px; width: 100%; text-align: center; outline: none; font-family: 'JetBrains Mono'; }
         
-        .shop-badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto; }
+        /* PROGRESS BAR */
+        .project-bar-container { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #111; z-index: 100; }
+        .project-bar { height: 100%; background: #00d2ff; box-shadow: 0 0 10px #00d2ff; transition: width 0.5s; }
     </style>
 </head>
-<body class="crt">
-    <canvas id="particles"></canvas>
+<body>
+    <canvas id="matrix"></canvas>
+    <div class="scanlines"></div>
+    <div class="crt-overlay"></div>
     
-    <div id="app" v-cloak class="h-screen flex flex-col relative z-10" :class="{'screen-shake': isShaking}">
+    <div id="app" v-cloak class="h-screen flex flex-col relative z-10" :class="{'animate-shake': isShaking}">
         
         <!-- 1. REGISTRATION -->
         <transition name="fade">
-            <div v-if="screen === 'reg'" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-6">
-                <h1 class="text-4xl font-bold text-white mb-2">ИДЕНТИФИКАЦИЯ</h1>
-                <p class="text-xs text-gray-500 mb-8 uppercase tracking-[0.3em]">Введите код города</p>
-                <input v-model="cityName" maxlength="12" placeholder="НАЗВАНИЕ..." class="cyber-input mb-6" />
-                <button @click="registerUser" :disabled="!cityName" class="cyber-btn w-full py-4 text-lg disabled:opacity-30 disabled:grayscale">ПОДТВЕРДИТЬ</button>
+            <div v-if="screen === 'reg'" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 p-6">
+                <h1 class="text-4xl font-bold text-white mb-4 glitch" data-text="ИДЕНТИФИКАЦИЯ">ИДЕНТИФИКАЦИЯ</h1>
+                <input v-model="cityName" maxlength="12" placeholder="ВВЕДИТЕ ИМЯ" class="cyber-input mb-6" />
+                <button @click="registerUser" :disabled="!cityName" class="cyber-btn w-full py-4 text-lg">ПОДТВЕРДИТЬ</button>
             </div>
         </transition>
 
         <!-- 2. MENU -->
-        <div v-if="screen === 'menu'" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 p-6 backdrop-blur-sm">
-            <h1 class="text-6xl font-black text-white mb-1 tracking-tighter">ETHOS</h1>
-            <div class="text-xs text-[#00ff9d] tracking-[0.8em] mb-8 uppercase">PROJECT</div>
-            
-            <div class="w-full max-w-xs grid grid-cols-2 gap-3 mb-6">
-                <div v-for="cls in classes" :key="cls.id" @click="selectedClass = cls" class="class-card flex flex-col items-center text-center" :class="{selected: selectedClass.id === cls.id}">
-                    <div class="text-3xl mb-2">{{ cls.icon }}</div>
-                    <div class="text-xs font-bold text-white mb-1">{{ cls.name }}</div>
-                    <div class="text-[9px] text-gray-400 leading-tight">{{ cls.desc }}</div>
+        <transition name="fade">
+            <div v-if="screen === 'menu'" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/85 p-6 backdrop-blur-sm">
+                <h1 class="text-6xl font-black text-white mb-1 tracking-tighter glitch" data-text="ETHOS">ETHOS</h1>
+                <div class="text-xs text-green-500 tracking-[0.8em] mb-8 uppercase">MATRIX EDITION</div>
+                
+                <div class="w-full max-w-xs grid grid-cols-2 gap-3 mb-4">
+                    <div v-for="cls in classes" :key="cls.id" @click="selectedClass = cls" class="class-card flex flex-col items-center text-center" :class="{selected: selectedClass.id === cls.id}">
+                        <div class="text-2xl mb-1">{{ cls.icon }}</div>
+                        <div class="text-[10px] font-bold text-white uppercase">{{ cls.name }}</div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="w-full max-w-xs space-y-3">
-                <div class="flex justify-between items-center bg-[#111]/80 p-3 rounded border border-[#333] backdrop-blur">
-                    <div><div class="text-[9px] text-gray-500 uppercase">ПРАВИТЕЛЬ</div><div class="text-xs font-bold text-white">{{ cityName }}</div></div>
-                    <div class="text-right"><div class="text-[9px] text-gray-500 uppercase">БАЛАНС</div><div class="font-bold text-yellow-500 font-mono">{{ bits }} ฿</div></div>
+                <div class="w-full max-w-xs space-y-3">
+                    <div class="flex justify-between items-center bg-black/80 border border-green-900 p-3 rounded">
+                        <div><div class="text-[9px] text-gray-500">ИМЯ</div><div class="text-xs font-bold text-white">{{ cityName }}</div></div>
+                        <div class="text-right"><div class="text-[9px] text-gray-500">СЧЕТ</div><div class="font-bold text-yellow-500 font-mono">{{ bits }} ฿</div></div>
+                    </div>
+                    <button @click="startGame" class="cyber-btn w-full py-4 text-xl">ВОЙТИ В СЕТЬ</button>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button @click="screen='shop'" class="cyber-btn py-3 text-[10px]" style="border-color: #00d2ff; color: #00d2ff;">РЫНОК</button>
+                        <button @click="screen='achievements'" class="cyber-btn py-3 text-[10px]" style="border-color: #ffd700; color: #ffd700;">АЧИВКИ</button>
+                        <button @click="screen='codex'" class="cyber-btn py-3 text-[10px]" style="border-color: #ff003c; color: #ff003c;">КОДЕКС</button>
+                    </div>
                 </div>
-                <button @click="startGame" class="cyber-btn w-full py-5 text-xl">ИГРАТЬ</button>
-                <div class="grid grid-cols-2 gap-3">
-                    <button @click="screen='shop'" class="cyber-btn blue py-3 text-sm">МАГАЗИН</button>
-                    <button @click="screen='achievements'" class="cyber-btn gold py-3 text-sm">АЧИВКИ</button>
-                </div>
-                <button @click="toggleSound" class="w-full py-2 text-[10px] text-gray-600 uppercase hover:text-white transition">{{ soundEnabled ? '🔊 Звук включен' : '🔇 Звук выключен' }}</button>
             </div>
-        </div>
+        </transition>
 
         <!-- 3. GAMEPLAY -->
         <div v-if="screen === 'game' || screen === 'minigame'" class="flex-1 flex flex-col relative overflow-hidden pb-8">
-            <div class="px-4 py-4 grid grid-cols-4 gap-4 z-30">
+            <div class="project-bar-container"><div class="project-bar" :style="{width: projectProgress + '%'}"></div></div>
+            <div class="absolute top-2 right-2 text-[10px] text-[#00d2ff] font-bold z-50 font-mono">UPLOAD: {{ projectProgress }}%</div>
+
+            <div class="px-4 py-6 grid grid-cols-4 gap-4 z-30">
                 <div v-for="(val, key) in stats" :key="key" class="flex flex-col items-center">
-                    <div class="text-xl mb-1 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{{ icons[key] }}</div>
-                    <div class="w-full h-1.5 bg-[#222] rounded overflow-hidden relative"><div class="stat-bar" :class="getBarColor(val)" :style="{width: val + '%'}"></div></div>
-                    <!-- Индикатор линзы -->
-                    <div v-if="upgrades['lens'] && !activeEvent" class="flex h-2 w-full justify-center gap-1">
-                         <span v-if="getImpact(key) > 0" class="text-[8px] text-green-500">▲</span>
-                         <span v-if="getImpact(key) < 0" class="text-[8px] text-red-500">▼</span>
-                    </div>
+                    <div class="text-xl mb-1">{{ icons[key] }}</div>
+                    <div class="w-full h-1 bg-[#111] overflow-hidden"><div class="stat-bar" :class="getBarColor(val)" :style="{width: val + '%'}"></div></div>
                 </div>
             </div>
 
             <div class="flex-1 flex items-center justify-center px-4 relative perspective-1000">
                 
-                <!-- CARD -->
-                <div v-if="screen === 'game' && activeScenario && !activeEvent" class="game-card" :style="cardStyle">
-                    <div class="h-3/5 bg-[#151515] flex items-center justify-center text-[7rem] relative border-b border-[#333]">
-                        <div class="absolute inset-0 bg-gradient-to-t from-[#111] to-transparent opacity-80"></div>
-                        <div class="transform scale-110 filter drop-shadow-2xl">{{ activeScenario.emoji }}</div>
-                        <div class="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded text-[10px] font-mono text-gray-400 border border-gray-800 backdrop-blur">ДЕНЬ {{ moves }}</div>
+                <transition name="slide">
+                    <!-- REGULAR CARD -->
+                    <div v-if="screen === 'game' && activeScenario && !activeEvent" class="game-card" :style="cardStyle" :class="{'border-[#00d2ff] shadow-[0_0_30px_#00d2ff]': activeScenario.type === 'project'}">
+                        <div class="h-3/5 bg-[#050505] flex items-center justify-center text-[7rem] relative border-b border-[#333]">
+                            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+                            <div class="transform scale-110 filter drop-shadow-[0_0_10px_rgba(0,255,65,0.5)]">{{ activeScenario.emoji }}</div>
+                            <div class="absolute top-3 right-3 bg-black/80 px-2 py-1 border border-green-900 text-[10px] font-mono text-green-500">DAY: {{ moves }}</div>
+                        </div>
+                        <div class="h-2/5 p-6 flex flex-col items-center text-center bg-[#080808] justify-center">
+                            <div v-if="activeScenario.type === 'project'" class="text-[10px] text-[#00d2ff] font-bold tracking-widest mb-1 animate-pulse">ПРОЕКТ: КОВЧЕГ</div>
+                            <h3 class="text-lg font-black text-white mb-2 uppercase leading-tight">{{ activeScenario.title }}</h3>
+                            <p class="text-xs text-gray-400 font-mono leading-relaxed">{{ activeScenario.desc }}</p>
+                        </div>
                     </div>
-                    <div class="h-2/5 p-6 flex flex-col items-center text-center bg-[#111] justify-center">
-                        <h3 class="text-lg font-black text-[#00ff9d] mb-2 uppercase leading-tight drop-shadow-[0_0_5px_rgba(0,255,157,0.5)]">{{ activeScenario.title }}</h3>
-                        <p class="text-xs text-gray-300 font-mono leading-relaxed">{{ activeScenario.desc }}</p>
-                    </div>
-                </div>
+                </transition>
 
-                <!-- CRISIS CARD -->
-                <div v-if="screen === 'game' && activeEvent" class="game-card border-red-500 shadow-[0_0_40px_rgba(255,42,109,0.6)] z-50">
-                    <div class="h-full p-6 flex flex-col bg-[#050505] items-center text-center relative">
-                        <div class="absolute inset-0 bg-red-900/10 animate-pulse pointer-events-none"></div>
+                <!-- CRISIS -->
+                <div v-if="screen === 'game' && activeEvent" class="game-card border-red-500 shadow-[0_0_40px_red] z-50">
+                    <div class="h-full p-6 flex flex-col bg-black items-center text-center relative">
                         <div class="text-6xl mb-4 animate-bounce">{{ activeEvent.emoji }}</div>
-                        <h3 class="text-2xl font-black text-red-500 mb-2 uppercase">⚠ {{ activeEvent.title }} ⚠</h3>
+                        <h3 class="text-2xl font-black text-red-500 mb-2 uppercase glitch" :data-text="'⚠ ' + activeEvent.title">⚠ {{ activeEvent.title }}</h3>
                         <p class="text-xs text-white font-mono mb-auto leading-relaxed z-10">{{ activeEvent.desc }}</p>
                         <div class="w-full space-y-3 z-10">
-                            <button v-if="activeEvent.minigame" @click="startMinigame(activeEvent.minigame)" class="w-full py-4 border border-secondary bg-secondary/10 text-secondary font-bold text-sm uppercase rounded animate-pulse hover:bg-secondary/20 transition">🎮 ВЗЛОМАТЬ СИСТЕМУ</button>
-                            <button v-for="(choice, idx) in activeEvent.choices" :key="idx" @click="resolveEvent(choice)" class="w-full py-4 border border-gray-700 bg-gray-900 text-white font-bold text-sm uppercase rounded hover:border-gray-500 transition">{{ choice.text }} <span v-if="choice.chance" class="text-[9px] text-gray-500 block">Шанс: {{Math.floor(choice.chance*100)}}%</span></button>
+                            <button v-if="activeEvent.minigame" @click="startMinigame(activeEvent.minigame)" class="w-full py-4 border border-blue-500 text-blue-500 font-bold text-sm uppercase animate-pulse">🎮 ВЗЛОМ</button>
+                            <button v-for="(choice, idx) in activeEvent.choices" :key="idx" @click="resolveEvent(choice)" class="w-full py-4 border border-gray-700 text-white font-bold text-sm uppercase hover:bg-gray-900">{{ choice.text }}</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- MINIGAMES -->
-                <div v-if="screen === 'minigame' && minigameType === 'hack'" class="game-card border-secondary shadow-[0_0_50px_rgba(0,210,255,0.5)] z-50 bg-black">
-                    <div class="h-full p-6 flex flex-col items-center justify-center text-center"><h3 class="text-xl font-bold text-secondary mb-4">CYBER-HACK</h3><div class="hack-grid mb-6"><div v-for="i in 9" :key="i" class="hack-cell" :class="{'active': hackActive === i-1, 'wrong': hackWrong === i-1}" @click="handleHackClick(i-1)"></div></div><p class="text-xs text-gray-400 font-mono">{{ hackStatus }}</p></div>
+                <div v-if="screen === 'minigame' && minigameType === 'hack'" class="game-card border-blue-500 shadow-[0_0_50px_blue] z-50 bg-black">
+                    <div class="h-full p-6 flex flex-col items-center justify-center text-center"><h3 class="text-xl font-bold text-blue-500 mb-4 glitch" data-text="ВЗЛОМ">ВЗЛОМ</h3><div class="grid grid-cols-3 gap-2 mb-6"><div v-for="i in 9" :key="i" class="w-16 h-16 border border-blue-900 cursor-pointer transition-all" :class="{'bg-blue-500 shadow-[0_0_20px_blue]': hackActive === i-1, 'bg-red-500': hackWrong === i-1}" @click="handleHackClick(i-1)"></div></div><p class="text-xs text-gray-400 font-mono">{{ hackStatus }}</p></div>
                 </div>
-                <div v-if="screen === 'minigame' && minigameType === 'lock'" class="game-card border-yellow-500 shadow-[0_0_50px_rgba(255,215,0,0.5)] z-50 bg-black">
-                    <div class="h-full p-6 flex flex-col items-center justify-center text-center"><h3 class="text-xl font-bold text-yellow-500 mb-8">QUANTUM LOCK</h3><div class="lock-bar-container"><div class="lock-target" :style="{left: lockTarget + '%', width: lockSize + '%'}"></div><div class="lock-cursor" :style="{left: lockPos + '%'}"></div></div><button @click="checkLock" class="cyber-btn w-full py-6 text-xl mt-8">СТОП</button><p class="text-xs text-gray-400 mt-4">Остановите в зеленой зоне</p></div>
+                <div v-if="screen === 'minigame' && minigameType === 'lock'" class="game-card border-yellow-500 shadow-[0_0_50px_yellow] z-50 bg-black">
+                    <div class="h-full p-6 flex flex-col items-center justify-center text-center"><h3 class="text-xl font-bold text-yellow-500 mb-8 glitch" data-text="ЗАМОК">ЗАМОК</h3><div class="w-full h-8 border border-yellow-900 relative overflow-hidden"><div class="absolute h-full bg-yellow-500/30 border-x-2 border-yellow-500" :style="{left: lockTarget + '%', width: lockSize + '%'}"></div><div class="absolute h-full w-1 bg-white shadow-[0_0_10px_white]" :style="{left: lockPos + '%'}"></div></div><button @click="checkLock" class="cyber-btn w-full py-6 text-xl mt-8" style="border-color: #ffd700; color: #ffd700;">СТОП</button></div>
                 </div>
             </div>
 
             <!-- CONTROLS -->
             <div v-if="screen === 'game' && activeScenario && !activeEvent && !deathReason" class="pb-10 px-6 flex gap-4 z-40">
-                <button @click="makeChoice('left')" class="choice-btn left group"><span class="text-red-500 text-2xl mb-1 group-active:scale-125 transition">✕</span><span class="text-[9px] text-red-100 uppercase font-bold tracking-widest opacity-80">{{ activeScenario.left.text }}</span></button>
-                <button @click="makeChoice('right')" class="choice-btn right group"><span class="text-green-500 text-2xl mb-1 group-active:scale-125 transition">✓</span><span class="text-[9px] text-green-100 uppercase font-bold tracking-widest opacity-80">{{ activeScenario.right.text }}</span></button>
+                <button @click="makeChoice('left')" class="choice-btn left group"><span class="text-red-500 text-2xl mb-1">✕</span><span class="text-[9px] text-red-500 uppercase font-bold tracking-widest opacity-80">{{ activeScenario.left.text }}</span></button>
+                <button @click="makeChoice('right')" class="choice-btn right group"><span class="text-green-500 text-2xl mb-1">✓</span><span class="text-[9px] text-green-500 uppercase font-bold tracking-widest opacity-80">{{ activeScenario.right.text }}</span></button>
             </div>
             
-            <div class="news-ticker-container"><div class="news-content">{{ newsText }}</div></div>
+            <!-- NEWS -->
+            <div class="fixed bottom-0 left-0 w-full bg-black border-t border-green-900 py-1 overflow-hidden z-50">
+                <div class="whitespace-nowrap text-[10px] text-green-500 font-mono uppercase animate-[ticker_20s_linear_infinite]">{{ newsText }}</div>
+            </div>
         </div>
 
-        <!-- RESULT -->
-        <div v-if="eventResult" class="absolute inset-0 z-[60] bg-black/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-md">
-            <div class="text-7xl mb-4">{{ eventResult.success ? '✅' : '❌' }}</div>
-            <h2 class="text-3xl font-black mb-2 tracking-wider" :class="eventResult.success ? 'text-green-400' : 'text-red-500'">{{ eventResult.success ? 'УСПЕХ' : 'ПРОВАЛ' }}</h2>
-            <p class="text-gray-300 mb-8 font-mono text-sm">{{ eventResult.msg }}</p>
-            <button @click="closeEventResult" class="cyber-btn w-full py-4 text-lg">ПРОДОЛЖИТЬ</button>
+        <!-- WIN SCREEN -->
+        <div v-if="screen === 'win'" class="absolute inset-0 z-[100] bg-blue-900/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-xl">
+            <div class="text-8xl mb-4">🚀</div><h2 class="text-4xl font-black mb-2 text-white">ПОБЕДА!</h2><p class="text-white/80 text-sm font-bold mb-8 uppercase">Ковчег запущен. Человечество спасено.</p><button @click="screen='menu'" class="cyber-btn w-full py-5 text-xl">СЛАВА!</button>
         </div>
 
         <!-- GAME OVER -->
         <div v-if="screen === 'end'" class="absolute inset-0 z-[100] bg-red-950/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-xl">
-            <div class="text-7xl mb-4 animate-pulse">☠️</div><h2 class="text-4xl font-black mb-2 text-white">ИГРА ОКОНЧЕНА</h2><p class="text-red-200 text-sm font-bold mb-8 uppercase tracking-widest border border-red-500/50 p-2">{{ deathReason }}</p>
-            <div class="mb-8 font-mono bg-black/40 p-4 rounded w-full"><div class="text-gray-400 text-xs uppercase">Вы прожили</div><div class="text-4xl text-white">{{ moves }} <span class="text-sm">ДН</span></div></div>
-            <button @click="screen='menu'" class="cyber-btn w-full py-5 text-xl">ГЛАВНОЕ МЕНЮ</button>
+            <div class="text-7xl mb-4 animate-pulse">☠️</div><h2 class="text-4xl font-black mb-2 text-white">ПРОВАЛ</h2><p class="text-red-200 text-sm font-bold mb-8 uppercase tracking-widest border border-red-500/50 p-2">{{ deathReason }}</p>
+            <div class="mb-8 font-mono bg-black/40 p-4 rounded w-full border border-red-900"><div class="text-gray-400 text-xs uppercase">ВЫЖИВАНИЕ</div><div class="text-4xl text-white">{{ moves }} <span class="text-sm">ДНЕЙ</span></div></div>
+            <button @click="screen='menu'" class="cyber-btn w-full py-5 text-xl" style="border-color: white; color: white;">ЗАНОВО</button>
         </div>
 
-        <!-- SHOP (IMPROVED) -->
-        <div v-if="screen === 'shop'" class="absolute inset-0 z-50 bg-black/95 p-4 backdrop-blur-md">
-            <div class="flex justify-between mb-4 text-yellow-500 font-bold border-b border-gray-800 pb-4 items-center">
-                <span class="text-xl">МАГАЗИН <span class="text-white text-sm font-mono">({{bits}} ฿)</span></span><button @click="screen='menu'" class="text-xs border border-gray-600 px-3 py-1 rounded text-white hover:bg-gray-800">НАЗАД</button>
+        <!-- SHOP / ACH / CODEX (MODALS) -->
+        <div v-if="['shop','achievements','codex'].includes(screen)" class="absolute inset-0 z-50 bg-black/95 p-4 backdrop-blur-md">
+            <div class="flex justify-between mb-4 border-b border-gray-800 pb-4 items-center">
+                <span class="text-xl font-bold text-white uppercase">{{ screen === 'shop' ? 'РЫНОК' : screen === 'codex' ? 'АРХИВ' : 'НАГРАДЫ' }}</span>
+                <button @click="screen='menu'" class="text-xs border border-gray-600 px-3 py-1 rounded text-white hover:bg-gray-800">X</button>
             </div>
-            <div class="space-y-3 overflow-y-auto h-[80vh]">
-                <div v-for="i in shopItems" :key="i.id" class="border border-gray-800 p-4 rounded-xl bg-[#0a0a0a] flex justify-between items-center shadow-lg">
-                    <div class="flex items-center gap-3">
-                        <div class="text-2xl">{{i.icon}}</div>
-                        <div>
-                            <div class="font-bold text-white text-sm">{{i.name}}</div>
-                            <div class="text-[10px] text-gray-500 uppercase">{{i.desc}}</div>
-                        </div>
-                    </div>
-                    <!-- Logic for buying -->
-                    <div v-if="i.type === 'passive' && upgrades[i.id]" class="text-green-500 text-[9px] font-bold border border-green-500 px-2 py-1 rounded bg-green-900/20">КУПЛЕНО</div>
-                    <button v-else @click="buyItem(i)" :disabled="bits < i.price" class="bg-primary text-black px-3 py-2 text-[10px] font-black rounded disabled:opacity-30 hover:bg-white transition">
-                        {{i.price}} ฿
-                    </button>
+            
+            <!-- Shop Content -->
+            <div v-if="screen === 'shop'" class="space-y-3 overflow-y-auto h-[80vh]">
+                <div v-for="i in shopItems" :key="i.id" class="border border-green-900 p-4 rounded bg-[#050505] flex justify-between items-center">
+                    <div><div class="font-bold text-green-400">{{i.icon}} {{i.name}}</div><div class="text-[9px] text-gray-500 uppercase">{{i.desc}}</div></div>
+                    <button v-if="!upgrades[i.id]" @click="buyItem(i)" :disabled="bits < i.price" class="bg-green-900 text-green-100 px-3 py-1 text-[10px] font-bold rounded disabled:opacity-30">{{i.price}} ฿</button>
+                    <span v-else class="text-green-500 text-[10px] border border-green-500 px-2 py-1 rounded">ЕСТЬ</span>
                 </div>
             </div>
-        </div>
 
-        <!-- ACHIEVEMENTS -->
-        <div v-if="screen === 'achievements'" class="absolute inset-0 z-50 bg-black/95 p-4 backdrop-blur-md">
-            <div class="flex justify-between mb-6 text-purple-500 font-bold border-b border-gray-800 pb-4 items-center"><span class="text-xl">ДОСТИЖЕНИЯ</span><button @click="screen='menu'" class="text-xs border border-gray-600 px-3 py-1 rounded text-white hover:bg-gray-800">НАЗАД</button></div>
-            <div class="space-y-3 overflow-y-auto h-[80vh]"><div v-for="ach in achievementsList" :key="ach.id" class="ach-item" :class="{'unlocked': unlockedAchievements.includes(ach.id)}"><div class="text-3xl">{{ unlockedAchievements.includes(ach.id) ? '🏆' : '🔒' }}</div><div class="flex-1"><div class="font-black text-sm uppercase" :class="unlockedAchievements.includes(ach.id) ? 'text-white' : 'text-gray-600'">{{ ach.title }}</div><div class="text-[10px] text-gray-500 leading-tight mt-1">{{ ach.desc }}</div></div><div v-if="unlockedAchievements.includes(ach.id)" class="text-[10px] text-yellow-500 font-mono bg-yellow-900/20 px-2 py-1 rounded border border-yellow-600/30">+{{ ach.reward }}</div><div v-else class="text-[10px] text-gray-700 font-mono">{{ ach.reward }} ฿</div></div></div>
+            <!-- Achievements Content -->
+            <div v-if="screen === 'achievements'" class="space-y-3 overflow-y-auto h-[80vh]">
+                <div v-for="ach in achievementsList" :key="ach.id" class="border border-gray-800 p-3 rounded bg-[#050505] flex items-center gap-3" :class="{'border-gold': unlockedAchievements.includes(ach.id)}">
+                    <div class="text-2xl">{{ unlockedAchievements.includes(ach.id) ? '🏆' : '🔒' }}</div>
+                    <div class="flex-1"><div class="font-bold text-sm" :class="unlockedAchievements.includes(ach.id) ? 'text-yellow-400' : 'text-gray-600'">{{ ach.title }}</div><div class="text-[10px] text-gray-500">{{ ach.desc }}</div></div>
+                    <div v-if="unlockedAchievements.includes(ach.id)" class="text-[10px] text-yellow-500">+{{ ach.reward }}</div>
+                </div>
+            </div>
+
+            <!-- Codex Content -->
+            <div v-if="screen === 'codex'" class="grid grid-cols-3 gap-2">
+                <div v-for="d in deathTypes" :key="d.id" class="aspect-square border border-gray-800 bg-black flex flex-col items-center justify-center p-2 rounded" :class="{'border-red-500 bg-red-900/20': unlockedDeaths.includes(d.id)}">
+                    <div class="text-2xl">{{ unlockedDeaths.includes(d.id) ? d.icon : '❓' }}</div>
+                    <div class="text-[8px] text-gray-500 mt-1 text-center uppercase">{{ unlockedDeaths.includes(d.id) ? d.name : '???' }}</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -209,19 +238,16 @@
         const { createApp, ref, computed, onMounted } = Vue;
         const tg = window.Telegram?.WebApp;
 
-        // --- DATA ---
+        // CONFIG
         const SCENARIOS = [
-            { emoji:'🗳️', title:'ФАЛЬСИФИКАЦИЯ', desc:'Оппозиция лидирует. Переписать цифры?', left:{text:'РИСОВАТЬ %', s:{pop:-20, sec:15, mor:-10}}, right:{text:'ЧЕСТНО', s:{pop:15, sec:-15, fin:-5}}, news: "ПРОТЕСТЫ У ЦИК..." },
-            { emoji:'💰', title:'НАЛОГИ', desc:'Казна пустеет.', left:{text:'НЕТ', s:{fin:-10}}, right:{text:'ПОДНЯТЬ', s:{fin:15, pop:-15}}, news: "НОВЫЕ НАЛОГИ..." },
-            { emoji:'👁️', title:'СЛЕЖКА', desc:'Следить за гражданами?', left:{text:'НЕТ', s:{sec:-10}}, right:{text:'ДА', s:{sec:20, pop:-15}}, news: "БОЛЬШОЙ БРАТ..." },
-            { emoji:'🤖', title:'ИИ СУДЬЯ', desc:'Заменить судей на ИИ?', left:{text:'ЛЮДИ', s:{mor:5, fin:-5}}, right:{text:'ИИ', s:{fin:15, mor:-15}}, news: "СУД БУДУЩЕГО..." },
-            { emoji:'🌊', title:'ПОТОП', desc:'Дамбу прорвало.', left:{text:'СПАСАТЬ', s:{fin:-20, pop:10}}, right:{text:'МОЛИТЬСЯ', s:{pop:-20, mor:10}}, news: "ВОДА В ГОРОДЕ..." },
-            { emoji:'👽', title:'НЛО', desc:'Они прилетели.', left:{text:'ВОЙНА', s:{sec:-20, fin:-10}}, right:{text:'ПРИВЕТ', s:{pop:10, mor:10}}, news: "КОНТАКТ..." },
-            { emoji:'🧠', title:'ЧИПЫ', desc:'Обязательное чипирование.', left:{text:'НЕТ', s:{pop:5}}, right:{text:'ДА', s:{sec:20, pop:-20}}, news: "КИБОРГИЗАЦИЯ..." },
-            { emoji:'🏗️', title:'МЕГА-ПРОЕКТ', desc:'Строим лифт в космос?', left:{text:'СТРОИТЬ', s:{fin:-40, mor:20, sec:10}}, right:{text:'БРЕД', s:{fin:10, pop:-5}}, news: "БЮДЖЕТ ПУСТ..." },
-            { emoji:'💊', title:'ФАРМАКОЛОГИЯ', desc:'Легализовать наркотик "Счастье"?', left:{text:'ЗАПРЕТ', s:{pop:-10, mor:10}}, right:{text:'ЛЕГАЛАЙЗ', s:{fin:25, pop:10, mor:-30}}, news: "НАЦИЯ В ЭЙФОРИИ..." },
-            { emoji:'🎨', title:'ЦЕНЗУРА', desc:'Запретить современное искусство?', left:{text:'СВОБОДА', s:{pop:5, sec:-5}}, right:{text:'В ТЮРЬМУ', s:{sec:10, pop:-15, mor:-5}}, news: "ВЫСТАВКИ ЗАКРЫТЫ..." },
-            { emoji:'🪖', title:'ВОЙНА', desc:'Удар по соседям?', left:{text:'ЖДАТЬ', s:{sec:-20, fin:5}}, right:{text:'ЯДЕРНЫЙ ЗАЛП', s:{sec:40, fin:-30, pop:-20, mor:-50}}, news: "РАДИАЦИЯ..." },
+            { type: 'project', emoji:'🚀', title:'ДВИГАТЕЛЬ', desc:'Тест гипер-двигателя. Рискнуть?', left:{text:'ОТМЕНА', s:{fin:5}}, right:{text:'ТЕСТ', s:{fin:-20, sec:-10}, project: 15}, news: "ГРОХОТ НА КОСМОДРОМЕ..." },
+            { type: 'project', emoji:'💾', title:'ИИ ЯДРО', desc:'Супер-компьютер для Ковчега.', left:{text:'НЕТ ДЕНЕГ', s:{pop:-5}}, right:{text:'КУПИТЬ', s:{fin:-25}, project: 15}, news: "СКАЧОК ЭНЕРГИИ..." },
+            { emoji:'🗳️', title:'ВЫБОРЫ', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10, mor:-10}}, right:{text:'ЧЕСТНО', s:{pop:15, sec:-15, fin:-5}}, news: "ПРОТЕСТЫ..." },
+            { emoji:'💰', title:'НАЛОГИ', left:{text:'НЕТ', s:{fin:-10}}, right:{text:'ПОДНЯТЬ', s:{fin:15, pop:-15}}, news: "НОВЫЕ НАЛОГИ..." },
+            { emoji:'👁️', title:'СЛЕЖКА', left:{text:'НЕТ', s:{sec:-10}}, right:{text:'ДА', s:{sec:20, pop:-15}}, news: "БОЛЬШОЙ БРАТ..." },
+            { emoji:'🤖', title:'ИИ СУДЬЯ', left:{text:'ЛЮДИ', s:{mor:5, fin:-5}}, right:{text:'ИИ', s:{fin:15, mor:-15}}, news: "СУД БУДУЩЕГО..." },
+            { emoji:'🌊', title:'ПОТОП', left:{text:'СПАСАТЬ', s:{fin:-20, pop:10}}, right:{text:'МОЛИТЬСЯ', s:{pop:-20, mor:10}}, news: "ВОДА В ГОРОДЕ..." },
+            { emoji:'👽', title:'НЛО', left:{text:'ВОЙНА', s:{sec:-20, fin:-10}}, right:{text:'ПРИВЕТ', s:{pop:10, mor:10}}, news: "КОНТАКТ..." },
             { emoji:'🗳️', title:'ВЫБОРЫ', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10}}, right:{text:'ЧЕСТНО', s:{pop:10, sec:-10}} },
             { emoji:'💰', title:'НАЛОГИ', left:{text:'НЕТ', s:{fin:-10}}, right:{text:'ДА', s:{fin:15, pop:-15}} },
             { emoji:'👁️', title:'СЛЕЖКА', left:{text:'НЕТ', s:{sec:-10}}, right:{text:'ДА', s:{sec:20, pop:-15}} },
@@ -325,42 +351,38 @@
             { emoji:'🚽', title:'ЗОЛОТОЙ ТРОН', desc:'Золотой унитаз в мэрию?', left:{text:'НЕТ', s:{fin:5}}, right:{text:'ХОЧУ', s:{fin:-15, mor:-20, pop:-15}}, news: "САНТЕХНИКА..." },
             { emoji:'🥔', title:'КАРТОШКА', desc:'Кредит картошкой?', left:{text:'ДЕНЬГИ', s:{fin:5, sec:-5}}, right:{text:'БЕРЕМ', s:{fin:-5, pop:10}}, news: "ДРАНИКИ..." },
             { emoji:'👻', title:'ОХОТНИКИ', desc:'Призраки в метро.', left:{text:'ГАЗ', s:{fin:5, pop:-5}}, right:{text:'ИЗГНАТЬ', s:{fin:-10, mor:15}}, news: "ГОЛОСА В ТОННЕЛЯХ..." },
-            { emoji:'🍆', title:'ЦЕНЗУРА', desc:'Запретить баклажан?', left:{text:'ОСТАВИТЬ', s:{pop:10, mor:-5}}, right:{text:'ЗАПРЕТИТЬ', s:{pop:-10, mor:15}}, news: "ОВОЩНОЙ БУНТ..." }
+            { emoji:'🍆', title:'ЦЕНЗУРА', desc:'Запретить баклажан?', left:{text:'ОСТАВИТЬ', s:{pop:10, mor:-5}}, right:{text:'ЗАПРЕТИТЬ', s:{pop:-10, mor:15}}, news: "ОВОЩНОЙ БУНТ..." },
 
         ];
 
         const CLASSES = [
-            { id: 'corp', name: 'КОРПОРАТ', icon: '👔', desc: 'Старт: 70💰. Доход x1.5.', bonus: {fin: 20, pop: -20} },
-            { id: 'general', name: 'ГЕНЕРАЛ', icon: '🎖️', desc: 'Старт: 70🛡️. Армия крепка.', bonus: {sec: 20, mor: -20} },
-            { id: 'hacker', name: 'ХАКЕР', icon: '💻', desc: 'Старт: 60💰. Мини-игры проще.', bonus: {fin: 10, sec: -10} },
-            { id: 'punk', name: 'АНАРХИСТ', icon: '🎸', desc: 'Старт: 70👥. Народ с вами.', bonus: {pop: 20, fin: -20} }
+            { id: 'corp', name: 'КОРПОРАТ', icon: '👔', desc: 'Старт: 70💰', bonus: {fin: 20, pop: -20} },
+            { id: 'general', name: 'ГЕНЕРАЛ', icon: '🎖️', desc: 'Старт: 70🛡️', bonus: {sec: 20, mor: -20} },
+            { id: 'hacker', name: 'ХАКЕР', icon: '💻', desc: 'Старт: 60💰', bonus: {fin: 10, sec: -10} }
         ];
 
         const CRISES = [
-            { id: 'bank_hack', emoji: '🏦', title: 'ВЗЛОМ БАНКА', desc: 'Хакеры атакуют!', minigame: 'hack', successMsg: 'Атака отбита!', failMsg: 'Казна пуста!', failImpact: {fin: -50}, winImpact: {fin: 30} },
-            { id: 'bomb', emoji: '💣', title: 'БОМБА', desc: 'Обезвредьте бомбу!', minigame: 'lock', successMsg: 'Успех!', failMsg: 'Взрыв!', failImpact: {pop: -50, sec: -30}, winImpact: {sec: 20, mor: 20} },
-            { id: 'assassin', emoji: '🔫', title: 'СНАЙПЕР', desc: 'В вас целятся!', choices: [{ text: 'НЫРНУТЬ', chance: 0.5, successMsg: 'Промах!', failMsg: 'Попадание...', fail: 'death' }] }
+            { id: 'bank_hack', emoji: '🏦', title: 'ВЗЛОМ', desc: 'Хакеры атакуют банк!', minigame: 'hack', successMsg: 'Отбито!', failMsg: 'Кража!', failImpact: {fin: -50}, winImpact: {fin: 30} },
+            { id: 'bomb', emoji: '💣', title: 'БОМБА', desc: 'Обезвредьте бомбу!', minigame: 'lock', successMsg: 'Успех!', failMsg: 'Взрыв!', failImpact: {pop: -50, sec: -30}, winImpact: {sec: 20, mor: 20} }
         ];
 
-        // НОВЫЙ МАГАЗИН
         const SHOP_ITEMS = [
-            { id: 'stim', name: 'АДРЕНАЛИН', icon: '💊', type: 'consumable', price: 250, desc: '+15% КО ВСЕМ СТАТАМ (МГНОВЕННО)' },
-            { id: 'lens', name: 'НЕЙРО-ЛИНЗА', icon: '👁️', type: 'passive', price: 500, desc: 'ВИДЕТЬ ВЛИЯНИЕ ВЫБОРА' },
-            { id: 'shield', name: 'НАНО-ЩИТ', icon: '🛡️', type: 'passive', price: 750, desc: 'АВТО-СПАСЕНИЕ ОТ СМЕРТИ (1 РАЗ)' },
-            { id: 'miner', name: 'КРИПТО-МАЙНЕР', icon: '⛏️', type: 'passive', price: 1000, desc: 'ДОХОД МОНЕТ x1.5' },
-            { id: 'bot', name: 'ПОЛИТ-БОТ', icon: '🤖', type: 'passive', price: 2000, desc: 'ДОХОД МОНЕТ x2.0' }
+            { id: 'lens', name: 'ЛИНЗА', icon: '👁️', price: 500, desc: 'Видеть влияние' },
+            { id: 'shield', name: 'НАНО-ЩИТ', icon: '🛡️', price: 750, desc: '1 спасбросок' },
+            { id: 'miner', name: 'МАЙНЕР', icon: '⛏️', price: 1000, desc: 'Доход x1.5' }
         ];
 
-        // НОВЫЕ АЧИВКИ
         const ACHIEVEMENTS = [
-            { id: 'survivor_10', title: 'НОВИЧОК', desc: 'Проживите 10 дней', reward: 100, check: (m, b, s) => m >= 10 },
+            { id: 'win', title: 'УТОПИЯ', desc: 'Завершить Проект Ковчег', reward: 5000, check: () => false },
             { id: 'survivor_50', title: 'ВЕТЕРАН', desc: 'Проживите 50 дней', reward: 300, check: (m, b, s) => m >= 50 },
             { id: 'rich', title: 'ОЛИГАРХ', desc: 'Накопите 1000 ฿', reward: 200, check: (m, b, s) => b >= 1000 },
-            { id: 'shopaholic', title: 'ШОПОГОЛИК', desc: 'Купите 3 улучшения', reward: 150, check: (m, b, s, u) => Object.keys(u).length >= 3 },
-            { id: 'tyrant', title: 'ТИРАН', desc: 'Армия > 90%', reward: 150, check: (m, b, s) => s.sec > 90 },
-            { id: 'saint', title: 'СВЯТОЙ', desc: 'Мораль > 90%', reward: 150, check: (m, b, s) => s.mor > 90 },
-            { id: 'doomed', title: 'НЕУДАЧНИК', desc: 'Умрите до 5 дня', reward: 50, check: (m, b, s) => m < 5 }, 
-            { id: 'hacker_win', title: 'ВЗЛОМЩИК', desc: 'Выиграть мини-игру', reward: 100, check: () => false } // Triggered manually
+        ];
+
+        const DEATH_TYPES = [
+            { id: 'pop_low', name: 'БУНТ', icon: '🔥' }, { id: 'pop_high', name: 'ХАОС', icon: '🤪' },
+            { id: 'fin_low', name: 'КРАХ', icon: '📉' }, { id: 'fin_high', name: 'ОЛИГАРХИЯ', icon: '💰' },
+            { id: 'sec_low', name: 'ВТОРЖЕНИЕ', icon: '🏳️' }, { id: 'sec_high', name: 'ХУНТА', icon: '🪖' },
+            { id: 'mor_low', name: 'РАЗЛОЖЕНИЕ', icon: '🔞' }, { id: 'mor_high', name: 'ФАНАТИЗМ', icon: '⛪' }
         ];
 
         createApp({
@@ -371,11 +393,13 @@
                 const upgrades = ref(JSON.parse(localStorage.getItem('ec_upgrades') || '{}'));
                 const highScore = ref(parseInt(localStorage.getItem('ec_highscore') || 0));
                 const unlockedAchievements = ref(JSON.parse(localStorage.getItem('ec_achievements') || '[]'));
+                const unlockedDeaths = ref(JSON.parse(localStorage.getItem('ec_deaths') || '[]'));
                 const soundEnabled = ref(true);
                 
                 const stats = ref({ pop: 50, fin: 50, sec: 50, mor: 50 });
                 const icons = { pop:'👥', fin:'💰', sec:'🛡️', mor:'⚖️' };
                 const moves = ref(0);
+                const projectProgress = ref(0);
                 
                 const activeScenario = ref(null);
                 const activeEvent = ref(null);
@@ -387,21 +411,22 @@
                 const selectedClass = ref(CLASSES[0]);
                 const achievementsList = ACHIEVEMENTS;
                 const shopItems = SHOP_ITEMS;
-                
+                const deathTypes = DEATH_TYPES;
                 const newsText = ref("СИСТЕМА ЗАГРУЖЕНА...");
                 const isShaking = ref(false);
 
+                // Minigames
                 const minigameType = ref(null);
                 const hackSequence = ref([]); const hackInput = ref([]); const hackActive = ref(-1); const hackWrong = ref(-1); const hackStatus = ref(''); const hackPlaying = ref(false);
                 const lockPos = ref(0); const lockDir = ref(1); const lockTarget = ref(0); const lockSize = ref(20); let lockInterval = null;
 
                 onMounted(() => {
                     if(tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#050505'); }
-                    initParticles();
+                    initMatrix();
                     if(cityName.value) screen.value = 'menu';
                 });
 
-                // AUDIO
+                // --- GAME LOGIC ---
                 let audioCtx;
                 const playSound = (type) => {
                     if(!soundEnabled.value) return;
@@ -411,10 +436,9 @@
                         const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
                         o.connect(g); g.connect(audioCtx.destination);
                         const t = audioCtx.currentTime;
-                        
                         if(type==='click'){ o.type='triangle'; o.frequency.setValueAtTime(800,t); g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.1); o.start(t); o.stop(t+0.1); }
-                        if(type==='death'){ o.type='sawtooth'; o.frequency.setValueAtTime(100,t); o.frequency.linearRampToValueAtTime(20,t+0.8); g.gain.setValueAtTime(0.2,t); g.gain.linearRampToValueAtTime(0,t+0.8); o.start(t); o.stop(t+0.8); }
-                        if(type==='win'){ o.type='sine'; o.frequency.setValueAtTime(400,t); o.frequency.linearRampToValueAtTime(800,t+0.3); g.gain.setValueAtTime(0.1,t); g.gain.linearRampToValueAtTime(0,t+0.3); o.start(t); o.stop(t+0.3); }
+                        if(type==='death'){ o.type='sawtooth'; o.frequency.setValueAtTime(100,t); g.gain.setValueAtTime(0.2,t); g.gain.linearRampToValueAtTime(0,t+0.8); o.start(t); o.stop(t+0.8); }
+                        if(type==='win'){ o.type='sine'; o.frequency.setValueAtTime(400,t); g.gain.setValueAtTime(0.1,t); g.gain.linearRampToValueAtTime(0,t+0.3); o.start(t); o.stop(t+0.3); }
                     } catch(e){}
                 };
                 const toggleSound = () => { soundEnabled.value = !soundEnabled.value; };
@@ -422,7 +446,7 @@
                 const startGame = () => {
                     playSound('click');
                     stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
-                    moves.value = 0; deathReason.value = null;
+                    moves.value = 0; deathReason.value = null; projectProgress.value = 0;
                     const b = selectedClass.value.bonus;
                     for(let k in b) stats.value[k] += b[k];
                     pickCard();
@@ -432,8 +456,13 @@
 
                 const pickCard = () => {
                     flyDir.value = null;
-                    const rand = Math.floor(Math.random() * SCENARIOS.length);
-                    activeScenario.value = SCENARIOS[rand];
+                    if (moves.value > 5 && Math.random() < 0.2 && projectProgress.value < 100) {
+                        const projects = SCENARIOS.filter(s => s.type === 'project');
+                        activeScenario.value = projects[Math.floor(Math.random() * projects.length)];
+                    } else {
+                        const normals = SCENARIOS.filter(s => !s.type);
+                        activeScenario.value = normals[Math.floor(Math.random() * normals.length)];
+                    }
                     if(activeScenario.value.news) newsText.value = activeScenario.value.news;
                 };
 
@@ -444,6 +473,12 @@
                     flyDir.value = dir;
                     const impact = activeScenario.value[dir].s;
                     
+                    if(activeScenario.value.type === 'project' && activeScenario.value[dir].project) {
+                        projectProgress.value += activeScenario.value[dir].project;
+                        playSound('win');
+                        if(projectProgress.value >= 100) { setTimeout(() => { screen.value = 'win'; unlockAchievement('win'); }, 500); return; }
+                    }
+
                     let hasDamage = false;
                     for(let k in impact) {
                         stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
@@ -452,168 +487,90 @@
                     if(hasDamage) { isShaking.value = true; setTimeout(() => isShaking.value = false, 400); }
                     moves.value++;
                     checkAchievements();
-
-                    setTimeout(() => {
-                        if(checkDeath()) return;
-                        if(Math.random() < 0.15 && moves.value > 3) triggerEvent();
-                        else pickCard();
-                    }, 300);
+                    setTimeout(() => { if(checkDeath()) return; if(Math.random() < 0.15 && moves.value > 3) triggerEvent(); else pickCard(); }, 300);
                 };
 
                 const checkDeath = () => {
                     const s = stats.value;
-                    if(s.pop<=0 || s.pop>=100) deathReason.value = "БУНТ НАСЕЛЕНИЯ";
-                    else if(s.fin<=0 || s.fin>=100) deathReason.value = "ЭКОНОМИЧЕСКИЙ КРАХ";
-                    else if(s.sec<=0 || s.sec>=100) deathReason.value = "ВОЕННЫЙ ПЕРЕВОРОТ";
-                    else if(s.mor<=0 || s.mor>=100) deathReason.value = "МОРАЛЬНОЕ РАЗЛОЖЕНИЕ";
+                    let type = null;
+                    if(s.pop<=0) type = 'pop_low'; else if(s.pop>=100) type = 'pop_high';
+                    else if(s.fin<=0) type = 'fin_low'; else if(s.fin>=100) type = 'fin_high';
+                    else if(s.sec<=0) type = 'sec_low'; else if(s.sec>=100) type = 'sec_high';
+                    else if(s.mor<=0) type = 'mor_low'; else if(s.mor>=100) type = 'mor_high';
                     
-                    if(deathReason.value) {
-                        // SHIELD CHECK
+                    if(type) {
                         if(upgrades.value['shield']) {
                             upgrades.value['shield'] = false;
                             localStorage.setItem('ec_upgrades', JSON.stringify(upgrades.value));
                             stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
-                            deathReason.value = null;
-                            if(tg) tg.showPopup({message: "🛡️ ЩИТ СПАС ВАС ОТ ГИБЕЛИ!"});
+                            if(tg) tg.showPopup({message: "🛡️ ЩИТ СПАС ВАС!"});
                             pickCard();
                             return false;
                         }
-
-                        playSound('death');
-                        if(tg) tg.HapticFeedback.notificationOccurred('error');
-                        
-                        // Doomed Achievement
-                        if(moves.value < 5 && !unlockedAchievements.value.includes('doomed')) {
-                            unlockAchievement('doomed');
-                        }
-
+                        deathReason.value = DEATH_TYPES.find(d => d.id === type)?.name || "СМЕРТЬ";
+                        if(!unlockedDeaths.value.includes(type)) { unlockedDeaths.value.push(type); localStorage.setItem('ec_deaths', JSON.stringify(unlockedDeaths.value)); }
                         let earned = moves.value;
                         if(selectedClass.value.id === 'corp') earned = Math.floor(earned * 1.5);
-                        // Passive Upgrades Multiplier
                         if(upgrades.value['miner']) earned = Math.floor(earned * 1.5);
-                        if(upgrades.value['bot']) earned = Math.floor(earned * 2.0);
-
                         bits.value += earned;
                         localStorage.setItem('ec_bits', bits.value);
-                        
-                        if(moves.value > highScore.value) {
-                            highScore.value = moves.value;
-                            localStorage.setItem('ec_highscore', highScore.value);
-                        }
+                        if(moves.value > highScore.value) { highScore.value = moves.value; localStorage.setItem('ec_highscore', highScore.value); }
+                        playSound('death');
+                        if(tg) tg.HapticFeedback.notificationOccurred('error');
                         setTimeout(() => screen.value = 'end', 500);
                         return true;
                     }
                     return false;
                 };
 
-                const checkAchievements = () => {
-                    ACHIEVEMENTS.forEach(ach => {
-                        if(!unlockedAchievements.value.includes(ach.id) && ach.id !== 'hacker_win' && ach.id !== 'doomed') {
-                            if(ach.check(moves.value, bits.value, stats.value, upgrades.value)) {
-                                unlockAchievement(ach.id);
-                            }
-                        }
-                    });
-                };
-
                 const unlockAchievement = (id) => {
-                    const ach = ACHIEVEMENTS.find(a => a.id === id);
-                    if(ach && !unlockedAchievements.value.includes(id)) {
+                    if(!unlockedAchievements.value.includes(id)) {
                         unlockedAchievements.value.push(id);
+                        const ach = ACHIEVEMENTS.find(a => a.id === id);
                         bits.value += ach.reward;
                         localStorage.setItem('ec_achievements', JSON.stringify(unlockedAchievements.value));
                         localStorage.setItem('ec_bits', bits.value);
-                        playSound('win');
                         if(tg) tg.showPopup({message: `🏆 ОТКРЫТО: ${ach.title}\n+${ach.reward} ฿`});
                     }
                 };
 
-                const triggerEvent = () => {
-                    const rand = Math.floor(Math.random() * CRISES.length);
-                    activeEvent.value = CRISES[rand];
-                    newsText.value = "⚠ ВНИМАНИЕ! УГРОЗА! ⚠";
-                    if(tg) tg.HapticFeedback.notificationOccurred('warning');
+                const checkAchievements = () => {
+                    ACHIEVEMENTS.forEach(ach => {
+                        if(!unlockedAchievements.value.includes(ach.id) && ach.id !== 'win') {
+                            if(ach.check(moves.value, bits.value, stats.value)) unlockAchievement(ach.id);
+                        }
+                    });
                 };
 
-                const resolveEvent = (choice) => {
-                    playSound('click');
-                    const success = Math.random() <= choice.chance;
-                    if(success) finishEvent(true, choice.successMsg);
-                    else {
-                        if(choice.fail === 'death') { deathReason.value = choice.failMsg; playSound('death'); setTimeout(()=>screen.value='end', 500); }
-                        else finishEvent(false, choice.failMsg);
-                    }
-                };
-
+                const triggerEvent = () => { const rand = Math.floor(Math.random() * CRISES.length); activeEvent.value = CRISES[rand]; newsText.value = "⚠ ВНИМАНИЕ! УГРОЗА! ⚠"; if(tg) tg.HapticFeedback.notificationOccurred('warning'); };
+                const resolveEvent = (choice) => { playSound('click'); const success = Math.random() <= choice.chance; if(success) finishEvent(true, choice.successMsg); else { if(choice.fail === 'death') { deathReason.value = choice.failMsg; playSound('death'); setTimeout(()=>screen.value='end', 500); } else finishEvent(false, choice.failMsg); } };
                 const startMinigame = (type) => { minigameType.value = type; screen.value = 'minigame'; if(type === 'hack') initHackGame(); if(type === 'lock') initLockGame(); };
                 
-                // Minigames (Shortened logic to fit)
                 const initHackGame = () => { hackSequence.value=[]; hackInput.value=[]; hackStatus.value='ЗАПОМИНАЙ...'; hackPlaying.value=false; for(let i=0;i<4;i++)hackSequence.value.push(Math.floor(Math.random()*9)); setTimeout(async()=>{ for(let id of hackSequence.value){ hackActive.value=id; playSound('click'); await new Promise(r=>setTimeout(r,400)); hackActive.value=-1; await new Promise(r=>setTimeout(r,200)); } hackStatus.value='ПОВТОРИ!'; hackPlaying.value=true; },1000); };
                 const handleHackClick = (id) => { if(!hackPlaying.value)return; playSound('click'); hackActive.value=id; setTimeout(()=>hackActive.value=-1,200); if(id===hackSequence.value[hackInput.value.length]){ hackInput.value.push(id); if(hackInput.value.length===hackSequence.value.length) finishMinigame(true); } else { hackWrong.value=id; setTimeout(()=>hackWrong.value=-1,300); finishMinigame(false); }};
                 const initLockGame = () => { lockPos.value=0; lockDir.value=1; lockTarget.value=20+Math.random()*40; lockSize.value=selectedClass.value.id==='hacker'?35:20; const spd=selectedClass.value.id==='hacker'?1.5:2.5; if(lockInterval)clearInterval(lockInterval); lockInterval=setInterval(()=>{ lockPos.value+=spd*lockDir.value; if(lockPos.value>100||lockPos.value<0)lockDir.value*=-1; },16); };
                 const checkLock = () => { clearInterval(lockInterval); finishMinigame(lockPos.value>=lockTarget.value && lockPos.value<=(lockTarget.value+lockSize.value)); };
-
-                const finishMinigame = (win) => {
-                    screen.value = 'game';
-                    const evt = activeEvent.value;
-                    if(win) { 
-                        if(evt.winImpact) for(let k in evt.winImpact) stats.value[k]+=evt.winImpact[k]; 
-                        finishEvent(true, evt.successMsg);
-                        unlockAchievement('hacker_win');
-                    }
-                    else { if(evt.failImpact) for(let k in evt.failImpact) stats.value[k]+=evt.failImpact[k]; finishEvent(false, evt.failMsg); }
-                };
-
+                
+                const finishMinigame = (win) => { screen.value = 'game'; const evt = activeEvent.value; if(win) { if(evt.winImpact) for(let k in evt.winImpact) stats.value[k]+=evt.winImpact[k]; finishEvent(true, evt.successMsg); } else { if(evt.failImpact) for(let k in evt.failImpact) stats.value[k]+=evt.failImpact[k]; finishEvent(false, evt.failMsg); } };
                 const finishEvent = (success, msg) => { activeEvent.value = null; eventResult.value = { success, msg }; if(success) playSound('win'); else playSound('death'); };
                 const closeEventResult = () => { eventResult.value = null; if(checkDeath()) return; pickCard(); };
                 const registerUser = () => { localStorage.setItem('ec_city', cityName.value); playSound('click'); screen.value = 'menu'; };
-                
-                // SHOP LOGIC UPDATED
-                const buyItem = (i) => { 
-                    if(bits.value >= i.price) {
-                        bits.value -= i.price;
-                        if(i.type === 'passive') {
-                            upgrades.value[i.id] = true;
-                        } else if(i.type === 'consumable') {
-                            // Instant effect for stimulants
-                            if(i.id === 'stim') {
-                                // Cannot use stim in menu, only useful if we allowed pausing game to shop, 
-                                // BUT for simplicity, let's say Stim adds "Extra Life HP" or just unlocks a free boost next game.
-                                // Current implementation: Needs to be used IN GAME. 
-                                // FIX: Let's make Stim usable only if game state is active? No, shop is accessible from menu.
-                                // Let's make Stim a "Start Bonus" next game.
-                                // OR: Just add coins/stats directly if we were playing. 
-                                // Simpler approach for MVP: Consumables are removed, Stim becomes "Start with +10% stats" passive for one run?
-                                // Let's stick to: Stim is instant heal if bought during game? No, can't access shop during game easily.
-                                // OKAY: Stim gives +500 Coins instantly (Cashback) - simple. 
-                                // BETTER: Stim is removed, replaced by "Mega Start" passive.
-                                // For this code: Stim adds to 'starting bonus' logic.
-                            }
-                        }
-                        localStorage.setItem('ec_bits', bits.value); 
-                        localStorage.setItem('ec_upgrades', JSON.stringify(upgrades.value)); 
-                        playSound('win'); 
-                        checkAchievements(); // Check for Shopaholic
-                    }
-                };
-                
-                // Helper for Lens
-                const getImpact = (key) => { if(!activeScenario.value) return 0; return activeScenario.value.right.s[key] || 0; };
-
+                const buyItem = (i) => { if(bits.value>=i.price){bits.value-=i.price;upgrades.value[i.id]=true; localStorage.setItem('ec_bits',bits.value); localStorage.setItem('ec_upgrades',JSON.stringify(upgrades.value)); playSound('win'); }};
                 const cardStyle = computed(() => { if(!flyDir.value)return{}; const rot = flyDir.value==='right'?15:-15; return { transform: `translate(${flyDir.value==='right'?400:-400}px, 50px) rotate(${rot}deg)`, opacity: 0 }; });
-                const getBarColor = (v) => (v<20||v>80)?'bg-red-500 shadow-[0_0_10px_red]':'bg-[#00ff9d]';
+                const getBarColor = (v) => (v<20||v>80)?'bg-red-500':'bg-[#00ff41]';
 
                 return { 
                     screen, cityName, bits, stats, icons, moves, upgrades, classes, selectedClass, highScore, soundEnabled,
                     activeScenario, activeEvent, eventResult, deathReason, shopItems, cardStyle, newsText, isShaking,
-                    achievementsList, unlockedAchievements,
+                    achievementsList, unlockedAchievements, unlockedDeaths, deathTypes, projectProgress,
                     minigameType, hackActive, hackWrong, hackStatus, handleHackClick, lockPos, lockTarget, lockSize, checkLock, startMinigame,
-                    registerUser, startGame, makeChoice, resolveEvent, closeEventResult, buyItem, getBarColor, toggleSound, getImpact
+                    registerUser, startGame, makeChoice, resolveEvent, closeEventResult, buyItem, getBarColor, toggleSound
                 };
             }
         }).mount('#app');
 
-        function initParticles(){const c=document.getElementById('particles');if(!c)return;const x=c.getContext('2d');let w,h,p=[];const rs=()=>{w=c.width=window.innerWidth;h=c.height=window.innerHeight;};window.onresize=rs;rs();for(let i=0;i<40;i++)p.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*0.5,vy:(Math.random()-.5)*0.5});function draw(){x.clearRect(0,0,w,h);x.fillStyle='#00ff9d';for(let i=0;i<p.length;i++){let a=p[i];a.x+=a.vx;a.y+=a.vy;if(a.x<0||a.x>w)a.vx*=-1;if(a.y<0||a.y>h)a.vy*=-1;x.beginPath();x.arc(a.x,a.y,1,0,Math.PI*2);x.fill();}requestAnimationFrame(draw);}draw();}
+        // MATRIX RAIN
+        function initMatrix(){const c=document.getElementById('matrix');const ctx=c.getContext('2d');c.width=window.innerWidth;c.height=window.innerHeight;const chars="AZ0192837465";const font_size=14;const columns=c.width/font_size;const drops=[];for(let x=0;x<columns;x++)drops[x]=1;function draw(){ctx.fillStyle="rgba(0, 0, 0, 0.05)";ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle="#0F0";ctx.font=font_size+"px monospace";for(let i=0;i<drops.length;i++){const text=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(text,i*font_size,drops[i]*font_size);if(drops[i]*font_size>c.height&&Math.random()>0.975)drops[i]=0;drops[i]++;}requestAnimationFrame(draw);}draw();}
     </script>
 </body>
 </html>
