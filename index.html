@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ETHOS: CRISIS</title>
+    <title>ETHOS: LEGENDS</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
@@ -15,7 +15,7 @@
         body { background-color: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent; }
         [v-cloak] { display: none; }
 
-        /* UI БАЗА */
+        /* UI BASE */
         .cyber-btn {
             background: var(--primary); color: #000; 
             clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
@@ -23,7 +23,6 @@
         }
         .cyber-btn:active { transform: scale(0.96); filter: brightness(0.8); }
         
-        /* КАРТОЧКА */
         .game-card {
             width: 90%; max-width: 360px; height: 55vh; max-height: 500px;
             background: #111; border: 1px solid #333; border-radius: 16px;
@@ -31,21 +30,44 @@
             transition: transform 0.3s ease-out; will-change: transform; z-index: 10;
         }
         
-        /* КНОПКИ ВЫБОРА */
         .choice-btn {
             flex: 1; height: 65px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
             background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: all 0.1s;
         }
-        .choice-btn:active { transform: scale(0.95); }
         .choice-btn.left { border-bottom: 4px solid var(--danger); }
         .choice-btn.right { border-bottom: 4px solid var(--primary); }
+
+        /* MINIGAMES */
+        .hack-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 260px; margin: 0 auto; }
+        .hack-cell { aspect-ratio: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; cursor: pointer; transition: all 0.1s; }
+        .hack-cell.active { background: var(--secondary); box-shadow: 0 0 15px var(--secondary); border-color: white; }
+        .hack-cell.wrong { background: var(--danger); animation: shake 0.3s; }
         
-        /* АНИМАЦИИ КРИЗИСА */
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 42, 109, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 42, 109, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 42, 109, 0); } }
-        .crisis-overlay { background: radial-gradient(circle, transparent 0%, rgba(255,0,0,0.2) 100%); animation: pulse-bg 1s infinite; }
-        @keyframes pulse-bg { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        .lock-bar-container { width: 100%; height: 30px; background: #111; border: 2px solid #333; border-radius: 15px; position: relative; overflow: hidden; margin-bottom: 20px; }
+        .lock-target { position: absolute; height: 100%; background: rgba(0, 255, 157, 0.3); border-left: 2px solid var(--primary); border-right: 2px solid var(--primary); z-index: 1; }
+        .lock-cursor { position: absolute; top: 0; width: 4px; height: 100%; background: #fff; box-shadow: 0 0 10px #fff; z-index: 2; }
+        
+        /* NEW: NEWS TICKER */
+        .news-ticker-container {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 30px; background: #111; border-top: 1px solid #333;
+            display: flex; align-items: center; overflow: hidden; z-index: 50; pointer-events: none;
+        }
+        .news-content {
+            white-space: nowrap; animation: ticker 20s linear infinite; color: var(--primary); font-size: 12px; text-transform: uppercase;
+        }
+        @keyframes ticker { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+        /* NEW: ACHIEVEMENTS */
+        .ach-item { border: 1px solid #333; background: #0a0a0a; padding: 10px; border-radius: 8px; margin-bottom: 8px; opacity: 0.5; display: flex; align-items: center; gap: 10px; }
+        .ach-item.unlocked { border-color: var(--gold); opacity: 1; background: rgba(255, 215, 0, 0.05); }
+        
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } 100% { transform: translateX(0); } }
+        .screen-shake { animation: shake 0.5s; }
+
+        .class-card { border: 1px solid #333; background: #0a0a0a; padding: 10px; border-radius: 8px; cursor: pointer; transition: all 0.2s; opacity: 0.6; }
+        .class-card.selected { border-color: var(--primary); background: rgba(0, 255, 157, 0.1); opacity: 1; transform: scale(1.02); }
         
         .stat-bar { height: 100%; transition: width 0.4s ease; }
         .scanlines { background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%); background-size: 100% 4px; position: fixed; inset: 0; pointer-events: none; z-index: 50; opacity: 0.2; }
@@ -54,7 +76,7 @@
 </head>
 <body>
     <div class="scanlines"></div>
-    <div id="app" v-cloak class="h-screen flex flex-col relative z-10">
+    <div id="app" v-cloak class="h-screen flex flex-col relative z-10" :class="{'screen-shake': isShaking}">
         
         <!-- 1. РЕГИСТРАЦИЯ -->
         <div v-if="screen === 'reg'" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black p-6">
@@ -66,23 +88,29 @@
 
         <!-- 2. МЕНЮ -->
         <div v-if="screen === 'menu'" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/95 p-6 backdrop-blur">
-            <h1 class="text-6xl font-black text-white mb-0 tracking-tighter text-center">ETHOS</h1>
-            <div class="text-[#00ff9d] text-xs tracking-[0.6em] mb-10 uppercase">CRISIS CORE</div>
-            <div class="w-full max-w-xs space-y-3">
-                <div class="flex justify-between items-center bg-[#111] p-4 rounded border border-[#333] mb-2">
-                    <div><div class="text-[10px] text-gray-500 uppercase">Правитель</div><div class="text-sm font-bold">{{ cityName }}</div></div>
-                    <div class="text-right"><div class="text-[10px] text-gray-500 uppercase">Баланс</div><div class="font-bold text-yellow-500 font-mono">{{ bits }} ฿</div></div>
+            <h1 class="text-4xl font-black text-white mb-4 tracking-tighter">ПРОИСХОЖДЕНИЕ</h1>
+            <div class="w-full max-w-xs grid grid-cols-2 gap-3 mb-6">
+                <div v-for="cls in classes" :key="cls.id" @click="selectedClass = cls" class="class-card flex flex-col items-center text-center" :class="{selected: selectedClass.id === cls.id}">
+                    <div class="text-2xl mb-1">{{ cls.icon }}</div>
+                    <div class="text-xs font-bold text-white mb-1">{{ cls.name }}</div>
+                    <div class="text-[8px] text-gray-400 leading-tight">{{ cls.desc }}</div>
                 </div>
-                <button @click="startGame" class="cyber-btn w-full py-5 text-xl">ИГРАТЬ</button>
+            </div>
+            <div class="w-full max-w-xs space-y-3">
+                <div class="flex justify-between items-center bg-[#111] p-3 rounded border border-[#333]">
+                    <div><div class="text-[10px] text-gray-500">{{ cityName }}</div><div class="text-[10px] text-purple-400">РЕКОРД: {{ highScore }} ДН</div></div>
+                    <div class="font-bold text-yellow-500 font-mono">{{ bits }} ฿</div>
+                </div>
+                <button @click="startGame" class="cyber-btn w-full py-4 text-xl">НАЧАТЬ</button>
                 <div class="grid grid-cols-2 gap-3">
-                    <button @click="screen='shop'" class="cyber-btn bg-[#00d2ff] py-4 text-sm">МАГАЗИН</button>
-                    <button @click="openLeaderboard" class="cyber-btn bg-purple-600 text-white py-4 text-sm">РЕЙТИНГ</button>
+                    <button @click="screen='shop'" class="cyber-btn bg-[#00d2ff] py-3 text-sm">МАГАЗИН</button>
+                    <button @click="screen='achievements'" class="cyber-btn bg-purple-600 text-white py-3 text-sm">НАГРАДЫ</button>
                 </div>
             </div>
         </div>
 
-        <!-- 3. ЭКРАН ИГРЫ -->
-        <div v-if="screen === 'game'" class="flex-1 flex flex-col relative overflow-hidden">
+        <!-- 3. ИГРА -->
+        <div v-if="screen === 'game' || screen === 'minigame'" class="flex-1 flex flex-col relative overflow-hidden pb-8">
             <!-- Статы -->
             <div class="px-4 py-4 bg-black border-b border-white/10 grid grid-cols-4 gap-3 z-30">
                 <div v-for="(val, key) in stats" :key="key" class="flex flex-col items-center">
@@ -90,135 +118,105 @@
                     <div class="h-1.5 bg-[#222] w-full rounded-full overflow-hidden"><div class="stat-bar" :class="getBarColor(val)" :style="{width: val + '%'}"></div></div>
                 </div>
             </div>
-            
-            <!-- Зона игры -->
+
             <div class="flex-1 flex items-center justify-center px-4 relative">
-                <!-- ОВЕРЛЕЙ КРИЗИСА -->
-                <div v-if="activeEvent" class="absolute inset-0 z-20 crisis-overlay flex flex-col items-center justify-center pointer-events-none">
-                    <div class="text-red-500 font-black text-4xl tracking-[0.5em] animate-pulse opacity-20 rotate-[-45deg] absolute">CRITICAL ERROR</div>
+                <div v-if="screen === 'game' && activeScenario && !activeEvent" class="game-card" :style="cardStyle">
+                    <div class="h-3/5 bg-[#151515] flex items-center justify-center text-[8rem] relative border-b border-[#333]">{{ activeScenario.emoji }}<div class="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded text-[10px] font-mono text-gray-400 border border-gray-800">ДЕНЬ {{ moves }}</div></div>
+                    <div class="h-2/5 p-6 flex flex-col items-center text-center bg-[#111] justify-center"><h3 class="text-lg font-bold text-[#00ff9d] mb-3 uppercase leading-tight">{{ activeScenario.title }}</h3><p class="text-sm text-gray-300 font-mono leading-relaxed">{{ activeScenario.desc }}</p></div>
                 </div>
 
-                <!-- КАРТОЧКА ОБЫЧНАЯ -->
-                <div v-if="activeScenario && !activeEvent" class="game-card" :style="cardStyle">
-                    <div class="h-3/5 bg-[#151515] flex items-center justify-center text-[8rem] border-b border-[#333] relative">
-                        {{ activeScenario.emoji }}
-                        <div class="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded text-[10px] font-mono text-gray-400 border border-gray-800">ДЕНЬ {{ moves }}</div>
-                    </div>
-                    <div class="h-2/5 p-6 flex flex-col items-center text-center bg-[#111] justify-center">
-                        <h3 class="text-lg font-bold text-[#00ff9d] mb-3 uppercase leading-tight">{{ activeScenario.title }}</h3>
-                        <p class="text-sm text-gray-300 font-mono leading-relaxed">{{ activeScenario.desc }}</p>
-                    </div>
-                </div>
-
-                <!-- КАРТОЧКА СОБЫТИЯ (КРИЗИСА) -->
-                <div v-if="activeEvent" class="game-card border-red-500 shadow-[0_0_50px_red] z-50">
-                    <div class="h-full p-6 flex flex-col bg-black items-center text-center relative">
+                <div v-if="screen === 'game' && activeEvent" class="game-card border-red-500 shadow-[0_0_50px_red] z-50">
+                    <div class="h-full p-6 flex flex-col bg-black items-center text-center">
                         <div class="text-6xl mb-4 animate-bounce">{{ activeEvent.emoji }}</div>
-                        <h3 class="text-2xl font-black text-red-500 mb-2 uppercase glitch">⚠ {{ activeEvent.title }} ⚠</h3>
-                        <p class="text-sm text-white font-mono mb-8 leading-relaxed">{{ activeEvent.desc }}</p>
-                        
-                        <div class="w-full space-y-3 mt-auto">
-                            <button v-for="(choice, idx) in activeEvent.choices" :key="idx" @click="resolveEvent(choice)" 
-                                class="w-full py-4 border border-red-500/50 bg-red-900/20 hover:bg-red-900/40 text-white font-bold text-sm uppercase rounded relative overflow-hidden group transition">
-                                <span class="relative z-10">{{ choice.text }}</span>
-                                <div v-if="choice.chance" class="text-[9px] text-red-400 mt-1">Шанс успеха: {{ Math.floor(choice.chance * 100) }}%</div>
-                                <div v-if="choice.req" class="text-[9px] text-yellow-400 mt-1">Требуется: {{ icons[choice.req.stat] }} {{ choice.req.val }}%</div>
-                            </button>
+                        <h3 class="text-2xl font-black text-red-500 mb-2 uppercase">⚠ {{ activeEvent.title }} ⚠</h3>
+                        <p class="text-sm text-white font-mono mb-auto leading-relaxed">{{ activeEvent.desc }}</p>
+                        <div class="w-full space-y-3">
+                            <button v-if="activeEvent.minigame" @click="startMinigame(activeEvent.minigame)" class="w-full py-4 border border-secondary bg-secondary/20 text-secondary font-bold text-sm uppercase rounded animate-pulse">🎮 ВЗЛОМАТЬ СИСТЕМУ</button>
+                            <button v-for="(choice, idx) in activeEvent.choices" :key="idx" @click="resolveEvent(choice)" class="w-full py-4 border border-gray-700 bg-gray-900 text-white font-bold text-sm uppercase rounded">{{ choice.text }} <span v-if="choice.chance" class="text-[9px] text-gray-500 block">Шанс: {{Math.floor(choice.chance*100)}}%</span></button>
                         </div>
                     </div>
                 </div>
+
+                <!-- Minigames (Hack & Lock) -->
+                <div v-if="screen === 'minigame' && minigameType === 'hack'" class="game-card border-secondary shadow-[0_0_50px_blue] z-50 bg-black">
+                    <div class="h-full p-6 flex flex-col items-center justify-center text-center"><h3 class="text-xl font-bold text-secondary mb-4 glitch">CYBER-HACK</h3><div class="hack-grid mb-6"><div v-for="i in 9" :key="i" class="hack-cell" :class="{'active': hackActive === i-1, 'wrong': hackWrong === i-1}" @click="handleHackClick(i-1)"></div></div><p class="text-xs text-gray-400">{{ hackStatus }}</p></div>
+                </div>
+                <div v-if="screen === 'minigame' && minigameType === 'lock'" class="game-card border-yellow-500 shadow-[0_0_50px_orange] z-50 bg-black">
+                    <div class="h-full p-6 flex flex-col items-center justify-center text-center"><h3 class="text-xl font-bold text-yellow-500 mb-8">QUANTUM LOCK</h3><div class="lock-bar-container"><div class="lock-target" :style="{left: lockTarget + '%', width: lockSize + '%'}"></div><div class="lock-cursor" :style="{left: lockPos + '%'}"></div></div><button @click="checkLock" class="cyber-btn w-full py-6 text-xl">СТОП</button><p class="text-xs text-gray-400 mt-4">Остановите в зеленой зоне</p></div>
+                </div>
             </div>
 
-            <!-- Кнопки выбора (только для обычных карт) -->
-            <div v-if="activeScenario && !deathReason && !activeEvent" class="pb-8 px-6 flex gap-4 z-40">
-                <button @click="makeChoice('left')" class="choice-btn left active:bg-red-900/20">
-                    <span class="text-red-500 text-2xl mb-1">✕</span>
-                    <span class="text-[10px] text-red-100 uppercase font-bold tracking-widest">{{ activeScenario.left.text }}</span>
-                </button>
-                <button @click="makeChoice('right')" class="choice-btn right active:bg-green-900/20">
-                    <span class="text-green-500 text-2xl mb-1">✓</span>
-                    <span class="text-[10px] text-green-100 uppercase font-bold tracking-widest">{{ activeScenario.right.text }}</span>
-                </button>
+            <div v-if="screen === 'game' && activeScenario && !activeEvent && !deathReason" class="pb-8 px-6 flex gap-4 z-40">
+                <button @click="makeChoice('left')" class="choice-btn left active:bg-red-900/20"><span class="text-red-500 text-2xl mb-1">✕</span><span class="text-[10px] text-red-100 uppercase font-bold tracking-widest">{{ activeScenario.left.text }}</span></button>
+                <button @click="makeChoice('right')" class="choice-btn right active:bg-green-900/20"><span class="text-green-500 text-2xl mb-1">✓</span><span class="text-[10px] text-green-100 uppercase font-bold tracking-widest">{{ activeScenario.right.text }}</span></button>
+            </div>
+            
+            <!-- NEWS TICKER -->
+            <div class="news-ticker-container">
+                <div class="news-content">{{ newsText }}</div>
             </div>
         </div>
 
-        <!-- 4. РЕЗУЛЬТАТ СОБЫТИЯ (POPUP) -->
+        <!-- RESULT -->
         <div v-if="eventResult" class="absolute inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center p-8 text-center backdrop-blur">
             <div class="text-6xl mb-4">{{ eventResult.success ? '✅' : '❌' }}</div>
-            <h2 class="text-2xl font-bold mb-2" :class="eventResult.success ? 'text-green-400' : 'text-red-500'">
-                {{ eventResult.success ? 'УСПЕХ!' : 'ПРОВАЛ...' }}
-            </h2>
+            <h2 class="text-2xl font-bold mb-2" :class="eventResult.success ? 'text-green-400' : 'text-red-500'">{{ eventResult.success ? 'УСПЕХ' : 'ПРОВАЛ' }}</h2>
             <p class="text-white mb-8">{{ eventResult.msg }}</p>
-            <button @click="closeEventResult" class="cyber-btn w-full py-4 text-lg">ПРОДОЛЖИТЬ</button>
+            <button @click="closeEventResult" class="cyber-btn w-full py-4 text-lg">ДАЛЕЕ</button>
         </div>
 
-        <!-- ОСТАЛЬНЫЕ ЭКРАНЫ (Магазин, Лидерборд, Смерть) - Стандартные -->
-        <div v-if="screen === 'shop'" class="absolute inset-0 z-50 bg-black flex flex-col">
-            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#111]"><h2 class="text-yellow-500 font-bold">МАГАЗИН</h2><button @click="screen='menu'" class="text-xs border border-gray-600 px-3 py-1 rounded">НАЗАД</button></div>
-            <div class="p-4 space-y-3">
-                <div v-for="item in shopItems" :key="item.id" class="border border-gray-800 bg-[#0a0a0a] p-3 rounded flex justify-between items-center">
-                    <div><div class="font-bold text-sm">{{ item.icon }} {{ item.name }}</div><div class="text-[10px] text-gray-500">{{ item.desc }}</div></div>
-                    <button v-if="!upgrades[item.id]" @click="buyItem(item)" :disabled="bits < item.price" class="bg-primary text-black px-3 py-1 text-xs font-bold rounded">{{ item.price }} ฿</button>
-                    <div v-else class="text-green-500 text-xs">КУПЛЕНО</div>
-                </div>
-            </div>
-        </div>
-        
-        <div v-if="screen === 'ladder'" class="absolute inset-0 z-50 bg-black flex flex-col">
-            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#111]"><h2 class="text-purple-400 font-bold">ТОП</h2><button @click="screen='menu'" class="text-xs border border-gray-600 px-3 py-1 rounded">НАЗАД</button></div>
-            <div class="p-4 space-y-2 overflow-y-auto">
-                <div v-for="(p, i) in leaderboard" :key="i" class="flex justify-between p-3 border border-gray-800 rounded bg-[#0a0a0a]">
-                    <div class="flex gap-3"><span class="text-gray-500">{{ i+1 }}</span><span>{{ p.city }}</span></div><span class="text-yellow-500">{{ p.score }}</span>
-                </div>
-            </div>
-        </div>
-
+        <!-- GAME OVER -->
         <div v-if="screen === 'end'" class="absolute inset-0 z-[100] bg-red-950/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur">
-            <div class="text-6xl mb-4">☠️</div><h2 class="text-3xl font-black mb-2">ГОРОД ПАЛ</h2><p class="text-red-300 text-xs font-bold mb-8">{{ deathReason }}</p>
+            <div class="text-6xl mb-4">☠️</div><h2 class="text-3xl font-black mb-2">ИГРА ОКОНЧЕНА</h2><p class="text-red-300 text-xs font-bold mb-8 uppercase">{{ deathReason }}</p>
             <div class="mb-8 font-mono"><div class="text-gray-400 text-xs">Прожито</div><div class="text-3xl">{{ moves }} ДН</div></div>
             <button @click="screen='menu'" class="cyber-btn w-full py-4 text-lg">В МЕНЮ</button>
+        </div>
+
+        <!-- SHOP -->
+        <div v-if="screen === 'shop'" class="absolute inset-0 z-50 bg-black p-4">
+            <div class="flex justify-between mb-6 text-yellow-500 font-bold border-b border-gray-800 pb-2"><span>МАГАЗИН ({{bits}} ฿)</span><button @click="screen='menu'" class="text-xs border border-gray-600 px-2 rounded text-white">Х</button></div>
+            <div class="space-y-3"><div v-for="i in shopItems" :key="i.id" class="border border-gray-800 p-4 rounded bg-[#0a0a0a] flex justify-between items-center"><div><div class="font-bold">{{i.icon}} {{i.name}}</div><div class="text-xs text-gray-500">{{i.desc}}</div></div><button v-if="!upgrades[i.id]" @click="buyItem(i)" :disabled="bits < i.price" class="bg-primary text-black px-3 py-1 text-sm font-bold rounded disabled:opacity-30">{{i.price}} ฿</button><span v-else class="text-green-500 text-xs font-bold border border-green-500 px-2 py-1 rounded">КУПЛЕНО</span></div></div>
+        </div>
+
+        <!-- NEW: ACHIEVEMENTS SCREEN -->
+        <div v-if="screen === 'achievements'" class="absolute inset-0 z-50 bg-black p-4">
+            <div class="flex justify-between mb-6 text-purple-500 font-bold border-b border-gray-800 pb-2"><span>ДОСТИЖЕНИЯ</span><button @click="screen='menu'" class="text-xs border border-gray-600 px-2 rounded text-white">Х</button></div>
+            <div class="space-y-3 overflow-y-auto h-[80vh]">
+                <div v-for="ach in achievementsList" :key="ach.id" class="ach-item" :class="{'unlocked': unlockedAchievements.includes(ach.id)}">
+                    <div class="text-2xl">{{ unlockedAchievements.includes(ach.id) ? '🏆' : '🔒' }}</div>
+                    <div>
+                        <div class="font-bold text-sm" :class="unlockedAchievements.includes(ach.id) ? 'text-white' : 'text-gray-500'">{{ ach.title }}</div>
+                        <div class="text-xs text-gray-600">{{ ach.desc }}</div>
+                        <div v-if="unlockedAchievements.includes(ach.id)" class="text-[9px] text-yellow-500 mt-1">Награда получена: {{ ach.reward }} ฿</div>
+                        <div v-else class="text-[9px] text-gray-700 mt-1">Награда: {{ ach.reward }} ฿</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         const { createApp, ref, computed, onMounted } = Vue;
         const tg = window.Telegram?.WebApp;
-        const API_URL = "https://YOUR-BACKEND.com"; // Заглушка
 
-        // === 1. КРИТИЧЕСКИЕ СОБЫТИЯ (CRISES) ===
-        const CRISES = [
-            {
-                id: 'assassin', emoji: '🔫', title: 'ПОКУШЕНИЕ', desc: 'Снайпер на крыше! В вас целятся.',
-                choices: [
-                    { text: 'НЫРНУТЬ В МАШИНУ', chance: 0.5, successMsg: 'Пуля разбила стекло, но вы целы.', failMsg: 'Слишком медленно...', fail: 'death' },
-                    { text: 'ОХРАНА, ЗАКРЫТЬ!', req: {stat:'sec', val:60}, successMsg: 'Охрана сработала профессионально.', failMsg: 'Ваша охрана слишком слаба.', fail: 'death' }
-                ]
-            },
-            {
-                id: 'plague', emoji: '☣️', title: 'ЧУМА', desc: 'Неизвестный вирус в центре города.',
-                choices: [
-                    { text: 'СЖЕЧЬ РАЙОН', chance: 1.0, impact:{pop:-30, mor:-20}, successMsg: 'Жестоко, но эффективно. Вирус остановлен.' },
-                    { text: 'ЛЕЧИТЬ (РИСК)', chance: 0.4, impact:{fin:-20}, successMsg: 'Врачи справились!', failMsg: 'Вакцина не помогла, эпидемия вышла из-под контроля.', fail: 'death' }
-                ]
-            },
-            {
-                id: 'casino', emoji: '🎰', title: 'СТАВКА ВСЕГО', desc: 'Безумный инвестор предлагает сыграть на бюджет страны.',
-                choices: [
-                    { text: 'ОТКАЗАТЬСЯ', chance: 1.0, impact:{fin:-5}, successMsg: 'Скучно, но безопасно.' },
-                    { text: 'ОРЕЛ ИЛИ РЕШКА', chance: 0.5, impact:{fin:50}, successMsg: 'ВЫ ВЫИГРАЛИ МИЛЛИАРДЫ!', failMsg: 'Вы проиграли всю казну.', fail:{fin:-100} }
-                ]
-            },
-            {
-                id: 'ufo', emoji: '🛸', title: 'ВТОРЖЕНИЕ', desc: 'Корабли пришельцев над городом.',
-                choices: [
-                    { text: 'АТАКОВАТЬ', req: {stat:'sec', val:70}, successMsg: 'Мы сбили их флагман!', failMsg: 'Наши ракеты не пробили их щиты.', fail: 'death' },
-                    { text: 'СДАТЬСЯ', chance: 1.0, impact:{mor:-50, pop:-20}, successMsg: 'Нас поработили, но мы живы.' }
-                ]
-            }
-        ];
-
-        // === 2. ОБЫЧНЫЕ КАРТЫ ===
+        // === CONTENT ===
         const SCENARIOS = [
+            { emoji:'🗳️', title:'ВЫБОРЫ', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10}}, right:{text:'ЧЕСТНО', s:{pop:10, sec:-10}}, news:"ВЫБОРЫ В ГОРОДЕ..." },
+            { emoji:'💰', title:'НАЛОГИ', left:{text:'НЕТ', s:{fin:-10}}, right:{text:'ДА', s:{fin:15, pop:-15}}, news:"ОБСУЖДАЮТ БЮДЖЕТ..." },
+            { emoji:'👁️', title:'СЛЕЖКА', left:{text:'НЕТ', s:{sec:-10}}, right:{text:'ДА', s:{sec:20, pop:-15}}, news:"КАМЕРЫ НА УЛИЦАХ..." },
+            { emoji:'🤖', title:'ИИ СУДЬЯ', left:{text:'ЛЮДИ', s:{mor:5, fin:-5}}, right:{text:'ИИ', s:{fin:15, mor:-15}}, news:"СУДЕБНАЯ РЕФОРМА..." },
+            { emoji:'🌊', title:'ПОТОП', left:{text:'СПАСАТЬ', s:{fin:-20, pop:10}}, right:{text:'МОЛИТЬСЯ', s:{pop:-20, mor:10}}, news:"УРОВЕНЬ ВОДЫ РАСТЕТ..." },
+            { emoji:'🚁', title:'ДРОНЫ', left:{text:'ОТМЕНА', s:{sec:-10, pop:5}}, right:{text:'ЗАПУСК', s:{sec:15, pop:-10}}, news:"ПОЛИЦИЯ ЗАКУПАЕТ ДРОНОВ..." },
+            { emoji:'🧬', title:'ГМО', left:{text:'ЭТИКА', s:{mor:10, fin:-5}}, right:{text:'ПРОГРЕСС', s:{fin:15, mor:-20}}, news:"ГЕННАЯ ИНЖЕНЕРИЯ..." },
+            { emoji:'👽', title:'НЛО', left:{text:'СЪЕСТЬ МУХУ', s:{pop:-20, mor:-10}}, right:{text:'НЕТ', s:{pop:5}}, news:"СТРАННЫЕ ОГНИ В НЕБЕ..." },
+{ emoji:'🗳️', title:'ВЫБОРЫ', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10}}, right:{text:'ЧЕСТНО', s:{pop:10, sec:-10}} },
+            { emoji:'💰', title:'НАЛОГИ', left:{text:'НЕТ', s:{fin:-10}}, right:{text:'ДА', s:{fin:15, pop:-15}} },
+            { emoji:'👁️', title:'СЛЕЖКА', left:{text:'НЕТ', s:{sec:-10}}, right:{text:'ДА', s:{sec:20, pop:-15}} },
+            { emoji:'🤖', title:'ИИ СУДЬЯ', left:{text:'ЛЮДИ', s:{mor:5, fin:-5}}, right:{text:'ИИ', s:{fin:15, mor:-15}} },
+            { emoji:'🌊', title:'ПОТОП', left:{text:'СПАСАТЬ', s:{fin:-20, pop:10}}, right:{text:'МОЛИТЬСЯ', s:{pop:-20, mor:10}} },
+            { emoji:'🚁', title:'ДРОНЫ', left:{text:'ОТМЕНА', s:{sec:-10, pop:5}}, right:{text:'ЗАПУСК', s:{sec:15, pop:-10}} },
+            { emoji:'🧬', title:'ГМО', left:{text:'ЭТИКА', s:{mor:10, fin:-5}}, right:{text:'ПРОГРЕСС', s:{fin:15, mor:-20}} },
+            { emoji:'👽', title:'НЛО', left:{text:'СЪЕСТЬ МУХУ', s:{pop:-20, mor:-10}}, right:{text:'НЕТ', s:{pop:5}} },
             { emoji:'🗳️', title:'ВЫБОРЫ', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10}}, right:{text:'ЧЕСТНО', s:{pop:10, sec:-10}} },
             { emoji:'💰', title:'НАЛОГИ', left:{text:'НЕТ', s:{fin:-10}}, right:{text:'ПОДНЯТЬ', s:{fin:15, pop:-15}} },
             { emoji:'🏭', title:'ЗАВОД', left:{text:'ЗАКРЫТЬ', s:{fin:-10, pop:-10}}, right:{text:'РАБОТАТЬ', s:{fin:15, pop:-5}} },
@@ -281,6 +279,26 @@
             { emoji:'🍆', title:'ОВОЩИ', desc:'Запретить баклажаны?', left:{text:'НЕТ', s:{pop:5}}, right:{text:'ЦЕНЗУРА', s:{pop:-5, mor:5}} },
             { emoji:'🍺', title:'ПИВО', desc:'Бесплатное пиво?', left:{text:'АЛКОГОЛИЗМ', s:{mor:-10, pop:-5}}, right:{text:'УРА!', s:{pop:20, fin:-20, sec:-10}} }
 
+
+        ];
+
+        const CLASSES = [
+            { id: 'corp', name: 'КОРПОРАТ', icon: '👔', desc: 'Старт: 70💰. Доход x1.5.', bonus: {fin: 20, pop: -20} },
+            { id: 'general', name: 'ГЕНЕРАЛ', icon: '🎖️', desc: 'Старт: 70🛡️. Армия крепка.', bonus: {sec: 20, mor: -20} },
+            { id: 'hacker', name: 'ХАКЕР', icon: '💻', desc: 'Старт: 60💰. Мини-игры проще.', bonus: {fin: 10, sec: -10} }
+        ];
+
+        const CRISES = [
+            { id: 'bank_hack', emoji: '🏦', title: 'ВЗЛОМ БАНКА', desc: 'Хакеры атакуют!', minigame: 'hack', successMsg: 'Атака отбита!', failMsg: 'Казна пуста!', failImpact: {fin: -50}, winImpact: {fin: 30} },
+            { id: 'bomb', emoji: '💣', title: 'БОМБА', desc: 'Обезвредьте бомбу!', minigame: 'lock', successMsg: 'Успех!', failMsg: 'Взрыв!', failImpact: {pop: -50, sec: -30}, winImpact: {sec: 20, mor: 20} },
+            { id: 'assassin', emoji: '🔫', title: 'СНАЙПЕР', desc: 'В вас целятся!', choices: [{ text: 'НЫРНУТЬ', chance: 0.5, successMsg: 'Промах!', failMsg: 'Попадание...', fail: 'death' }] }
+        ];
+
+        const ACHIEVEMENTS = [
+            { id: 'survivor_10', title: 'ВЫЖИВШИЙ I', desc: 'Проживите 10 дней', reward: 50, check: (m, b, s) => m >= 10 },
+            { id: 'survivor_50', title: 'ВЫЖИВШИЙ II', desc: 'Проживите 50 дней', reward: 200, check: (m, b, s) => m >= 50 },
+            { id: 'rich', title: 'БОГАЧ', desc: 'Накопите 500 монет', reward: 100, check: (m, b, s) => b >= 500 },
+            { id: 'tyrant', title: 'ТИРАН', desc: 'Армия и Деньги > 90%', reward: 150, check: (m, b, s) => s.sec > 90 && s.fin > 90 },
         ];
 
         createApp({
@@ -289,91 +307,161 @@
                 const cityName = ref(localStorage.getItem('ec_city') || '');
                 const bits = ref(parseInt(localStorage.getItem('ec_bits') || 0));
                 const upgrades = ref(JSON.parse(localStorage.getItem('ec_upgrades') || '{}'));
+                const highScore = ref(parseInt(localStorage.getItem('ec_highscore') || 0));
+                const unlockedAchievements = ref(JSON.parse(localStorage.getItem('ec_achievements') || '[]'));
                 
                 const stats = ref({ pop: 50, fin: 50, sec: 50, mor: 50 });
                 const icons = { pop:'👥', fin:'💰', sec:'🛡️', mor:'⚖️' };
                 const moves = ref(0);
                 
                 const activeScenario = ref(null);
-                const activeEvent = ref(null); // Текущий кризис
-                const eventResult = ref(null); // Результат кризиса
-                
+                const activeEvent = ref(null);
+                const eventResult = ref(null);
                 const deathReason = ref(null);
-                const leaderboard = ref([]);
                 const flyDir = ref(null);
+                
+                const classes = CLASSES;
+                const selectedClass = ref(CLASSES[0]);
+                const achievementsList = ACHIEVEMENTS;
+                
+                const newsText = ref("СИСТЕМА ЗАГРУЖЕНА... ОЖИДАНИЕ ПРИКАЗОВ...");
+                const isShaking = ref(false);
 
-                // --- ЛОГИКА ИГРЫ ---
+                // Minigames state
+                const minigameType = ref(null);
+                const hackSequence = ref([]); const hackInput = ref([]); const hackActive = ref(-1); const hackWrong = ref(-1); const hackStatus = ref(''); const hackPlaying = ref(false);
+                const lockPos = ref(0); const lockDir = ref(1); const lockTarget = ref(0); const lockSize = ref(20); let lockInterval = null;
+
+                onMounted(() => {
+                    if(tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#000000'); }
+                    if(cityName.value) screen.value = 'menu';
+                });
+
                 const startGame = () => {
                     stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
                     moves.value = 0; deathReason.value = null;
-                    activeEvent.value = null; eventResult.value = null;
+                    const b = selectedClass.value.bonus;
+                    for(let k in b) stats.value[k] += b[k];
                     pickCard();
                     screen.value = 'game';
+                    newsText.value = "НОВЫЙ ПРАВИТЕЛЬ ВСТУПИЛ В ДОЛЖНОСТЬ...";
                 };
 
                 const pickCard = () => {
                     flyDir.value = null;
                     const rand = Math.floor(Math.random() * SCENARIOS.length);
                     activeScenario.value = SCENARIOS[rand];
+                    if(activeScenario.value.news) newsText.value = activeScenario.value.news;
                 };
 
                 const makeChoice = (dir) => {
                     if(flyDir.value || activeEvent.value) return;
+                    if(tg) tg.HapticFeedback.impactOccurred('medium');
                     flyDir.value = dir;
-                    
-                    // 1. Применяем статы обычной карты
                     const impact = activeScenario.value[dir].s;
-                    applyStats(impact);
+                    
+                    // Визуальный эффект тряски если урон
+                    let hasDamage = false;
+                    for(let k in impact) {
+                        stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
+                        if(impact[k] < 0) hasDamage = true;
+                    }
+                    if(hasDamage) {
+                        isShaking.value = true;
+                        setTimeout(() => isShaking.value = false, 500);
+                    }
+
                     moves.value++;
+                    checkAchievements();
 
                     setTimeout(() => {
                         if(checkDeath()) return;
-
-                        // 2. ШАНС КРИЗИСА (15%)
-                        if(Math.random() < 0.15 && moves.value > 3) {
-                            triggerEvent();
-                        } else {
-                            pickCard();
-                        }
+                        if(Math.random() < 0.15 && moves.value > 3) triggerEvent();
+                        else pickCard();
                     }, 250);
                 };
 
-                // --- СИСТЕМА СОБЫТИЙ ---
+                const checkDeath = () => {
+                    const s = stats.value;
+                    if(s.pop<=0 || s.pop>=100) deathReason.value = "БУНТ";
+                    else if(s.fin<=0 || s.fin>=100) deathReason.value = "ЭКОНОМИКА";
+                    else if(s.sec<=0 || s.sec>=100) deathReason.value = "ВОЙНА";
+                    else if(s.mor<=0 || s.mor>=100) deathReason.value = "МОРАЛЬ";
+                    
+                    if(deathReason.value) {
+                        let earned = moves.value;
+                        if(selectedClass.value.id === 'corp') earned = Math.floor(earned * 1.5);
+                        bits.value += earned;
+                        localStorage.setItem('ec_bits', bits.value);
+                        if(moves.value > highScore.value) {
+                            highScore.value = moves.value;
+                            localStorage.setItem('ec_highscore', highScore.value);
+                        }
+                        setTimeout(() => screen.value = 'end', 500);
+                        return true;
+                    }
+                    return false;
+                };
+
+                const checkAchievements = () => {
+                    ACHIEVEMENTS.forEach(ach => {
+                        if(!unlockedAchievements.value.includes(ach.id)) {
+                            if(ach.check(moves.value, bits.value, stats.value)) {
+                                unlockedAchievements.value.push(ach.id);
+                                bits.value += ach.reward;
+                                localStorage.setItem('ec_achievements', JSON.stringify(unlockedAchievements.value));
+                                localStorage.setItem('ec_bits', bits.value);
+                                newsText.value = `🏆 ДОСТИЖЕНИЕ РАЗБЛОКИРОВАНО: ${ach.title}!`;
+                                if(tg) tg.showPopup({message: `🏆 Получено достижение: ${ach.title}\nНаграда: +${ach.reward} ฿`});
+                            }
+                        }
+                    });
+                };
+
                 const triggerEvent = () => {
                     const rand = Math.floor(Math.random() * CRISES.length);
                     activeEvent.value = CRISES[rand];
+                    newsText.value = "⚠ ВНИМАНИЕ! ЧРЕЗВЫЧАЙНАЯ СИТУАЦИЯ! ⚠";
                     if(tg) tg.HapticFeedback.notificationOccurred('warning');
                 };
 
                 const resolveEvent = (choice) => {
-                    let success = false;
-                    
-                    // Проверка условий
-                    if(choice.req) {
-                        // Проверка статов
-                        if(stats.value[choice.req.stat] >= choice.req.val) success = true;
-                        else success = false;
-                    } else {
-                        // Рандом (Шанс)
-                        success = Math.random() <= choice.chance;
+                    const success = Math.random() <= choice.chance;
+                    if(success) finishEvent(true, choice.successMsg);
+                    else {
+                        if(choice.fail === 'death') { deathReason.value = choice.failMsg; setTimeout(()=>screen.value='end', 500); }
+                        else finishEvent(false, choice.failMsg);
                     }
+                };
 
-                    // Результат
-                    if(success) {
-                        if(choice.impact) applyStats(choice.impact);
-                        eventResult.value = { success: true, msg: choice.successMsg };
+                const startMinigame = (type) => {
+                    minigameType.value = type;
+                    screen.value = 'minigame';
+                    if(type === 'hack') initHackGame();
+                    if(type === 'lock') initLockGame();
+                };
+
+                // Minigame Logic (Shortened)
+                const initHackGame = () => { hackSequence.value=[]; hackInput.value=[]; hackStatus.value='Запоминай...'; hackPlaying.value=false; for(let i=0;i<4;i++)hackSequence.value.push(Math.floor(Math.random()*9)); setTimeout(async()=>{ for(let id of hackSequence.value){ hackActive.value=id; await new Promise(r=>setTimeout(r,400)); hackActive.value=-1; await new Promise(r=>setTimeout(r,200)); } hackStatus.value='Повтори!'; hackPlaying.value=true; },1000); };
+                const handleHackClick = (id) => { if(!hackPlaying.value)return; hackActive.value=id; setTimeout(()=>hackActive.value=-1,200); if(id===hackSequence.value[hackInput.value.length]){ hackInput.value.push(id); if(hackInput.value.length===hackSequence.value.length) finishMinigame(true); } else { hackWrong.value=id; setTimeout(()=>hackWrong.value=-1,300); finishMinigame(false); }};
+                const initLockGame = () => { lockPos.value=0; lockDir.value=1; lockTarget.value=20+Math.random()*40; lockSize.value=selectedClass.value.id==='hacker'?35:20; const spd=selectedClass.value.id==='hacker'?1.5:2.5; if(lockInterval)clearInterval(lockInterval); lockInterval=setInterval(()=>{ lockPos.value+=spd*lockDir.value; if(lockPos.value>100||lockPos.value<0)lockDir.value*=-1; },16); };
+                const checkLock = () => { clearInterval(lockInterval); finishMinigame(lockPos.value>=lockTarget.value && lockPos.value<=(lockTarget.value+lockSize.value)); };
+
+                const finishMinigame = (win) => {
+                    screen.value = 'game';
+                    const evt = activeEvent.value;
+                    if(win) {
+                        if(evt.winImpact) for(let k in evt.winImpact) stats.value[k]+=evt.winImpact[k];
+                        finishEvent(true, evt.successMsg);
                     } else {
-                        if(choice.fail === 'death') {
-                            deathReason.value = choice.failMsg || "ВЫ ПОГИБЛИ ВО ВРЕМЯ КРИЗИСА";
-                            activeEvent.value = null; // Скрываем карту
-                            setTimeout(() => screen.value = 'end', 500);
-                            return;
-                        }
-                        if(typeof choice.fail === 'object') applyStats(choice.fail); // Штраф по статам
-                        eventResult.value = { success: false, msg: choice.failMsg || "Провал..." };
+                        if(evt.failImpact) for(let k in evt.failImpact) stats.value[k]+=evt.failImpact[k];
+                        finishEvent(false, evt.failMsg);
                     }
-                    
-                    activeEvent.value = null; // Убираем карточку события
+                };
+
+                const finishEvent = (success, msg) => {
+                    activeEvent.value = null;
+                    eventResult.value = { success, msg };
                 };
 
                 const closeEventResult = () => {
@@ -382,56 +470,18 @@
                     pickCard();
                 };
 
-                // --- ВСПОМОГАТЕЛЬНЫЕ ---
-                const applyStats = (impact) => {
-                    for(let k in impact) {
-                        stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
-                    }
-                };
-
-                const checkDeath = () => {
-                    const s = stats.value;
-                    let reason = null;
-                    if(s.pop<=0 || s.pop>=100) reason = "БУНТ";
-                    if(s.fin<=0 || s.fin>=100) reason = "ЭКОНОМИКА";
-                    if(s.sec<=0 || s.sec>=100) reason = "ВОЙНА";
-                    if(s.mor<=0 || s.mor>=100) reason = "МОРАЛЬ";
-
-                    if(reason) {
-                        deathReason.value = reason;
-                        bits.value += moves.value;
-                        localStorage.setItem('ec_bits', bits.value);
-                        setTimeout(() => screen.value = 'end', 1000);
-                        return true;
-                    }
-                    return false;
-                };
-
-                const registerUser = () => {
-                    if(!cityName.value) return;
-                    localStorage.setItem('ec_city', cityName.value);
-                    screen.value = 'menu';
-                };
-                
-                const openLeaderboard = () => {
-                    screen.value = 'ladder';
-                    leaderboard.value = [{city:cityName.value, score:moves.value}, {city:'Bot', score:50}]; // Заглушка
-                };
-
-                const cardStyle = computed(() => {
-                    if(!flyDir.value) return {};
-                    const x = flyDir.value === 'right' ? 500 : -500;
-                    return { transform: `translate(${x}px, 100px) rotate(${flyDir.value==='right'?20:-20}deg)`, opacity: 0 };
-                });
-
-                const shopItems = [{id:'lens',name:'ЛИНЗА',icon:'👁️',price:100,desc:'Показывает будущее'}];
-                const buyItem = (i) => { if(bits.value>=i.price){bits.value-=i.price;upgrades.value[i.id]=true;} };
+                const registerUser = () => { localStorage.setItem('ec_city', cityName.value); screen.value = 'menu'; };
+                const buyItem = (i) => { if(bits.value>=i.price){bits.value-=i.price;upgrades.value[i.id]=true; localStorage.setItem('ec_bits',bits.value); localStorage.setItem('ec_upgrades',JSON.stringify(upgrades.value)); }};
+                const shopItems = [{id:'lens',name:'ЛИНЗА',icon:'👁️',price:100,desc:'Видеть статы'}];
+                const cardStyle = computed(() => { if(!flyDir.value)return{}; return { transform: `translate(${flyDir.value==='right'?500:-500}px, 100px) rotate(${flyDir.value==='right'?20:-20}deg)`, opacity: 0 }; });
                 const getBarColor = (v) => (v<20||v>80)?'bg-red-500':'bg-[#00ff9d]';
 
                 return { 
-                    screen, cityName, bits, stats, icons, upgrades, moves, 
-                    activeScenario, activeEvent, eventResult, deathReason, leaderboard, shopItems, cardStyle,
-                    registerUser, startGame, makeChoice, resolveEvent, closeEventResult, openLeaderboard, buyItem, getBarColor 
+                    screen, cityName, bits, stats, icons, moves, upgrades, classes, selectedClass, highScore,
+                    activeScenario, activeEvent, eventResult, deathReason, shopItems, cardStyle, newsText, isShaking,
+                    achievementsList, unlockedAchievements,
+                    minigameType, hackActive, hackWrong, hackStatus, handleHackClick, lockPos, lockTarget, lockSize, checkLock, startMinigame,
+                    registerUser, startGame, makeChoice, resolveEvent, closeEventResult, buyItem, getBarColor 
                 };
             }
         }).mount('#app');
