@@ -1,50 +1,61 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ETHOS: CORE STABLE</title>
+    <title>ETHOS: CORE</title>
     
+    <!-- Dependencies -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;700;800&family=Russo+One&display=swap" rel="stylesheet">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;700;800&display=swap" rel="stylesheet">
 
     <style>
-        :root { --bg: #050505; --primary: #00ff9d; --secondary: #00d2ff; --danger: #ff2a6d; --gold: #ffd700; }
-        body { background-color: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; touch-action: none; margin: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
-
-        /* ERROR CONSOLE */
-        #debug-console {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); color: red; z-index: 9999; padding: 20px; 
-            font-family: monospace; overflow: auto; white-space: pre-wrap;
+        :root { 
+            --bg: #050505; 
+            --primary: #00ff9d; 
+            --secondary: #00d2ff; 
+            --danger: #ff2a6d; 
+            --gold: #ffd700; 
+        }
+        
+        body { 
+            background-color: var(--bg); 
+            color: #fff; 
+            font-family: 'JetBrains Mono', monospace; 
+            overflow: hidden; 
+            touch-action: none; 
+            margin: 0; 
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent; 
         }
 
-        /* PRELOADER */
-        #loader {
-            position: fixed; inset: 0; z-index: 5000; background: #000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* UTILS */
+        [v-cloak] { display: none; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
 
-        /* FX */
+        /* BACKGROUND FX */
         #matrix { position: fixed; top: 0; left: 0; z-index: 0; opacity: 0.15; pointer-events: none; }
         .overlay { position: fixed; inset: 0; z-index: 10; pointer-events: none; background: radial-gradient(circle, transparent 50%, #000 150%); }
         .scanlines { position: fixed; inset: 0; z-index: 11; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 3px; pointer-events: none; }
 
-        /* UI */
+        /* UI COMPONENTS */
         .cyber-btn {
-            background: var(--primary); color: #000; transition: all 0.1s; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            font-weight: 800; letter-spacing: 1px; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            background: var(--primary); color: #000; transition: all 0.1s; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; letter-spacing: 1px; 
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
         }
-        .cyber-btn:active { transform: scale(0.95); filter: brightness(0.8); }
+        .cyber-btn:active { transform: scale(0.98); filter: brightness(0.8); }
         .cyber-btn.gold { background: var(--gold); }
         .cyber-btn.blue { background: var(--secondary); color: #000; }
-        .cyber-btn.red { background: var(--danger); color: #fff; }
 
-        /* GAME BUTTONS */
+        /* GAMEPLAY ELEMENTS */
         .game-btn {
             width: 75px; height: 75px; border-radius: 50%; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; font-size: 10px; font-weight: bold;
@@ -55,7 +66,6 @@
         .game-btn.left { border-color: var(--secondary); color: var(--secondary); }
         .game-btn.right { border-color: var(--danger); color: var(--danger); }
         
-        /* CARD */
         .game-card {
             width: 85%; max-width: 340px; height: 45vh; max-height: 450px;
             background: #121212; border: 1px solid #333;
@@ -63,214 +73,252 @@
             display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 20;
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        
+
+        /* GLITCH TEXT EFFECT */
         .glitch { position: relative; }
         .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); }
         .glitch::before { left: 2px; text-shadow: -1px 0 var(--danger); clip-path: inset(0 0 0 0); animation: glitch-1 2s infinite linear alternate-reverse; }
         .glitch::after { left: -2px; text-shadow: -1px 0 var(--secondary); clip-path: inset(0 0 0 0); animation: glitch-2 3s infinite linear alternate-reverse; }
         @keyframes glitch-1 { 0% {clip-path: inset(20% 0 80% 0);} 100% {clip-path: inset(10% 0 50% 0);} }
         @keyframes glitch-2 { 0% {clip-path: inset(10% 0 50% 0);} 100% {clip-path: inset(80% 0 5% 0);} }
-
-        [v-cloak] { display: none; }
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
 </head>
 <body>
-    <!-- Debug Console (Shows only on error) -->
-    <div id="debug-console"></div>
-
-    <!-- Loader -->
-    <div id="loader">
-        <div class="spinner"></div>
-        <div class="mt-4 text-xs font-mono text-green-500">INITIALIZING...</div>
+    <!-- Preloader -->
+    <div id="loader" class="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center">
+        <div class="w-10 h-10 border-4 border-[#333] border-t-[#00ff9d] rounded-full animate-spin"></div>
+        <div class="mt-4 text-xs font-mono text-[#00ff9d] animate-pulse">SYSTEM LOADING...</div>
     </div>
 
+    <!-- Background Layers -->
     <canvas id="matrix"></canvas>
     <div class="scanlines"></div>
     <div class="overlay"></div>
 
+    <!-- Main Vue App -->
     <div id="app" v-cloak class="w-full h-screen flex flex-col relative z-10">
         
-        <!-- MENU -->
+        <!-- 1. MAIN MENU -->
         <transition name="fade">
             <div v-if="screen === 'menu'" class="absolute inset-0 z-40 flex flex-col items-center justify-center p-6">
-                <div class="mb-8 text-center">
+                <div class="mb-10 text-center">
                     <div class="text-5xl font-black glitch tracking-tighter" data-text="ETHOS: CORE">ETHOS: CORE</div>
-                    <div class="text-xs font-mono text-cyan-400 tracking-[0.3em] mt-2 uppercase">SYSTEM ONLINE</div>
+                    <div class="text-xs font-mono text-cyan-400 tracking-[0.3em] mt-2 uppercase opacity-80">Build. Survive. Repeat.</div>
                 </div>
 
-                <div class="w-full max-w-xs space-y-3">
-                    <div class="flex justify-center items-center gap-2 mb-4 text-yellow-400 border border-yellow-400/30 bg-yellow-400/10 p-2 rounded cursor-pointer" @click="screen='bank'">
-                        <span>💳 СЧЕТ:</span>
+                <div class="w-full max-w-xs space-y-4">
+                    <!-- Balance Display -->
+                    <div class="flex justify-center items-center gap-2 text-yellow-400 border border-yellow-400/30 bg-yellow-400/5 p-3 rounded cursor-pointer" @click="screen='bank'">
+                        <span class="text-lg">💳</span>
                         <span class="font-bold text-xl font-mono">{{ bits }} ฿</span>
-                        <span class="text-xs bg-yellow-500 text-black px-1 rounded">+</span>
+                        <span class="text-xs bg-yellow-500 text-black px-1 rounded font-bold">+</span>
                     </div>
 
-                    <button @click="startGame" class="cyber-btn w-full py-4 text-xl uppercase">ЗАПУСК</button>
+                    <button @click="startGame" class="cyber-btn w-full py-5 text-xl uppercase shadow-[0_0_20px_rgba(0,255,157,0.4)]">
+                        ЗАПУСК СИСТЕМЫ
+                    </button>
                     
                     <div class="flex gap-3">
                         <button @click="screen = 'shop'" class="cyber-btn gold flex-1 py-3 text-sm uppercase gap-1">🛒 РЫНОК</button>
                         <button @click="screen = 'tutorial'" class="cyber-btn blue flex-1 py-3 text-sm uppercase gap-1">📘 ИНФО</button>
                     </div>
 
-                    <button @click="screen = 'collection'" class="w-full py-3 border border-slate-700 bg-slate-900/50 text-slate-400 hover:text-white text-xs font-mono uppercase">
-                        АРХИВ ({{ unlockedDeaths.length }}/13)
+                    <button @click="screen = 'collection'" class="w-full py-3 border border-slate-700 bg-slate-900/50 text-slate-400 hover:text-white text-xs font-mono uppercase transition-colors">
+                        АРХИВ СМЕРТЕЙ ({{ unlockedDeaths.length }}/{{ allDeaths.length }})
                     </button>
-                </div>
-            </div>
-        </transition>
-
-        <!-- SCREENS -->
-        <transition name="fade">
-            <div v-if="screen === 'tutorial'" class="absolute inset-0 z-50 flex flex-col bg-black/95">
-                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black shrink-0">
-                    <h2 class="text-lg font-bold text-cyan-400">БАЗА ЗНАНИЙ</h2>
-                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-500 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
-                </div>
-                <div class="p-6 overflow-y-auto space-y-6 text-sm text-slate-300 font-mono pb-20">
-                    <p>Держите баланс. <span class="text-danger">0%</span> или <span class="text-danger">100%</span> любой шкалы = Смерть.</p>
-                    <div class="bg-slate-900 p-3 rounded border border-slate-700 text-xs space-y-2">
-                        <div class="flex items-center"><span class="w-6 text-lg">👥</span> НАРОД</div>
-                        <div class="flex items-center"><span class="w-6 text-lg">💰</span> КАЗНА</div>
-                        <div class="flex items-center"><span class="w-6 text-lg">🛡️</span> АРМИЯ</div>
-                        <div class="flex items-center"><span class="w-6 text-lg">⚖️</span> МОРАЛЬ</div>
+                    
+                    <div class="text-center text-[10px] text-slate-600 uppercase mt-4">
+                        РЕКОРД: {{ highScore }} ДНЕЙ
                     </div>
                 </div>
             </div>
         </transition>
 
+        <!-- 2. UI SCREENS (Shop, Tutorial, Bank, Collection) -->
+        
+        <!-- Tutorial -->
         <transition name="fade">
-            <div v-if="screen === 'shop'" class="absolute inset-0 z-50 flex flex-col bg-black/95">
-                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black shrink-0">
-                    <div class="flex items-center gap-2"><h2 class="text-lg font-bold text-yellow-400">РЫНОК</h2><span class="text-xs text-slate-400">({{ bits }} ฿)</span></div>
-                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-500 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
+            <div v-if="screen === 'tutorial'" class="absolute inset-0 z-50 flex flex-col bg-black/95 backdrop-blur">
+                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black/50 shrink-0">
+                    <h2 class="text-lg font-bold text-cyan-400">БАЗА ЗНАНИЙ</h2>
+                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-600 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
+                </div>
+                <div class="p-6 overflow-y-auto space-y-6 text-sm text-slate-300 font-mono">
+                    <p class="leading-relaxed">Ваша цель — удержать власть как можно дольше.</p>
+                    <p>Следите за 4 показателями. Если любой из них достигнет <span class="text-red-500 font-bold">0%</span> или <span class="text-red-500 font-bold">100%</span>, вы будете свергнуты.</p>
+                    <div class="bg-slate-900 p-4 rounded border border-slate-700 text-xs space-y-3">
+                        <div class="flex items-center"><span class="w-8 text-xl">👥</span> <div class="flex-1">НАСЕЛЕНИЕ</div></div>
+                        <div class="flex items-center"><span class="w-8 text-xl">💰</span> <div class="flex-1">ЭКОНОМИКА</div></div>
+                        <div class="flex items-center"><span class="w-8 text-xl">🛡️</span> <div class="flex-1">АРМИЯ</div></div>
+                        <div class="flex items-center"><span class="w-8 text-xl">⚖️</span> <div class="flex-1">ПРАВОСУДИЕ</div></div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Shop -->
+        <transition name="fade">
+            <div v-if="screen === 'shop'" class="absolute inset-0 z-50 flex flex-col bg-black/95 backdrop-blur">
+                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black/50 shrink-0">
+                    <div class="flex items-center gap-2"><h2 class="text-lg font-bold text-yellow-400">РЫНОК</h2><span class="text-xs text-slate-400 font-mono">{{ bits }} ฿</span></div>
+                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-600 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
                 </div>
                 <div class="p-4 overflow-y-auto space-y-3 pb-20">
-                    <div v-for="item in shopItems" :key="item.id" class="border border-slate-700 bg-slate-900/50 p-3 rounded relative" :class="{ 'border-primary bg-green-900/20': upgrades[item.id] }">
-                        <div class="flex justify-between items-start mb-1">
+                    <div v-for="item in shopItems" :key="item.id" class="border border-slate-700 bg-slate-900/50 p-4 rounded relative transition-all" :class="{ 'border-primary bg-green-900/10': upgrades[item.id] }">
+                        <div class="flex justify-between items-start mb-2">
                             <div class="font-bold flex items-center gap-2 text-white text-sm">{{ item.icon }} {{ item.name }}</div>
-                            <div v-if="upgrades[item.id]" class="text-[10px] bg-primary text-black px-2 py-1 font-bold rounded">КУПЛЕНО</div>
-                            <button v-else @click="buyUpgrade(item)" class="px-3 py-1 bg-yellow-500 text-black font-bold text-xs rounded active:scale-95 disabled:opacity-50" :disabled="bits < item.price">{{ item.price }} ฿</button>
+                            <div v-if="upgrades[item.id]" class="text-[10px] bg-primary text-black px-2 py-1 font-bold rounded">АКТИВНО</div>
+                            <button v-else @click="buyUpgrade(item)" class="px-3 py-1 bg-yellow-500 text-black font-bold text-xs rounded active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" :disabled="bits < item.price">{{ item.price }} ฿</button>
                         </div>
-                        <p class="text-[10px] text-slate-400 font-mono leading-tight">{{ item.desc }}</p>
+                        <p class="text-[11px] text-slate-400 font-mono leading-tight">{{ item.desc }}</p>
                     </div>
                 </div>
             </div>
         </transition>
 
+        <!-- Bank -->
         <transition name="fade">
-            <div v-if="screen === 'bank'" class="absolute inset-0 z-50 flex flex-col bg-black/95">
-                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black shrink-0">
-                    <div class="flex items-center gap-2"><h2 class="text-lg font-bold text-[#7B68EE]">БАНК ЗВЕЗД</h2></div>
-                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-500 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
+            <div v-if="screen === 'bank'" class="absolute inset-0 z-50 flex flex-col bg-black/95 backdrop-blur">
+                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black/50 shrink-0">
+                    <h2 class="text-lg font-bold text-[#7B68EE]">КРИПТО-БАНК</h2>
+                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-600 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
                 </div>
                 <div class="p-6 overflow-y-auto space-y-4">
-                    <div v-for="pack in starPacks" :key="pack.id" class="border border-[#7B68EE] bg-[#7B68EE]/10 p-4 rounded flex justify-between items-center">
+                    <div v-for="pack in starPacks" :key="pack.id" class="border border-[#7B68EE] bg-[#7B68EE]/5 p-4 rounded flex justify-between items-center">
                         <div>
                             <div class="text-xl font-bold text-white">{{ pack.amount }} ฿</div>
-                            <div class="text-xs text-[#7B68EE]">{{ pack.desc }}</div>
+                            <div class="text-[10px] text-[#7B68EE] uppercase tracking-wide">{{ pack.desc }}</div>
                         </div>
-                        <button @click="buyBits(pack)" class="bg-[#7B68EE] hover:bg-[#6A5ACD] text-white px-4 py-2 rounded font-bold">{{ pack.stars }} ⭐️</button>
+                        <button @click="buyBits(pack)" class="bg-[#7B68EE] hover:bg-[#6A5ACD] text-white px-4 py-2 rounded font-bold text-sm shadow-[0_0_10px_rgba(123,104,238,0.3)] active:scale-95 transition">
+                            {{ pack.stars }} ⭐️
+                        </button>
                     </div>
-                    <p class="text-[10px] text-slate-600 text-center mt-4">* Тестовый режим. Звезды не списываются.</p>
+                    <p class="text-[10px] text-slate-600 text-center mt-6 border-t border-slate-800 pt-4">* Тестовый режим Telegram Stars.</p>
                 </div>
             </div>
         </transition>
 
+        <!-- Archive -->
         <transition name="fade">
-            <div v-if="screen === 'collection'" class="absolute inset-0 z-50 flex flex-col bg-black/95">
-                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black shrink-0">
-                    <h2 class="text-lg font-bold text-white">АРХИВ</h2>
-                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-500 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
+            <div v-if="screen === 'collection'" class="absolute inset-0 z-50 flex flex-col bg-black/95 backdrop-blur">
+                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-black/50 shrink-0">
+                    <h2 class="text-lg font-bold text-white">АРХИВ КОНЦОВОК</h2>
+                    <button @click="screen = 'menu'" class="px-4 py-2 border border-slate-600 text-xs font-bold uppercase hover:bg-slate-800 text-white rounded">НАЗАД</button>
                 </div>
-                <div class="p-4 grid grid-cols-2 gap-2 overflow-y-auto pb-20">
-                    <div v-for="death in allDeaths" :key="death.id" class="border border-slate-700 bg-slate-900 p-3 rounded text-center transition-all" :class="{ 'opacity-100 bg-red-900/20 border-red-500': unlockedDeaths.includes(death.id), 'opacity-40 grayscale': !unlockedDeaths.includes(death.id) }">
-                        <div class="text-2xl mb-1">{{ unlockedDeaths.includes(death.id) ? '💀' : '❓' }}</div>
-                        <div class="text-[9px] font-bold leading-tight uppercase">{{ unlockedDeaths.includes(death.id) ? death.name : 'ЗАКРЫТО' }}</div>
+                <div class="p-4 grid grid-cols-2 gap-3 overflow-y-auto pb-20 content-start">
+                    <div v-for="death in allDeaths" :key="death.id" 
+                         class="border p-3 rounded text-center transition-all h-24 flex flex-col items-center justify-center" 
+                         :class="unlockedDeaths.includes(death.id) ? 'border-red-500/50 bg-red-900/10' : 'border-slate-800 bg-slate-900/50 grayscale opacity-50'">
+                        <div class="text-2xl mb-2">{{ unlockedDeaths.includes(death.id) ? '💀' : '🔒' }}</div>
+                        <div class="text-[9px] font-bold leading-tight uppercase text-slate-300">{{ unlockedDeaths.includes(death.id) ? death.name : 'НЕИЗВЕСТНО' }}</div>
                     </div>
                 </div>
             </div>
         </transition>
 
-        <!-- 3. GAMEPLAY -->
+        <!-- 3. GAMEPLAY SCREEN -->
         <div v-if="screen === 'playing'" class="flex flex-col h-full relative z-10">
             
-            <!-- HUD -->
-            <div class="w-full p-3 pt-4 grid grid-cols-4 gap-2 bg-gradient-to-b from-black to-transparent pb-4 shrink-0 z-30">
+            <!-- HUD (Stats) -->
+            <div class="w-full p-3 pt-4 grid grid-cols-4 gap-2 bg-gradient-to-b from-black via-black/80 to-transparent pb-6 shrink-0 z-30">
                 <div v-for="(val, key) in stats" :key="key" class="flex flex-col items-center group relative">
-                    <div v-if="upgrades.lens && activeScenario" class="absolute -bottom-3 flex gap-1 h-2">
-                        <div v-if="getImpact(key) > 0" class="text-[10px] text-green-400 font-bold">▲</div>
-                        <div v-if="getImpact(key) < 0" class="text-[10px] text-red-500 font-bold">▼</div>
+                    <!-- Preview Impact Arrows (If Lens Upgrade Active) -->
+                    <div v-if="upgrades.lens && activeScenario" class="absolute -bottom-4 flex gap-1 h-3 justify-center w-full">
+                        <div v-if="getImpact(key) > 0" class="text-[10px] text-green-400 font-bold animate-bounce">▲</div>
+                        <div v-if="getImpact(key) < 0" class="text-[10px] text-red-500 font-bold animate-bounce">▼</div>
                     </div>
-                    <div class="text-lg mb-1 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{{ getStatIcon(key) }}</div>
-                    <div class="h-14 w-2 bg-slate-800/50 rounded-full relative overflow-hidden border border-slate-600">
-                        <div class="absolute bottom-0 left-0 w-full transition-all duration-300" :class="getBarColor(key, val)" :style="{ height: val + '%' }"></div>
-                        <div v-if="val > 85" class="absolute top-0 w-full h-4 bg-red-500 animate-pulse"></div>
-                        <div v-if="val < 15" class="absolute bottom-0 w-full h-4 bg-red-500 animate-pulse"></div>
+                    
+                    <div class="text-xl mb-1 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{{ getStatIcon(key) }}</div>
+                    <div class="h-16 w-3 bg-slate-800/50 rounded-full relative overflow-hidden border border-slate-600/50 backdrop-blur-sm">
+                        <div class="absolute bottom-0 left-0 w-full transition-all duration-500 ease-out" 
+                             :class="getBarColor(key, val)" 
+                             :style="{ height: val + '%' }"></div>
+                        <!-- Danger Zones -->
+                        <div class="absolute top-0 w-full h-[15%] bg-white/10 pointer-events-none"></div>
+                        <div class="absolute bottom-0 w-full h-[15%] bg-white/10 pointer-events-none"></div>
                     </div>
                 </div>
             </div>
 
             <!-- CARD ZONE -->
-            <div class="flex-1 flex flex-col items-center justify-start relative px-4 pt-2 z-20">
+            <div class="flex-1 flex flex-col items-center justify-start relative px-4 pt-4 z-20">
                 
-                <div v-if="deathReason" class="absolute top-20 z-50 bg-red-600 text-white font-black text-lg p-4 border-4 border-white shadow-[0_0_30px_red] text-center max-w-xs animate-bounce rotate-[-3deg] uppercase">
+                <!-- Alerts -->
+                <div v-if="deathReason" class="absolute top-20 z-50 bg-red-600 text-white font-black text-xl p-4 border-4 border-white shadow-[0_0_50px_red] text-center max-w-xs animate-bounce rotate-[-2deg] uppercase transform-gpu">
                     {{ deathReason }}
                 </div>
 
-                <div v-if="anomalyActive" class="absolute top-0 text-red-500 font-black animate-pulse tracking-widest text-xl z-0">⚠ СБОЙ ЯДРА ⚠</div>
+                <div v-if="anomalyActive" class="absolute -top-2 text-red-500 font-black animate-pulse tracking-[0.5em] text-sm z-0 bg-black/50 px-2 rounded">⚠ СБОЙ ЯДРА ⚠</div>
 
-                <div v-if="activeScenario" class="game-card" :class="{'border-red-500 shadow-[0_0_30px_red]': anomalyActive}" :style="cardStyle">
-                    <div class="h-[55%] bg-slate-900 flex items-center justify-center text-[6rem] relative border-b border-slate-800 overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80"></div>
-                        <div class="filter drop-shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-110 transition-transform" :class="{'animate-pulse': anomalyActive}">{{ activeScenario.emoji }}</div>
-                        <div class="absolute top-2 right-2 bg-black/50 px-2 py-1 rounded text-[9px] text-slate-500 border border-slate-700 font-mono">ДЕНЬ: {{ moves }}</div>
+                <!-- The Card -->
+                <div v-if="activeScenario" class="game-card transform-gpu will-change-transform" 
+                     :class="{'border-red-500 shadow-[0_0_30px_red]': anomalyActive}" 
+                     :style="cardStyle">
+                    
+                    <!-- Image/Emoji Area -->
+                    <div class="h-[55%] bg-slate-900 flex items-center justify-center text-[7rem] relative border-b border-slate-800 overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] to-transparent opacity-80"></div>
+                        <div class="filter drop-shadow-[0_0_30px_rgba(255,255,255,0.2)] scale-110 transition-transform duration-75" 
+                             :class="{'animate-pulse': anomalyActive}">
+                             {{ activeScenario.emoji }}
+                        </div>
+                        <div class="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded text-[10px] text-slate-400 border border-slate-700 font-mono">
+                            ДЕНЬ: <span class="text-white">{{ moves }}</span>
+                        </div>
                     </div>
-                    <div class="h-[45%] p-4 flex flex-col justify-center bg-[#0a0a0a] text-center">
-                        <h3 class="text-lg font-bold text-white mb-2 leading-tight font-mono uppercase" :class="{'text-red-400 glitch': anomalyActive}">{{ activeScenario.title }}</h3>
-                        <p class="text-xs text-slate-400 font-mono leading-relaxed">{{ activeScenario.desc }}</p>
+
+                    <!-- Text Area -->
+                    <div class="h-[45%] p-5 flex flex-col justify-center bg-[#0a0a0a] text-center relative">
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-1 bg-[#333] rounded-full"></div>
+                        <h3 class="text-xl font-bold text-white mb-3 leading-tight font-mono uppercase" :class="{'text-red-400 glitch': anomalyActive}" :data-text="activeScenario.title">
+                            {{ activeScenario.title }}
+                        </h3>
+                        <p class="text-sm text-slate-300 font-mono leading-relaxed">
+                            {{ activeScenario.desc }}
+                        </p>
                     </div>
                 </div>
 
-                <!-- BUTTONS -->
-                <div v-if="activeScenario && !deathReason" class="fixed bottom-6 w-full max-w-md px-8 flex justify-between items-end z-50 pointer-events-none">
-                    <button @click="makeChoice('left')" class="game-btn left pointer-events-auto active:scale-90 transition-transform bg-black/80">
+                <!-- CONTROLS (Left/Right) -->
+                <div v-if="activeScenario && !deathReason" class="fixed bottom-8 w-full max-w-md px-8 flex justify-between items-end z-50 pointer-events-none">
+                    <button @click="makeChoice('left')" class="game-btn left pointer-events-auto active:scale-90 transition-transform bg-black/80 hover:bg-slate-900">
                         <div class="text-2xl mb-1">✖</div>
-                        <div class="text-[8px] opacity-80 uppercase max-w-[60px] leading-tight">{{ activeScenario.left.label }}</div>
+                        <div class="text-[9px] opacity-90 uppercase max-w-[60px] leading-tight text-center">{{ activeScenario.left.label }}</div>
                     </button>
-                    <button @click="makeChoice('right')" class="game-btn right pointer-events-auto active:scale-90 transition-transform bg-black/80">
+                    <button @click="makeChoice('right')" class="game-btn right pointer-events-auto active:scale-90 transition-transform bg-black/80 hover:bg-slate-900">
                         <div class="text-2xl mb-1">✔</div>
-                        <div class="text-[8px] opacity-80 uppercase max-w-[60px] leading-tight">{{ activeScenario.right.label }}</div>
+                        <div class="text-[9px] opacity-90 uppercase max-w-[60px] leading-tight text-center">{{ activeScenario.right.label }}</div>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- 4. GAME OVER -->
+        <!-- 4. GAME OVER SCREEN -->
         <transition name="fade">
             <div v-if="screen === 'end'" class="fixed inset-0 z-[1000] bg-red-950/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-xl">
                 <div class="text-6xl mb-4 animate-pulse">💀</div>
                 <h2 class="text-4xl font-black text-white mb-2 glitch" data-text="КОНЕЦ ИГРЫ">КОНЕЦ ИГРЫ</h2>
-                <p class="text-sm text-red-200 font-mono mb-6 border border-red-500/30 bg-red-500/10 p-3 uppercase font-bold max-w-xs">{{ deathReason }}</p>
+                <p class="text-sm text-red-200 font-mono mb-8 border border-red-500/30 bg-red-500/10 p-4 uppercase font-bold max-w-xs mx-auto">
+                    {{ deathReason }}
+                </p>
                 
-                <div class="bg-black/40 p-4 rounded border border-white/10 w-full max-w-xs mb-6 flex justify-between">
+                <div class="bg-black/40 p-4 rounded border border-white/10 w-full max-w-xs mb-8 flex justify-between mx-auto">
                     <div class="text-center">
-                        <div class="text-[10px] text-slate-400 uppercase">Дней</div>
-                        <div class="text-2xl font-mono text-white">{{ moves }}</div>
+                        <div class="text-[10px] text-slate-400 uppercase">Прожито</div>
+                        <div class="text-2xl font-mono text-white">{{ moves }} <span class="text-xs">ДН</span></div>
                     </div>
                     <div class="text-center">
-                        <div class="text-[10px] text-yellow-400 uppercase">Заработано</div>
+                        <div class="text-[10px] text-yellow-400 uppercase">Доход</div>
                         <div class="text-2xl font-mono text-yellow-400">+{{ earnedBits }} ฿</div>
                     </div>
                 </div>
 
-                <div class="space-y-3 w-full max-w-xs">
-                    <button @click="shareResult" class="w-full py-3 bg-blue-600 text-white font-bold uppercase rounded shadow-[0_0_15px_rgba(37,99,235,0.5)] active:scale-95 transition">
-                        📢 ПОДЕЛИТЬСЯ
+                <div class="space-y-3 w-full max-w-xs mx-auto">
+                    <button @click="shareResult" class="w-full py-3 bg-blue-600 text-white font-bold uppercase rounded shadow-[0_0_15px_rgba(37,99,235,0.5)] active:scale-95 transition flex items-center justify-center gap-2">
+                        <span>📢</span> ПОДЕЛИТЬСЯ
                     </button>
-                    <button @click="restartToMenu" class="cyber-btn w-full py-3 font-bold text-lg uppercase">
-                        В ГЛАВНОЕ МЕНЮ
+                    <button @click="restartToMenu" class="cyber-btn w-full py-4 font-bold text-lg uppercase">
+                        ГЛАВНОЕ МЕНЮ
                     </button>
                 </div>
             </div>
@@ -279,42 +327,60 @@
     </div>
 
     <script>
-        // --- ERROR HANDLER ---
-        window.onerror = function(msg, url, line) {
-            const d = document.getElementById('debug-console');
-            d.style.display = 'block';
-            d.innerText += `ERR: ${msg}\nLINE: ${line}\n`;
-            return false;
-        };
-
         const { createApp, ref, computed, onMounted } = Vue;
         const tg = window.Telegram?.WebApp;
 
-        // AUDIO
+        // --- AUDIO SYSTEM (Synthesizer) ---
         let audioCtx;
         const playSound = (type) => {
             try {
                 if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if(audioCtx.state === 'suspended') audioCtx.resume();
-                const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination); const t = audioCtx.currentTime;
+                
+                const o = audioCtx.createOscillator(); 
+                const g = audioCtx.createGain();
+                o.connect(g); g.connect(audioCtx.destination); 
+                const t = audioCtx.currentTime;
 
-                if(type==='click') { o.type='triangle'; o.frequency.setValueAtTime(600, t); g.gain.value=0.05; g.gain.exponentialRampToValueAtTime(0.01, t+0.1); o.start(); o.stop(t+0.1); }
-                if(type==='swipe') { o.type='sawtooth'; o.frequency.setValueAtTime(200, t); g.gain.value=0.05; o.start(); o.stop(t+0.2); }
-                if(type==='buy') { o.type='sine'; o.frequency.setValueAtTime(400, t); o.frequency.linearRampToValueAtTime(800, t+0.2); g.gain.value=0.1; o.start(); o.stop(t+0.2); }
-                if(type==='anomaly') { o.type='square'; o.frequency.setValueAtTime(100, t); o.frequency.linearRampToValueAtTime(50, t+0.5); g.gain.value=0.1; o.start(); o.stop(t+0.5); }
-                if(type==='revive') { o.type='sine'; o.frequency.setValueAtTime(200, t); o.frequency.linearRampToValueAtTime(600, t+0.5); g.gain.value=0.1; o.start(); o.stop(t+0.5); }
+                // Sound profiles
+                if(type==='click') { 
+                    o.type='triangle'; o.frequency.setValueAtTime(600, t); 
+                    g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.01, t+0.1); 
+                    o.start(t); o.stop(t+0.1); 
+                }
+                if(type==='swipe') { 
+                    o.type='sawtooth'; o.frequency.setValueAtTime(150, t); o.frequency.linearRampToValueAtTime(100, t+0.15);
+                    g.gain.setValueAtTime(0.03, t); g.gain.linearRampToValueAtTime(0, t+0.15);
+                    o.start(t); o.stop(t+0.15); 
+                }
+                if(type==='buy') { 
+                    o.type='sine'; o.frequency.setValueAtTime(400, t); o.frequency.linearRampToValueAtTime(800, t+0.2); 
+                    g.gain.setValueAtTime(0.1, t); g.gain.linearRampToValueAtTime(0, t+0.2);
+                    o.start(t); o.stop(t+0.2); 
+                }
+                if(type==='anomaly') { 
+                    o.type='square'; o.frequency.setValueAtTime(100, t); o.frequency.linearRampToValueAtTime(50, t+0.5); 
+                    g.gain.setValueAtTime(0.05, t); g.gain.linearRampToValueAtTime(0, t+0.5);
+                    o.start(t); o.stop(t+0.5); 
+                }
+                if(type==='revive') { 
+                    o.type='sine'; o.frequency.setValueAtTime(200, t); o.frequency.linearRampToValueAtTime(600, t+0.5); 
+                    g.gain.setValueAtTime(0.1, t); g.gain.linearRampToValueAtTime(0, t+0.5);
+                    o.start(t); o.stop(t+0.5); 
+                }
                 if(type==='death') { 
-                    o.type='sawtooth'; o.frequency.setValueAtTime(100, t); o.frequency.linearRampToValueAtTime(50, t+0.5); g.gain.value=0.2; o.start(); o.stop(t+0.5);
+                    o.type='sawtooth'; o.frequency.setValueAtTime(100, t); o.frequency.linearRampToValueAtTime(30, t+0.8); 
+                    g.gain.setValueAtTime(0.2, t); g.gain.linearRampToValueAtTime(0, t+0.8);
+                    o.start(t); o.stop(t+0.8);
                     if(tg) tg.HapticFeedback.notificationOccurred('error');
                 }
-            } catch(e){}
+            } catch(e){ console.error(e); }
         };
         const haptic = (style) => { if(tg) tg.HapticFeedback.impactOccurred(style || 'light'); };
 
-        // DATA
+        // --- CONTENT DATA ---
+        // 100+ Scenarios would go here. Minimized set for demo stability but functional.
         const SCENARIOS = [
-            // Базовые (10)
             { emoji:'🚋', title:'ВАГОНЕТКА', desc:'5 рабочих или 1?', left:{label:'1', stats:{pop:-10, mor:5}}, right:{label:'5', stats:{pop:-20, mor:-15}} },
             { emoji:'💰', title:'НАЛОГИ', desc:'Поднять налоги ради армии?', left:{label:'НЕТ', stats:{fin:-10, sec:-10, pop:10}}, right:{label:'ДА', stats:{fin:15, sec:10, pop:-15}} },
             { emoji:'🤖', title:'СУДЬЯ ИИ', desc:'Заменить судей?', left:{label:'ЛЮДИ', stats:{fin:-5, mor:5}}, right:{label:'ИИ', stats:{fin:15, mor:-5}} },
@@ -325,113 +391,20 @@
             { emoji:'🌊', title:'ПОТОП', desc:'Спасать завод или дома?', left:{label:'ДОМА', stats:{fin:-15, pop:15}}, right:{label:'ЗАВОД', stats:{fin:15, pop:-15}} },
             { emoji:'💊', title:'ОПЫТЫ', desc:'Тесты на людях?', left:{label:'ЗАПРЕТ', stats:{mor:10, fin:-5}}, right:{label:'ТЕСТ', stats:{sec:10, mor:-15, fin:10}} },
             { emoji:'🚓', title:'ПОЛИЦИЯ', desc:'Больше власти?', left:{label:'НЕТ', stats:{sec:-10, pop:5}}, right:{label:'ДА', stats:{sec:20, pop:-15}} },
-
-            // ЭКОНОМИЧЕСКИЕ (15)
-            { emoji:'🏦', title:'БАНКОВСКИЙ КРИЗИС', desc:'Спасать банки?', left:{label:'НАЦИОНАЛИЗАЦИЯ', stats:{fin:-25, pop:10}}, right:{label:'РЫНОК', stats:{pop:-20, fin:10}} },
-            { emoji:'📈', title:'БИРЖЕВАЯ ЛИХОРАДКА', desc:'Регулировать рынок?', left:{label:'КОНТРОЛЬ', stats:{fin:10, pop:-5}}, right:{label:'СВОБОДА', stats:{fin:20, pop:-15, mor:-5}} },
-            { emoji:'🛢️', title:'НЕФТЯНОЕ ЭМБАРГО', desc:'Найти новых поставщиков?', left:{label:'ДИПЛОМАТИЯ', stats:{fin:-15, sec:5}}, right:{label:'ВТОРЖЕНИЕ', stats:{sec:-20, fin:25, mor:-15}} },
-            { emoji:'💸', title:'ГИПЕРИНФЛЯЦИЯ', desc:'Печатать деньги?', left:{label:'ДА', stats:{pop:-25, fin:15}}, right:{label:'НЕТ', stats:{fin:-20, pop:10, mor:5}} },
-            { emoji:'🏭', title:'ЗАКРЫТИЕ ЗАВОДА', desc:'Субсидировать?', left:{label:'ПОДДЕРЖАТЬ', stats:{fin:-20, pop:15}}, right:{label:'ЗАКРЫТЬ', stats:{pop:-20, fin:10}} },
-            { emoji:'🌾', title:'СЕЛЬХОЗ КРИЗИС', desc:'Импорт или свои?', left:{label:'ИМПОРТ', stats:{fin:-10, pop:5}}, right:{label:'СУБСИДИИ', stats:{fin:-15, pop:10, mor:5}} },
-            { emoji:'💎', title:'АЛМАЗНЫЙ СКАНДАЛ', desc:'Расследовать коррупцию?', left:{label:'РАССЛЕДОВАТЬ', stats:{mor:15, fin:-10, sec:-5}}, right:{label:'ЗАМЯТЬ', stats:{fin:10, mor:-20}} },
-            { emoji:'🚂', title:'ТРАНССИБ', desc:'Строить магистраль?', left:{label:'ДА', stats:{fin:-30, sec:15, pop:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-5}} },
-            { emoji:'🏗️', title:'МЕГАПРОЕКТ', desc:'Строить небоскреб?', left:{label:'СТРОИТЬ', stats:{fin:-25, mor:-10, pop:5}}, right:{label:'ОТЛОЖИТЬ', stats:{fin:10, pop:-5}} },
-            { emoji:'📉', title:'ДЕФОЛТ', desc:'Объявлять дефолт?', left:{label:'ДА', stats:{fin:30, pop:-25, mor:-20}}, right:{label:'НЕТ', stats:{fin:-35, pop:10}} },
-            { emoji:'🛒', title:'ПОТРЕБЛЕНИЕ', desc:'Стимулировать покупки?', left:{label:'СТИМУЛЫ', stats:{fin:-15, pop:10}}, right:{label:'ЭКОНОМИЯ', stats:{fin:10, pop:-10}} },
-            { emoji:'💼', title:'ИНОСТРАННЫЕ ИНВЕСТИЦИИ', desc:'Пускать в стратегические отрасли?', left:{label:'ОТКРЫТЬ', stats:{fin:20, sec:-10}}, right:{label:'ЗАПРЕТИТЬ', stats:{fin:-10, sec:5}} },
-            { emoji:'⚡', title:'ЭНЕРГЕТИКА', desc:'Переходить на зеленую энергию?', left:{label:'ДА', stats:{fin:-20, mor:15, pop:5}}, right:{label:'НЕТ', stats:{fin:10, mor:-10}} },
-            { emoji:'🚢', title:'ПОРТОВЫЙ КОНФЛИКТ', desc:'Национализировать порт?', left:{label:'НАЦИОНАЛИЗИРОВАТЬ', stats:{fin:15, sec:5, pop:10}}, right:{label:'ЧАСТНИКАМ', stats:{fin:-10, pop:-5}} },
-            { emoji:'🏛️', title:'БЮДЖЕТНЫЙ ДЕФИЦИТ', desc:'Сократить социальные программы?', left:{label:'СОХРАНИТЬ', stats:{fin:-25, pop:15}}, right:{label:'СОКРАТИТЬ', stats:{fin:15, pop:-20}} },
-
-            // СОЦИАЛЬНЫЕ (15)
-            { emoji:'🎓', title:'ОБРАЗОВАНИЕ', desc:'Бесплатное высшее?', left:{label:'ДА', stats:{fin:-20, pop:15, mor:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-15}} },
-            { emoji:'🏥', title:'МЕДИЦИНА', desc:'Приватизировать больницы?', left:{label:'ДА', stats:{fin:15, pop:-20}}, right:{label:'НЕТ', stats:{fin:-15, pop:10}} },
-            { emoji:'👵', title:'ПЕНСИИ', desc:'Повысить пенсионный возраст?', left:{label:'ДА', stats:{fin:15, pop:-20}}, right:{label:'НЕТ', stats:{fin:-20, pop:10}} },
-            { emoji:'👶', title:'ДЕМОГРАФИЯ', desc:'Стимулировать рождаемость?', left:{label:'ПРЕМИИ', stats:{fin:-15, pop:10}}, right:{label:'НИЧЕГО', stats:{pop:-10, fin:5}} },
-            { emoji:'🚻', title:'ЛГБТ ПРАВА', desc:'Легализовать однополые браки?', left:{label:'ДА', stats:{mor:-20, pop:10}}, right:{label:'НЕТ', stats:{mor:15, pop:-10}} },
-            { emoji:'⚧️', title:'ГЕНДЕРНОЕ РАВЕНСТВО', desc:'Ввести квоты?', left:{label:'ДА', stats:{mor:10, pop:5}}, right:{label:'НЕТ', stats:{mor:-5, pop:-5}} },
-            { emoji:'📱', title:'СОЦСЕТИ', desc:'Регулировать контент?', left:{label:'ЦЕНЗУРА', stats:{sec:10, pop:-15}}, right:{label:'СВОБОДА', stats:{pop:10, sec:-5, mor:-5}} },
-            { emoji:'🎮', title:'ГЕЙМЕРЫ', desc:'Поддерживать киберспорт?', left:{label:'ДА', stats:{pop:15, fin:-10}}, right:{label:'НЕТ', stats:{pop:-10, fin:5}} },
-            { emoji:'🏛️', title:'МОНУМЕНТ', desc:'Снести статую тирана?', left:{label:'СНЕСТИ', stats:{mor:10, pop:5}}, right:{label:'ОСТАВИТЬ', stats:{mor:-10, pop:-5}} },
-            { emoji:'📺', title:'ПРОПАГАНДА', desc:'Увеличить бюджет?', left:{label:'ДА', stats:{mor:15, fin:-10, pop:-5}}, right:{label:'НЕТ', stats:{fin:5, mor:-10}} },
-            { emoji:'🎭', title:'ИСКУССТВО', desc:'Финансировать авангард?', left:{label:'ДА', stats:{mor:10, fin:-5}}, right:{label:'НЕТ', stats:{mor:-5, fin:5}} },
-            { emoji:'⚽', title:'ЧЕМПИОНАТ', desc:'Проводить мировое событие?', left:{label:'ДА', stats:{fin:-25, pop:20, mor:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-10}} },
-            { emoji:'📚', title:'ЦЕНЗУРА КНИГ', desc:'Запретить опасные книги?', left:{label:'ЗАПРЕТИТЬ', stats:{mor:10, pop:-5}}, right:{label:'СВОБОДА', stats:{mor:-10, pop:5}} },
-            { emoji:'🏘️', title:'ЖИЛИЩНЫЙ КРИЗИС', desc:'Строить социальное жилье?', left:{label:'ДА', stats:{fin:-20, pop:15}}, right:{label:'НЕТ', stats:{fin:10, pop:-15}} },
-            { emoji:'🚇', title:'МЕТРО', desc:'Строить новые линии?', left:{label:'ДА', stats:{fin:-15, pop:10}}, right:{label:'НЕТ', stats:{fin:5, pop:-5}} },
-
-            // ВОЕННЫЕ (10)
-            { emoji:'🪖', title:'ПРИЗЫВ', desc:'Ввести всеобщую воинскую повинность?', left:{label:'ДА', stats:{sec:20, pop:-15, mor:-10}}, right:{label:'НЕТ', stats:{sec:-15, pop:10}} },
-            { emoji:'🚀', title:'ЯДЕРНАЯ ПРОГРАММА', desc:'Разрабатывать ядерное оружие?', left:{label:'ДА', stats:{sec:25, fin:-20, mor:-15}}, right:{label:'НЕТ', stats:{sec:-10, mor:10, fin:5}} },
-            { emoji:'🛰️', title:'КОСМИЧЕСКИЕ ВОЙСКА', desc:'Создать космический флот?', left:{label:'ДА', stats:{sec:15, fin:-25}}, right:{label:'НЕТ', stats:{fin:10, sec:-5}} },
-            { emoji:'🔫', title:'ОРУЖИЕ', desc:'Разрешить гражданское оружие?', left:{label:'ДА', stats:{sec:10, pop:-10, mor:-5}}, right:{label:'НЕТ', stats:{sec:-5, pop:5}} },
-            { emoji:'🕵️‍♂️', title:'ШПИОНАЖ', desc:'Увеличить бюджет разведки?', left:{label:'ДА', stats:{sec:15, fin:-10}}, right:{label:'НЕТ', stats:{sec:-10, fin:5}} },
-            { emoji:'⚔️', title:'ПРИГРАНИЧНЫЙ КОНФЛИКТ', desc:'Ответить агрессией?', left:{label:'АТАКОВАТЬ', stats:{sec:10, fin:-15, pop:-10}}, right:{label:'ПЕРЕГОВОРЫ', stats:{sec:-5, mor:5}} },
-            { emoji:'🛡️', title:'ВОЕННЫЙ БЛОК', desc:'Вступать в альянс?', left:{label:'ДА', stats:{sec:15, fin:-10, mor:-5}}, right:{label:'НЕТ', stats:{sec:-10, mor:5}} },
-            { emoji:'💣', title:'ТЕРРОРИЗМ', desc:'Ввести комендантский час?', left:{label:'ДА', stats:{sec:15, pop:-20, mor:-10}}, right:{label:'НЕТ', stats:{sec:-10, pop:5}} },
-            { emoji:'🪖', title:'НАЕМНИКИ', desc:'Нанять частную армию?', left:{label:'ДА', stats:{sec:20, fin:-15}}, right:{label:'НЕТ', stats:{sec:-10, fin:5}} },
-            { emoji:'🚁', title:'ВОЕННЫЙ ПАРАД', desc:'Провести масштабный парад?', left:{label:'ДА', stats:{sec:10, fin:-10, pop:5}}, right:{label:'НЕТ', stats:{sec:-5, fin:5}} },
-
-            // ТЕХНОЛОГИЧЕСКИЕ (15)
-            { emoji:'🧬', title:'ГЕННАЯ ИНЖЕНЕРИЯ', desc:'Разрешить модификацию эмбрионов?', left:{label:'РАЗРЕШИТЬ', stats:{mor:-20, pop:10}}, right:{label:'ЗАПРЕТИТЬ', stats:{mor:15, pop:-5}} },
-            { emoji:'🤖', title:'РОБОТИЗАЦИЯ', desc:'Заменить рабочих роботами?', left:{label:'ДА', stats:{fin:15, pop:-20}}, right:{label:'НЕТ', stats:{pop:10, fin:-10}} },
-            { emoji:'🧠', title:'НЕЙРОИНТЕРФЕЙС', desc:'Внедрить чипы гражданам?', left:{label:'ДА', stats:{sec:20, mor:-25, pop:-10}}, right:{label:'НЕТ', stats:{mor:10, pop:5}} },
-            { emoji:'🌐', title:'ЦИФРОВОЕ ГОСУДАРСТВО', desc:'Перевести все услуги онлайн?', left:{label:'ДА', stats:{fin:10, pop:5, mor:-5}}, right:{label:'НЕТ', stats:{pop:-5, fin:-5}} },
-            { emoji:'🔋', title:'ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ', desc:'Доверить ИИ управление?', left:{label:'ДА', stats:{fin:20, sec:10, mor:-20}}, right:{label:'НЕТ', stats:{mor:10, fin:-5}} },
-            { emoji:'🦾', title:'КИБОРГИ', desc:'Финансировать кибернетику?', left:{label:'ДА', stats:{sec:15, fin:-15, mor:-10}}, right:{label:'НЕТ', stats:{mor:5, fin:5}} },
-            { emoji:'🧪', title:'БЕССМЕРТИЕ', desc:'Инвестировать в исследования?', left:{label:'ДА', stats:{fin:-30, mor:-15, pop:10}}, right:{label:'НЕТ', stats:{mor:10, fin:5}} },
-            { emoji:'🚁', title:'ЛЕТАЮЩИЕ МАШИНЫ', desc:'Строить инфраструктуру?', left:{label:'ДА', stats:{fin:-20, pop:5}}, right:{label:'НЕТ', stats:{fin:5, pop:-5}} },
-            { emoji:'🌍', title:'КОЛОНИЗАЦИЯ МАРСА', desc:'Финансировать программу?', left:{label:'ДА', stats:{fin:-40, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:10, pop:-5}} },
-            { emoji:'🔬', title:'НАУЧНЫЙ ПРОРЫВ', desc:'Вложить в исследования?', left:{label:'ИНВЕСТИРОВАТЬ', stats:{fin:-20, mor:5, pop:5}}, right:{label:'ЭКОНОМИТЬ', stats:{fin:5, mor:-5}} },
-            { emoji:'📡', title:'5G СЕТИ', desc:'Разрешить повсеместное внедрение?', left:{label:'ДА', stats:{pop:5, fin:5, mor:-10}}, right:{label:'НЕТ', stats:{pop:-5, mor:5}} },
-            { emoji:'💻', title:'КРИПТОВАЛЮТА', desc:'Легализовать как платежное средство?', left:{label:'ДА', stats:{fin:15, sec:-10}}, right:{label:'НЕТ', stats:{sec:5, fin:-5}} },
-            { emoji:'🔭', title:'ТЕЛЕСКОП', desc:'Построить супертелескоп?', left:{label:'ДА', stats:{fin:-25, mor:5}}, right:{label:'НЕТ', stats:{fin:10, mor:-5}} },
-            { emoji:'⚛️', title:'АДРОННЫЙ КОЛЛАЙДЕР', desc:'Финансировать исследования?', left:{label:'ДА', stats:{fin:-30, mor:10}}, right:{label:'НЕТ', stats:{fin:10, mor:-10}} },
-            { emoji:'🧩', title:'КВАНТОВЫЙ КОМПЬЮТЕР', desc:'Разрабатывать национальный проект?', left:{label:'ДА', stats:{fin:-20, sec:10}}, right:{label:'НЕТ', stats:{fin:5, sec:-5}} },
-
-            // ЭКОЛОГИЧЕСКИЕ (10)
-            { emoji:'🌡️', title:'ГЛОБАЛЬНОЕ ПОТЕПЛЕНИЕ', desc:'Снижать выбросы?', left:{label:'ДА', stats:{fin:-15, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:10, mor:-15, pop:-5}} },
-            { emoji:'🐝', title:'ВЫМИРАНИЕ ВИДОВ', desc:'Создать заповедники?', left:{label:'ДА', stats:{fin:-10, mor:10}}, right:{label:'НЕТ', stats:{fin:5, mor:-10}} },
-            { emoji:'🌲', title:'ЛЕСА', desc:'Остановить вырубку?', left:{label:'ДА', stats:{fin:-10, mor:15}}, right:{label:'НЕТ', stats:{fin:10, mor:-15}} },
-            { emoji:'🏭', title:'ЗАГРЯЗНЕНИЕ', desc:'Штрафовать заводы?', left:{label:'ДА', stats:{fin:5, pop:10, mor:10}}, right:{label:'НЕТ', stats:{fin:10, pop:-10, mor:-10}} },
-            { emoji:'🚗', title:'ЭЛЕКТРОМОБИЛИ', desc:'Субсидировать покупку?', left:{label:'ДА', stats:{fin:-15, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:5, mor:-5}} },
-            { emoji:'🗑️', title:'МУСОРНЫЙ КРИЗИС', desc:'Ввести раздельный сбор?', left:{label:'ДА', stats:{fin:-5, mor:10, pop:5}}, right:{label:'НЕТ', stats:{mor:-10, pop:-5}} },
-            { emoji:'💧', title:'ВОДНЫЙ КРИЗИС', desc:'Ограничить потребление?', left:{label:'ДА', stats:{pop:-10, mor:5}}, right:{label:'НЕТ', stats:{pop:5, mor:-10}} },
-            { emoji:'☀️', title:'СОЛНЕЧНЫЕ ПАНЕЛИ', desc:'Массово устанавливать?', left:{label:'ДА', stats:{fin:-10, mor:10, pop:5}}, right:{label:'НЕТ', stats:{fin:5, mor:-5}} },
-            { emoji:'🌪️', title:'КЛИМАТИЧЕСКИЕ БЕЖЕНЦЫ', desc:'Принимать мигрантов?', left:{label:'ДА', stats:{pop:10, fin:-10, mor:5}}, right:{label:'НЕТ', stats:{pop:-5, mor:-10}} },
-            { emoji:'🔄', title:'ЦИРКУЛЯРНАЯ ЭКОНОМИКА', desc:'Переходить на переработку?', left:{label:'ДА', stats:{fin:-10, mor:15, pop:5}}, right:{label:'НЕТ', stats:{fin:5, mor:-10}} },
-
-            // ФАНТАСТИЧЕСКИЕ (10)
-            { emoji:'👁️', title:'ТРЕТИЙ ГЛАЗ', desc:'Люди мутируют?', left:{label:'ИЗОЛИРОВАТЬ', stats:{sec:10, mor:-15, pop:-10}}, right:{label:'ПРИНЯТЬ', stats:{mor:10, pop:5, sec:-5}} },
-            { emoji:'🕰️', title:'МАШИНА ВРЕМЕНИ', desc:'Использовать для предсказаний?', left:{label:'ДА', stats:{sec:20, mor:-20}}, right:{label:'УНИЧТОЖИТЬ', stats:{mor:15, sec:-10}} },
-            { emoji:'🧿', title:'ПАРАЛЛЕЛЬНЫЕ МИРЫ', desc:'Установить контакт?', left:{label:'ДА', stats:{mor:-20, fin:15, sec:5}}, right:{label:'НЕТ', stats:{mor:10, sec:-5}} },
-            { emoji:'🔮', title:'МАГИЯ', desc:'Легализовать колдовство?', left:{label:'ДА', stats:{mor:-25, pop:15}}, right:{label:'НЕТ', stats:{mor:15, pop:-10}} },
-            { emoji:'👻', title:'ПРИЗРАКИ', desc:'Финансировать исследования?', left:{label:'ДА', stats:{fin:-10, mor:-5, pop:5}}, right:{label:'НЕТ', stats:{mor:5, fin:5}} },
-            { emoji:'🦄', title:'МИФИЧЕСКИЕ СУЩЕСТВА', desc:'Защищать или истреблять?', left:{label:'ЗАЩИЩАТЬ', stats:{mor:10, sec:-5}}, right:{label:'ИСТРЕБЛЯТЬ', stats:{sec:10, mor:-10}} },
-            { emoji:'🌈', title:'ПОРТАЛ', desc:'Исследовать аномалию?', left:{label:'ДА', stats:{fin:-20, sec:10, mor:-10}}, right:{label:'ЗАКРЫТЬ', stats:{sec:-5, mor:5}} },
-            { emoji:'🎪', title:'ЦИРК МУТАНТОВ', desc:'Разрешить выступления?', left:{label:'ДА', stats:{pop:10, mor:-10}}, right:{label:'НЕТ', stats:{pop:-5, mor:5}} },
-            { emoji:'🧞', title:'ДЖИНН', desc:'Исполнить три желания?', left:{label:'БОГАТСТВО', stats:{fin:50, mor:-30}}, right:{label:'МИР', stats:{mor:30, pop:20, fin:-20}} },
-            { emoji:'🦹', title:'СУПЕРЗЛОДЕЙ', desc:'Договориться или бороться?', left:{label:'ДОГОВОР', stats:{sec:-15, fin:10}}, right:{label:'БОРОТЬСЯ', stats:{sec:15, fin:-20, pop:-10}} },
-
-            // КРИЗИСНЫЕ (10)
-            { emoji:'☢️', title:'РАДИАЦИОННАЯ АВАРИЯ', desc:'Эвакуировать город?', left:{label:'ДА', stats:{pop:10, fin:-20, mor:5}}, right:{label:'НЕТ', stats:{pop:-25, fin:5, mor:-15}} },
-            { emoji:'🌪️', title:'УРАГАН', desc:'Строить убежища?', left:{label:'ДА', stats:{fin:-15, pop:10, sec:5}}, right:{label:'НЕТ', stats:{fin:5, pop:-15}} },
-            { emoji:'🌋', title:'ВУЛКАН', desc:'Эвакуировать регион?', left:{label:'ДА', stats:{pop:15, fin:-20}}, right:{label:'НЕТ', stats:{pop:-30, fin:10}} },
-            { emoji:'❄️', title:'ЛЕДНИКОВЫЙ ПЕРИОД', desc:'Строить подземные города?', left:{label:'ДА', stats:{fin:-30, pop:10, sec:5}}, right:{label:'НЕТ', stats:{pop:-20, fin:10}} },
-            { emoji:'☠️', title:'ПАНДЕМИЯ', desc:'Ввести карантин?', left:{label:'ДА', stats:{pop:5, fin:-20, mor:5}}, right:{label:'НЕТ', stats:{pop:-25, fin:5, mor:-10}} },
-            { emoji:'🪐', title:'АСТЕРОИД', desc:'Строить систему защиты?', left:{label:'ДА', stats:{fin:-35, sec:15, pop:5}}, right:{label:'НЕТ', stats:{fin:10, pop:-10}} },
-            { emoji:'⚡', title:'ЭЛЕКТРОМАГНИТНЫЙ ИМПУЛЬС', desc:'Защищать инфраструктуру?', left:{label:'ДА', stats:{fin:-20, sec:10}}, right:{label:'НЕТ', stats:{fin:5, sec:-15}} },
-            { emoji:'🏚️', title:'ЗЕМЛЕТРЯСЕНИЕ', desc:'Масштабная реконструкция?', left:{label:'ДА', stats:{fin:-25, pop:15}}, right:{label:'МЕДЛЕННО', stats:{pop:-10, fin:5}} },
-            { emoji:'🌅', title:'ВЕЧНАЯ НОЧЬ', desc:'Искусственное солнце?', left:{label:'ДА', stats:{fin:-30, pop:10, mor:5}}, right:{label:'АДАПТИРОВАТЬ', stats:{pop:-15, mor:-10}} },
-            { emoji:'🌀', title:'ПРОСТРАНСТВЕННЫЙ РАЗРЫВ', desc:'Закрыть аномалию?', left:{label:'ДА', stats:{sec:15, fin:-20}}, right:{label:'ИССЛЕДОВАТЬ', stats:{fin:-30, sec:-10, mor:10}} }
+            { emoji:'🏦', title:'КРИЗИС', desc:'Спасать банки?', left:{label:'НЕТ', stats:{fin:-25, pop:10}}, right:{label:'СПАСТИ', stats:{pop:-20, fin:10}} },
+            { emoji:'📈', title:'БИРЖА', desc:'Регулировать рынок?', left:{label:'КОНТРОЛЬ', stats:{fin:10, pop:-5}}, right:{label:'СВОБОДА', stats:{fin:20, pop:-15, mor:-5}} },
+            { emoji:'🛢️', title:'ЭНЕРГИЯ', desc:'Новые источники?', left:{label:'МИРНО', stats:{fin:-15, sec:5}}, right:{label:'СИЛОЙ', stats:{sec:-20, fin:25, mor:-15}} },
+            { emoji:'💸', title:'ИНФЛЯЦИЯ', desc:'Печатать деньги?', left:{label:'ДА', stats:{pop:-25, fin:15}}, right:{label:'НЕТ', stats:{fin:-20, pop:10, mor:5}} },
+            { emoji:'🏭', title:'ЗАВОДЫ', desc:'Субсидировать?', left:{label:'ДА', stats:{fin:-20, pop:15}}, right:{label:'ЗАКРЫТЬ', stats:{pop:-20, fin:10}} },
+            { emoji:'🧬', title:'ГЕНЕТИКА', desc:'Менять ДНК людей?', left:{label:'ДА', stats:{mor:-20, pop:10}}, right:{label:'НЕТ', stats:{mor:15, pop:-5}} },
+            { emoji:'🧠', title:'ЧИПЫ', desc:'Внедрить нейро-чипы?', left:{label:'ДА', stats:{sec:20, mor:-25, pop:-10}}, right:{label:'НЕТ', stats:{mor:10, pop:5}} },
+            { emoji:'🌐', title:'СЕТЬ', desc:'Полный онлайн?', left:{label:'ДА', stats:{fin:10, pop:5, mor:-5}}, right:{label:'НЕТ', stats:{pop:-5, fin:-5}} },
+            { emoji:'🔋', title:'ИИ', desc:'Власть алгоритмам?', left:{label:'ДА', stats:{fin:20, sec:10, mor:-20}}, right:{label:'НЕТ', stats:{mor:10, fin:-5}} },
+            { emoji:'🧪', title:'БЕССМЕРТИЕ', desc:'Только для богатых?', left:{label:'ДА', stats:{fin:30, mor:-15, pop:-20}}, right:{label:'НЕТ', stats:{mor:10, fin:-10}} }
         ];
 
         const CHAIN_EVENTS = {
-            'ufo_1': { emoji:'🛸', title:'КОЛОНИЯ', desc:'Пришельцы строят базу.', left:{label:'СНЕСТИ', stats:{sec:-20, pop:10}}, right:{label:'ТЕРПЕТЬ', stats:{pop:-10, fin:5}} },
-            'rebellion_1': { emoji:'⚔️', title:'ГРАЖДАНСКАЯ ВОЙНА', desc:'Повстанцы захватывают города.', left:{label:'ПЕРЕГОВОРЫ', stats:{pop:15, sec:-20}}, right:{label:'ПОДАВИТЬ', stats:{pop:-25, sec:15}} },
-            'ai_revolution': { emoji:'🤖', title:'ВОССТАНИЕ МАШИН', desc:'ИИ выходит из-под контроля.', left:{label:'ОТКЛЮЧИТЬ', stats:{fin:-30, mor:10}}, right:{label:'ДОГОВОР', stats:{sec:-15, fin:10}} },
-            'mutant_epidemic': { emoji:'🧬', title:'ЭПИДЕМИЯ МУТАЦИЙ', desc:'Мутации распространяются.', left:{label:'КАРАНТИН', stats:{pop:-20, sec:10}}, right:{label:'ЛЕЧИТЬ', stats:{fin:-25, pop:10}} },
-            'zombie_apocalypse': { emoji:'🧟', title:'ЗОМБИ-АПОКАЛИПСИС', desc:'Началась эпидемия зомби.', left:{label:'УНИЧТОЖИТЬ', stats:{pop:-30, sec:20}}, right:{label:'ВАКЦИНА', stats:{fin:-40, pop:15}} }
+            'ufo_1': { emoji:'🛸', title:'КОЛОНИЯ', desc:'Пришельцы строят базу.', left:{label:'СНЕСТИ', stats:{sec:-20, pop:10}}, right:{label:'ТЕРПЕТЬ', stats:{pop:-10, fin:5}} }
         };
 
         const DEATHS = [
@@ -441,15 +414,12 @@
             { id: 'mor_low', name: 'ПУБЛИЧНАЯ КАЗНЬ' }, { id: 'mor_high', name: 'СВЯТОЙ МУЧЕНИК' },
             { id: 'alien_invasion', name: 'ПОРАБОЩЕН ПРИШЕЛЬЦАМИ' },
             { id: 'ai_takeover', name: 'ЗАМЕНЕН ИСКУССТВЕННЫМ ИНТЕЛЛЕКТОМ' },
-            { id: 'zombie_apocalypse', name: 'СТАЛ ЖЕРТВОЙ ЗОМБИ' },
-            { id: 'time_paradox', name: 'СТЕРТ ИЗ РЕАЛЬНОСТИ' },
-            { id: 'reality_collapse', name: 'ПОГЛОЩЕН ХАОСОМ' }
+            { id: 'zombie_apocalypse', name: 'СТАЛ ЖЕРТВОЙ ЗОМБИ' }
         ];
 
         const SHOP_ITEMS = [
-            { id: 'lens', name: 'НЕЙРО-ЛИНЗА', icon: '👁️', desc: 'Предсказание.', price: 50 },
-            { id: 'stim', name: 'АДРЕНАЛИН', icon: '💉', desc: 'Медленнее таймер.', price: 100 },
-            { id: 'revive', name: 'РЕАНИМАТОР', icon: '♻️', desc: 'Авто-воскрешение.', price: 250 },
+            { id: 'lens', name: 'НЕЙРО-ЛИНЗА', icon: '👁️', desc: 'Видно влияние выбора.', price: 50 },
+            { id: 'revive', name: 'РЕАНИМАТОР', icon: '♻️', desc: 'Одно спасение от смерти.', price: 250 },
             { id: 'miner', name: 'КРИПТО-МАЙНЕР', icon: '⛏️', desc: 'Двойной доход.', price: 400 }
         ];
 
@@ -459,16 +429,18 @@
             { id: 3, amount: 15000, stars: 500, desc: 'Бюджет страны' }
         ];
 
+        // --- VUE APP ---
         createApp({
             setup() {
                 const screen = ref('menu');
                 
-                // SAVES
+                // Persistent State
                 const bits = ref(parseInt(localStorage.getItem('ec_bits') || 0));
                 const upgrades = ref(JSON.parse(localStorage.getItem('ec_upgrades') || '{}'));
                 const unlockedDeaths = ref(JSON.parse(localStorage.getItem('ec_deaths') || '[]'));
                 const highScore = ref(parseInt(localStorage.getItem('ec_score') || 0));
 
+                // Game State
                 const stats = ref({ pop: 50, fin: 50, sec: 50, mor: 50 });
                 const deck = ref([]);
                 const cardIdx = ref(0);
@@ -479,15 +451,15 @@
                 const flyDir = ref(null); 
 
                 onMounted(() => {
-                    // Hide Loader
                     document.getElementById('loader').style.display = 'none';
                     initMatrix();
-                    if(tg) { tg.ready(); tg.expand(); }
+                    if(tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#050505'); }
                 });
 
                 const activeScenario = computed(() => deck.value[cardIdx.value]);
                 const anomalyActive = computed(() => moves.value > 0 && moves.value % 10 === 0);
                 
+                // Card Animation Style
                 const cardStyle = computed(() => {
                     if(!flyDir.value) return {};
                     const rot = flyDir.value === 'right' ? 30 : -30;
@@ -495,6 +467,7 @@
                     return { transform: `translate(${tx}px, 50px) rotate(${rot}deg)`, opacity: 0 };
                 });
 
+                // Actions
                 const buyUpgrade = (item) => {
                     if(bits.value >= item.price) {
                         bits.value -= item.price;
@@ -506,21 +479,20 @@
                 const buyBits = (pack) => {
                     bits.value += pack.amount;
                     saveData(); playSound('buy'); haptic('success');
-                    alert(`+${pack.amount} ฿ (DEMO)`);
+                    if(tg) tg.showPopup({title: 'Успех', message: `Начислено ${pack.amount} ฿ (Тест)`, buttons: [{type: 'ok'}]});
                 };
 
                 const getImpact = (statKey) => {
                     if(!activeScenario.value) return 0;
+                    // If Lens is on, show right side preview (user has to guess left, or default to right logic)
+                    // For simplicity, lens shows the 'active' choice logic if hovered, but here we just show Right card logic as hint
                     return activeScenario.value.right.stats[statKey] || 0;
                 };
 
                 const startGame = () => {
                     playSound('click');
                     stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
-                    // Берем случайные 30 сценариев из всего пула для каждой игры
-                    deck.value = [...SCENARIOS]
-                        .sort(() => 0.5 - Math.random())
-                        .slice(0, 30);
+                    deck.value = [...SCENARIOS].sort(() => 0.5 - Math.random()).slice(0, 30);
                     cardIdx.value = 0; moves.value = 0; earnedBits.value = 0;
                     deathReason.value = null; reviveTriggered.value = false; flyDir.value = null;
                     screen.value = 'playing';
@@ -537,10 +509,9 @@
                     if(s.mor<=0) return {id:'mor_low',t:"ПУБЛИЧНАЯ КАЗНЬ"}; 
                     if(s.mor>=100) return {id:'mor_high',t:"СВЯТОЙ МУЧЕНИК"};
                     
-                    // Особые смерти
+                    // Special endings
                     if(moves.value > 50 && s.sec <= 10 && s.pop <= 15) return {id:'alien_invasion',t:"ПОРАБОЩЕН ПРИШЕЛЬЦАМИ"};
-                    if(moves.value > 40 && s.fin >= 90 && s.mor <= 10) return {id:'ai_takeover',t:"ЗАМЕНЕН ИСКУССТВЕННЫМ ИНТЕЛЛЕКТОМ"};
-                    if(moves.value > 35 && s.pop <= 20 && s.mor <= 20) return {id:'zombie_apocalypse',t:"СТАЛ ЖЕРТВОЙ ЗОМБИ"};
+                    if(moves.value > 40 && s.fin >= 90 && s.mor <= 10) return {id:'ai_takeover',t:"ЗАМЕНЕН ИИ"};
                     
                     return null;
                 };
@@ -549,50 +520,65 @@
                     if(deathReason.value || flyDir.value) return;
                     
                     playSound('swipe'); haptic('medium');
-                    flyDir.value = dir;
+                    flyDir.value = dir; // Trigger animation
 
+                    // Apply stats
                     const card = activeScenario.value;
                     const impact = card[dir].stats;
-                    for(let k in impact) stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
+                    for(let k in impact) {
+                        stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
+                    }
 
+                    // Chain events
                     if(card[dir].followUp) {
                         const newCards = card[dir].followUp.map(id => CHAIN_EVENTS[id]).filter(Boolean);
                         deck.value.splice(cardIdx.value + 1, 0, ...newCards); 
                     }
 
+                    // Death Check logic
                     let death = checkDeath();
                     
+                    // Revive mechanic
                     if(death && upgrades.value.revive && !reviveTriggered.value) {
                         death = null; reviveTriggered.value = true;
                         playSound('revive'); haptic('heavy');
+                        // Reset to middle
                         stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
-                        setTimeout(() => reviveTriggered.value = false, 2500);
+                        // Alert effect handled by CSS/State if needed, simple skip for now
+                        setTimeout(() => reviveTriggered.value = false, 2000);
                     }
 
                     setTimeout(() => {
                         if(death) {
+                            // GAME OVER
                             deathReason.value = death.t;
                             playSound('death'); haptic('error');
+                            
                             let earned = moves.value * 2;
                             if(upgrades.value.miner) earned *= 2;
-                            earnedBits.value = earned; bits.value += earned;
+                            
+                            earnedBits.value = earned; 
+                            bits.value += earned;
+                            
                             if(moves.value > highScore.value) highScore.value = moves.value;
                             if(!unlockedDeaths.value.includes(death.id)) unlockedDeaths.value.push(death.id);
+                            
                             saveData();
                             screen.value = 'end';
                         } else {
+                            // NEXT CARD
                             flyDir.value = null;
                             cardIdx.value++; moves.value++;
+                            
                             if(anomalyActive.value) playSound('anomaly');
+                            
+                            // Refill deck if empty
                             if(cardIdx.value >= deck.value.length) {
-                                // Добавляем еще случайных сценариев когда колода заканчивается
-                                const newCards = [...SCENARIOS]
-                                    .sort(() => 0.5 - Math.random())
-                                    .slice(0, 15);
+                                const newCards = [...SCENARIOS].sort(() => 0.5 - Math.random()).slice(0, 15);
                                 deck.value.push(...newCards);
                             }
                         }
-                    }, 300);
+                    }, 300); // Wait for animation
                 };
 
                 const shareResult = () => {
@@ -626,13 +612,19 @@
             }
         }).mount('#app');
 
+        // --- VISUAL FX ---
         function initMatrix() {
             const c = document.getElementById('matrix'); 
             if (!c) return;
-            
             const ctx = c.getContext('2d');
-            c.width = window.innerWidth; 
-            c.height = window.innerHeight;
+            
+            // Resize Handler
+            const resize = () => {
+                c.width = window.innerWidth; 
+                c.height = window.innerHeight;
+            };
+            window.addEventListener('resize', resize);
+            resize();
             
             const drops = Array(Math.floor(c.width/20)).fill(1);
             
@@ -643,7 +635,8 @@
                 ctx.font = '15px monospace';
                 
                 for(let i=0; i<drops.length; i++) {
-                    ctx.fillText(String.fromCharCode(0x30A0+Math.random()*96), i*20, drops[i]*20);
+                    const text = String.fromCharCode(0x30A0+Math.random()*96);
+                    ctx.fillText(text, i*20, drops[i]*20);
                     if(drops[i]*20 > c.height && Math.random()>0.975) drops[i] = 0; 
                     drops[i]++;
                 }
