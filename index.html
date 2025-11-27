@@ -109,11 +109,26 @@
                 </div>
 
                 <div class="w-full max-w-xs space-y-3">
-                    <div class="flex justify-between items-center bg-black/80 border border-green-900 p-3 rounded">
-                        <div><div class="text-[9px] text-gray-500">ИМЯ</div><div class="text-xs font-bold text-white">{{ cityName }}</div></div>
-                        <div class="text-right"><div class="text-[9px] text-gray-500">СЧЕТ</div><div class="font-bold text-yellow-500 font-mono">{{ bits }} ฿</div></div>
-                    </div>
-                    <button @click="startGame" class="cyber-btn w-full py-4 text-xl">ВОЙТИ В СЕТЬ</button>
+                    <div class="w-full max-w-xs space-y-4">
+    <div class="bg-black/80 border border-green-900 p-4 rounded text-center">
+        <div class="text-xs text-gray-500">ПРАВИТЕЛЬ</div>
+        <div class="text-lg font-bold text-white">{{ cityName }}</div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="bg-black/60 border border-gray-800 p-3 rounded">
+            <div class="text-gray-500">Рекорд</div>
+            <div class="text-2xl font-bold text-green-400">{{ highScore }} дней</div>
+        </div>
+        <div class="bg-black/60 border border-gray-800 p-3 rounded">
+            <div class="text-gray-500">Биткоинов</div>
+            <div class="text-2xl font-bold text-yellow-400">{{ bits }} ฿</div>
+        </div>
+    </div>
+
+    <button @click="startGame" class="cyber-btn w-full py-5 text-xl">ВОЙТИ В СЕТЬ</button>
+</div>
+                    
                     <div class="grid grid-cols-3 gap-2">
                         <button @click="screen='shop'" class="cyber-btn py-3 text-[10px]" style="border-color: #00d2ff; color: #00d2ff;">РЫНОК</button>
                         <button @click="screen='achievements'" class="cyber-btn py-3 text-[10px]" style="border-color: #ffd700; color: #ffd700;">АЧИВКИ</button>
@@ -189,15 +204,28 @@
 
         <!-- WIN SCREEN -->
         <div v-if="screen === 'win'" class="absolute inset-0 z-[100] bg-blue-900/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-xl">
-            <div class="text-8xl mb-4">🚀</div><h2 class="text-4xl font-black mb-2 text-white">ПОБЕДА!</h2><p class="text-white/80 text-sm font-bold mb-8 uppercase">Ковчег запущен. Человечество спасено.</p><button @click="screen='menu'" class="cyber-btn w-full py-5 text-xl">СЛАВА!</button>
-        </div>
+    <div class="text-8xl mb-4">Rocket</div>
+    <h2 class="text-4xl font-black mb-2 text-white">ПОБЕДА!</h2>
+    <p class="text-white/80 text-sm font-bold mb-8 uppercase">Ковчег запущен за {{ moves }} дней</p>
+    <div class="space-y-4 w-full max-w-xs">
+        <button @click="shareResult('win')" class="cyber-btn w-full py-5 text-xl">Поделиться победой</button>
+        <button @click="screen='menu'" class="cyber-btn w-full py-5 text-xl opacity-60">В меню</button>
+    </div>
+</div>
 
         <!-- GAME OVER -->
         <div v-if="screen === 'end'" class="absolute inset-0 z-[100] bg-red-950/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-xl">
-            <div class="text-7xl mb-4 animate-pulse">☠️</div><h2 class="text-4xl font-black mb-2 text-white">ПРОВАЛ</h2><p class="text-red-200 text-sm font-bold mb-8 uppercase tracking-widest border border-red-500/50 p-2">{{ deathReason }}</p>
-            <div class="mb-8 font-mono bg-black/40 p-4 rounded w-full border border-red-900"><div class="text-gray-400 text-xs uppercase">ВЫЖИВАНИЕ</div><div class="text-4xl text-white">{{ moves }} <span class="text-sm">ДНЕЙ</span></div></div>
-            <button @click="screen='menu'" class="cyber-btn w-full py-5 text-xl" style="border-color: white; color: white;">ЗАНОВО</button>
-        </div>
+    <div class="text-7xl mb-4 animate-pulse">Skull</div>
+    <h2 class="text-4xl font-black mb-2 text-white">ПРОВАЛ</h2>
+    <p class="text-red-200 text-sm font-bold mb-4 uppercase">{{ deathReason }}</p>
+    <div class="text-4xl text-white mb-8">{{ moves }} дней</div>
+    <div class="space-y-4 w-full max-w-xs">
+        <button @click="shareResult('lose')" class="cyber-btn w-full py-5 text-xl" style="border-color:#ff3366;color:#ff3366">
+            Поделиться провалом
+        </button>
+        <button @click="screen='menu'" class="cyber-btn w-full py-5 text-xl opacity-60">Заново</button>
+    </div>
+</div>
 
         <!-- SHOP / ACH / CODEX (MODALS) -->
         <div v-if="['shop','achievements','codex'].includes(screen)" class="absolute inset-0 z-50 bg-black/95 p-4 backdrop-blur-md">
@@ -395,6 +423,8 @@
                 const unlockedAchievements = ref(JSON.parse(localStorage.getItem('ec_achievements') || '[]'));
                 const unlockedDeaths = ref(JSON.parse(localStorage.getItem('ec_deaths') || '[]'));
                 const soundEnabled = ref(true);
+                const gamesPlayed = ref(parseInt(localStorage.getItem('ethos_games') || '0'));
+                const totalEarned = ref(parseInt(localStorage.getItem('ethos_total') || '0'));
                 
                 const stats = ref({ pop: 50, fin: 50, sec: 50, mor: 50 });
                 const icons = { pop:'👥', fin:'💰', sec:'🛡️', mor:'⚖️' };
@@ -527,7 +557,16 @@
                         if(upgrades.value['miner']) earned = Math.floor(earned * 1.5);
                         bits.value += earned;
                         localStorage.setItem('ec_bits', bits.value);
-                        if(moves.value > highScore.value) { highScore.value = moves.value; localStorage.setItem('ec_highscore', highScore.value); }
+                                                if(moves.value > highScore.value) { 
+                            highScore.value = moves.value; 
+                            localStorage.setItem('ec_highscore', highScore.value); 
+                        }
+
+                        // ←←←←← ВСТАВЬ СЮДА ЭТИ ДВЕ СТРОЧКИ ↓↓↓
+                        gamesPlayed.value++;
+                        localStorage.setItem('ethos_games', gamesPlayed.value);
+                        // ↑↑↑↑↑
+
                         playSound('death');
                         if(tg) tg.HapticFeedback.notificationOccurred('error');
                         setTimeout(() => screen.value = 'end', 500);
@@ -592,11 +631,36 @@
                 const getBarColor = (v) => (v<20||v>80)?'bg-red-500':'bg-[#00ff41]';
 
                 return { 
-                    screen, cityName, bits, stats, icons, moves, upgrades, classes, selectedClass, highScore, soundEnabled,
-                    activeScenario, activeEvent, eventResult, deathReason, shopItems, cardStyle, newsText, isShaking,
-                    achievementsList, unlockedAchievements, unlockedDeaths, deathTypes, projectProgress,
-                    minigameType, hackActive, hackWrong, hackStatus, handleHackClick, lockPos, lockTarget, lockSize, checkLock, startMinigame,
-                    registerUser, startGame, makeChoice, resolveEvent, closeEventResult, buyItem, getBarColor, toggleSound
+                    screen, cityName, bits, stats, icons, moves, upgrades, classes, selectedClass, 
+                    highScore, soundEnabled, gamesPlayed,
+                    activeScenario, activeEvent, eventResult, deathReason, shopItems, 
+                    cardStyle, newsText, isShaking, achievementsList, unlockedAchievements, 
+                    unlockedDeaths, deathTypes, projectProgress, minigameType, 
+                    hackActive, hackWrong, hackStatus, handleHackClick, 
+                    lockPos, lockTarget, lockSize, checkLock, startMinigame,
+                    registerUser, startGame, makeChoice, resolveEvent, 
+                    closeEventResult, buyItem, getBarColor, toggleSound,
+
+                    // НОВЫЕ СТРОКИ — ОБЯЗАТЕЛЬНО
+                    highScore,
+                    gamesPlayed,
+
+                    // ФУНКЦИЯ ПОДЕЛИТЬСЯ (главное — она внутри return!)
+                    shareResult(type) {
+    if (!window.Telegram?.WebApp) return;
+    const tg = window.Telegram.WebApp;
+    const botLink = "https://t.me/EthosCoreBot/game";
+    const text = type === 'win'
+        ? `Я СПАС ЧЕЛОВЕЧЕСТВО за ${moves.value} дней в ETHOS: MATRIX!\n\nКовчег запущен 🚀\nИграй тоже: ${botLink}`
+        : `Моё государство пало на ${moves.value}-й день…\nПричина: ${deathReason.value}\n\nА ты сколько продержишься?\nИграй: ${botLink}`;
+    
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(text)}`;
+    tg.openTelegramLink(shareUrl);
+},
+
+                    // Считаем игры и биткоины
+                    gamesPlayed: ref(parseInt(localStorage.getItem('ethos_games') || '0')),
+                    totalEarned: ref(parseInt(localStorage.getItem('ethos_total') || '0')),
                 };
             }
         }).mount('#app');
