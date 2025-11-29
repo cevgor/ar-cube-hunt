@@ -1,22 +1,5 @@
 {
-  "export_date": "2025-11-29T18:17:05.240126",
-  "total_players": 2,
-  "players": [
-    {
-      "user_id": 929619269,
-      "username": "dnstarceva",
-      "highscore": 0,
-      "bits": 0,
-      "last_daily": null,
-      "referrals": 0
-    },
-    {
-      "user_id": 973744700,
-      "username": "CevGor",
-      "highscore": 0,
-      "bits": 0,
-      "last_daily": null,
-      "referrals": 0
-    }
-  ]
+  "export_date": "2025-11-29T19:04:22.952349",
+  "total_players": 0,
+  "players": []
 }
