@@ -451,10 +451,21 @@
                 const lockPos = ref(0); const lockDir = ref(1); const lockTarget = ref(0); const lockSize = ref(20); let lockInterval = null;
 
                 onMounted(() => {
-                    if(tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#050505'); }
-                    initMatrix();
-                    if(cityName.value) screen.value = 'menu';
-                });
+    if(tg) { 
+        tg.ready(); 
+        tg.expand(); 
+        tg.setHeaderColor('#050505'); 
+        
+        // Синхронизируем текущие данные с ботом при загрузке
+        const syncData = {
+            highscore: highScore.value,
+            bits: bits.value
+        };
+        tg.sendData(JSON.stringify(syncData));
+    }
+    initMatrix();
+    if(cityName.value) screen.value = 'menu';
+});
 
                 // --- GAME LOGIC ---
                 let audioCtx;
@@ -496,20 +507,29 @@
                     if(activeScenario.value.news) newsText.value = activeScenario.value.news;
                 };
 
-                                const makeChoice = (dir) => {
+                                // ИСПРАВЛЕННАЯ ФУНКЦИЯ makeChoice
+                const makeChoice = (dir) => {
                     if(flyDir.value || activeEvent.value) return;
                     if(tg) tg.HapticFeedback.impactOccurred('medium');
                     playSound('click');
                     flyDir.value = dir;
                     const impact = activeScenario.value[dir].s;
                     
-                    if(activeScenario.value.type === 'project' && activeScenario.value[dir].project) {
-                        projectProgress.value += activeScenario.value[dir].project;
-                        playSound('win');
-                        if(projectProgress.value >= 100) { 
-                            setTimeout(() => { screen.value = 'win'; unlockAchievement('win'); }, 500); 
-                            return; 
+                    // Добавляем прогресс проекта если это проект
+                    if (activeScenario.value.type === 'project' && activeScenario.value[dir].project) {
+                        projectProgress.value = Math.min(100, projectProgress.value + activeScenario.value[dir].project);
+                    }
+                    
+                    if(projectProgress.value >= 100) { 
+                        if (window.Telegram?.WebApp) {
+                            const winData = {
+                                highscore: moves.value,
+                                bits: bits.value + 5000
+                            };
+                            window.Telegram.WebApp.sendData(JSON.stringify(winData));
                         }
+                        setTimeout(() => { screen.value = 'win'; unlockAchievement('win'); }, 500); 
+                        return; 
                     }
 
                     let hasDamage = false;
@@ -526,7 +546,7 @@
 
                     setTimeout(() => {
                         flyDir.value = null;
-                        activeScenario.value = null;           // ← ВАЖНО: убираем старую карту
+                        activeScenario.value = null;
                         if(checkDeath()) return;
                         if(Math.random() < 0.15 && moves.value > 3) triggerEvent();
                         else pickCard();
@@ -557,15 +577,22 @@
                         if(upgrades.value['miner']) earned = Math.floor(earned * 1.5);
                         bits.value += earned;
                         localStorage.setItem('ec_bits', bits.value);
-                                                if(moves.value > highScore.value) { 
+                        
+                        if(moves.value > highScore.value) { 
                             highScore.value = moves.value; 
                             localStorage.setItem('ec_highscore', highScore.value); 
                         }
 
-                        // ←←←←← ВСТАВЬ СЮДА ЭТИ ДВЕ СТРОЧКИ ↓↓↓
                         gamesPlayed.value++;
                         localStorage.setItem('ethos_games', gamesPlayed.value);
-                        // ↑↑↑↑↑
+
+                        if (window.Telegram?.WebApp) {
+                            const gameData = {
+                                highscore: moves.value,
+                                bits: bits.value
+                            };
+                            window.Telegram.WebApp.sendData(JSON.stringify(gameData));
+                        }
 
                         playSound('death');
                         if(tg) tg.HapticFeedback.notificationOccurred('error');
@@ -594,29 +621,104 @@
                     });
                 };
 
-                                const triggerEvent = () => { 
-                    activeScenario.value = null;  // ← убираем обычную карту под кризисом
+                const triggerEvent = () => { 
+                    activeScenario.value = null;
                     const rand = Math.floor(Math.random() * CRISES.length); 
                     activeEvent.value = CRISES[rand]; 
                     newsText.value = "⚠ ВНИМАНИЕ! УГРОЗА! ⚠"; 
                     if(tg) tg.HapticFeedback.notificationOccurred('warning'); 
                 };
-                const resolveEvent = (choice) => { playSound('click'); const success = Math.random() <= choice.chance; if(success) finishEvent(true, choice.successMsg); else { if(choice.fail === 'death') { deathReason.value = choice.failMsg; playSound('death'); setTimeout(()=>screen.value='end', 500); } else finishEvent(false, choice.failMsg); } };
-                const startMinigame = (type) => { minigameType.value = type; screen.value = 'minigame'; if(type === 'hack') initHackGame(); if(type === 'lock') initLockGame(); };
+
+                const resolveEvent = (choice) => { 
+                    playSound('click'); 
+                    const success = Math.random() <= choice.chance; 
+                    if(success) finishEvent(true, choice.successMsg); 
+                    else { 
+                        if(choice.fail === 'death') { 
+                            deathReason.value = choice.failMsg; 
+                            playSound('death'); 
+                            setTimeout(()=>screen.value='end', 500); 
+                        } else finishEvent(false, choice.failMsg); 
+                    } 
+                };
+
+                const startMinigame = (type) => { 
+                    minigameType.value = type; 
+                    screen.value = 'minigame'; 
+                    if(type === 'hack') initHackGame(); 
+                    if(type === 'lock') initLockGame(); 
+                };
                 
-                const initHackGame = () => { hackSequence.value=[]; hackInput.value=[]; hackStatus.value='ЗАПОМИНАЙ...'; hackPlaying.value=false; for(let i=0;i<4;i++)hackSequence.value.push(Math.floor(Math.random()*9)); setTimeout(async()=>{ for(let id of hackSequence.value){ hackActive.value=id; playSound('click'); await new Promise(r=>setTimeout(r,400)); hackActive.value=-1; await new Promise(r=>setTimeout(r,200)); } hackStatus.value='ПОВТОРИ!'; hackPlaying.value=true; },1000); };
-                const handleHackClick = (id) => { if(!hackPlaying.value)return; playSound('click'); hackActive.value=id; setTimeout(()=>hackActive.value=-1,200); if(id===hackSequence.value[hackInput.value.length]){ hackInput.value.push(id); if(hackInput.value.length===hackSequence.value.length) finishMinigame(true); } else { hackWrong.value=id; setTimeout(()=>hackWrong.value=-1,300); finishMinigame(false); }};
-                const initLockGame = () => { lockPos.value=0; lockDir.value=1; lockTarget.value=20+Math.random()*40; lockSize.value=selectedClass.value.id==='hacker'?35:20; const spd=selectedClass.value.id==='hacker'?1.5:2.5; if(lockInterval)clearInterval(lockInterval); lockInterval=setInterval(()=>{ lockPos.value+=spd*lockDir.value; if(lockPos.value>100||lockPos.value<0)lockDir.value*=-1; },16); };
-                const checkLock = () => { clearInterval(lockInterval); finishMinigame(lockPos.value>=lockTarget.value && lockPos.value<=(lockTarget.value+lockSize.value)); };
+                const initHackGame = () => { 
+                    hackSequence.value=[]; 
+                    hackInput.value=[]; 
+                    hackStatus.value='ЗАПОМИНАЙ...'; 
+                    hackPlaying.value=false; 
+                    for(let i=0;i<4;i++)hackSequence.value.push(Math.floor(Math.random()*9)); 
+                    setTimeout(async()=>{ 
+                        for(let id of hackSequence.value){ 
+                            hackActive.value=id; 
+                            playSound('click'); 
+                            await new Promise(r=>setTimeout(r,400)); 
+                            hackActive.value=-1; 
+                            await new Promise(r=>setTimeout(r,200)); 
+                        } 
+                        hackStatus.value='ПОВТОРИ!'; 
+                        hackPlaying.value=true; 
+                    },1000); 
+                };
+
+                const handleHackClick = (id) => { 
+                    if(!hackPlaying.value)return; 
+                    playSound('click'); 
+                    hackActive.value=id; 
+                    setTimeout(()=>hackActive.value=-1,200); 
+                    if(id===hackSequence.value[hackInput.value.length]){ 
+                        hackInput.value.push(id); 
+                        if(hackInput.value.length===hackSequence.value.length) finishMinigame(true); 
+                    } else { 
+                        hackWrong.value=id; 
+                        setTimeout(()=>hackWrong.value=-1,300); 
+                        finishMinigame(false); 
+                    }
+                };
+
+                const initLockGame = () => { 
+                    lockPos.value=0; 
+                    lockDir.value=1; 
+                    lockTarget.value=20+Math.random()*40; 
+                    lockSize.value=selectedClass.value.id==='hacker'?35:20; 
+                    const spd=selectedClass.value.id==='hacker'?1.5:2.5; 
+                    if(lockInterval)clearInterval(lockInterval); 
+                    lockInterval=setInterval(()=>{ 
+                        lockPos.value+=spd*lockDir.value; 
+                        if(lockPos.value>100||lockPos.value<0)lockDir.value*=-1; 
+                    },16); 
+                };
+
+                const checkLock = () => { 
+                    clearInterval(lockInterval); 
+                    finishMinigame(lockPos.value>=lockTarget.value && lockPos.value<=(lockTarget.value+lockSize.value)); 
+                };
                 
-                const finishMinigame = (win) => { screen.value = 'game'; const evt = activeEvent.value; if(win) { if(evt.winImpact) for(let k in evt.winImpact) stats.value[k]+=evt.winImpact[k]; finishEvent(true, evt.successMsg); } else { if(evt.failImpact) for(let k in evt.failImpact) stats.value[k]+=evt.failImpact[k]; finishEvent(false, evt.failMsg); } };
-                                const finishEvent = (success, msg) => { 
+                const finishMinigame = (win) => { 
+                    screen.value = 'game'; 
+                    const evt = activeEvent.value; 
+                    if(win) { 
+                        if(evt.winImpact) for(let k in evt.winImpact) stats.value[k]+=evt.winImpact[k]; 
+                        finishEvent(true, evt.successMsg); 
+                    } else { 
+                        if(evt.failImpact) for(let k in evt.failImpact) stats.value[k]+=evt.failImpact[k]; 
+                        finishEvent(false, evt.failMsg); 
+                    } 
+                };
+
+                const finishEvent = (success, msg) => { 
                     activeEvent.value = null; 
                     eventResult.value = { success, msg }; 
                     if(success) playSound('win'); 
                     else playSound('death'); 
 
-                    // ← автоматически продолжаем игру после показа результата
                     setTimeout(() => {
                         eventResult.value = null;
                         if(checkDeath()) return;
@@ -624,15 +726,37 @@
                         else pickCard();
                     }, 800);
                 };
+
                 const closeEventResult = () => { eventResult.value = null; if(checkDeath()) return; pickCard(); };
                 const registerUser = () => { localStorage.setItem('ec_city', cityName.value); playSound('click'); screen.value = 'menu'; };
                 const buyItem = (i) => { if(bits.value>=i.price){bits.value-=i.price;upgrades.value[i.id]=true; localStorage.setItem('ec_bits',bits.value); localStorage.setItem('ec_upgrades',JSON.stringify(upgrades.value)); playSound('win'); }};
                 const cardStyle = computed(() => { if(!flyDir.value)return{}; const rot = flyDir.value==='right'?15:-15; return { transform: `translate(${flyDir.value==='right'?400:-400}px, 50px) rotate(${rot}deg)`, opacity: 0 }; });
                 const getBarColor = (v) => (v<20||v>80)?'bg-red-500':'bg-[#00ff41]';
 
+                // ФУНКЦИЯ ПОДЕЛИТЬСЯ
+                const shareResult = (type) => {
+                    if (!window.Telegram?.WebApp) return;
+                    const tg = window.Telegram.WebApp;
+                    
+                    const gameData = {
+                        highscore: moves.value,
+                        bits: bits.value
+                    };
+                    tg.sendData(JSON.stringify(gameData));
+                    
+                    const botLink = "https://t.me/EthosCoreBot/game";
+                    const text = type === 'win'
+                        ? `Я СПАС ЧЕЛОВЕЧЕСТВО за ${moves.value} дней в ETHOS: MATRIX!\n\nКовчег запущен 🚀\nИграй тоже: ${botLink}`
+                        : `Моё государство пало на ${moves.value}-й день…\nПричина: ${deathReason.value}\n\nА ты сколько продержишься?\nИграй: ${botLink}`;
+                    
+                    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(text)}`;
+                    tg.openTelegramLink(shareUrl);
+                };
+
+                // ИСПРАВЛЕННЫЙ RETURN STATEMENT
                 return { 
                     screen, cityName, bits, stats, icons, moves, upgrades, classes, selectedClass, 
-                    highScore, soundEnabled, gamesPlayed,
+                    highScore, soundEnabled, gamesPlayed, totalEarned,
                     activeScenario, activeEvent, eventResult, deathReason, shopItems, 
                     cardStyle, newsText, isShaking, achievementsList, unlockedAchievements, 
                     unlockedDeaths, deathTypes, projectProgress, minigameType, 
@@ -640,33 +764,37 @@
                     lockPos, lockTarget, lockSize, checkLock, startMinigame,
                     registerUser, startGame, makeChoice, resolveEvent, 
                     closeEventResult, buyItem, getBarColor, toggleSound,
-
-                    // НОВЫЕ СТРОКИ — ОБЯЗАТЕЛЬНО
-                    highScore,
-                    gamesPlayed,
-
-                    // ФУНКЦИЯ ПОДЕЛИТЬСЯ (главное — она внутри return!)
-                    shareResult(type) {
-    if (!window.Telegram?.WebApp) return;
-    const tg = window.Telegram.WebApp;
-    const botLink = "https://t.me/EthosCoreBot/game";
-    const text = type === 'win'
-        ? `Я СПАС ЧЕЛОВЕЧЕСТВО за ${moves.value} дней в ETHOS: MATRIX!\n\nКовчег запущен 🚀\nИграй тоже: ${botLink}`
-        : `Моё государство пало на ${moves.value}-й день…\nПричина: ${deathReason.value}\n\nА ты сколько продержишься?\nИграй: ${botLink}`;
-    
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(text)}`;
-    tg.openTelegramLink(shareUrl);
-},
-
-                    // Считаем игры и биткоины
-                    gamesPlayed: ref(parseInt(localStorage.getItem('ethos_games') || '0')),
-                    totalEarned: ref(parseInt(localStorage.getItem('ethos_total') || '0')),
+                    shareResult
                 };
             }
         }).mount('#app');
 
         // MATRIX RAIN
-        function initMatrix(){const c=document.getElementById('matrix');const ctx=c.getContext('2d');c.width=window.innerWidth;c.height=window.innerHeight;const chars="AZ0192837465";const font_size=14;const columns=c.width/font_size;const drops=[];for(let x=0;x<columns;x++)drops[x]=1;function draw(){ctx.fillStyle="rgba(0, 0, 0, 0.05)";ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle="#0F0";ctx.font=font_size+"px monospace";for(let i=0;i<drops.length;i++){const text=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(text,i*font_size,drops[i]*font_size);if(drops[i]*font_size>c.height&&Math.random()>0.975)drops[i]=0;drops[i]++;}requestAnimationFrame(draw);}draw();}
+        function initMatrix(){
+            const c=document.getElementById('matrix');
+            const ctx=c.getContext('2d');
+            c.width=window.innerWidth;
+            c.height=window.innerHeight;
+            const chars="AZ0192837465";
+            const font_size=14;
+            const columns=c.width/font_size;
+            const drops=[];
+            for(let x=0;x<columns;x++)drops[x]=1;
+            function draw(){
+                ctx.fillStyle="rgba(0, 0, 0, 0.05)";
+                ctx.fillRect(0,0,c.width,c.height);
+                ctx.fillStyle="#0F0";
+                ctx.font=font_size+"px monospace";
+                for(let i=0;i<drops.length;i++){
+                    const text=chars[Math.floor(Math.random()*chars.length)];
+                    ctx.fillText(text,i*font_size,drops[i]*font_size);
+                    if(drops[i]*font_size>c.height&&Math.random()>0.975)drops[i]=0;
+                    drops[i]++;
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
     </script>
 </body>
 </html>
