@@ -1,5 +1,17 @@
 {
-  "export_date": "2025-11-29T19:04:22.952349",
-  "total_players": 0,
-  "players": []
+  "export_date": "2025-11-30T00:13:27.460700",
+  "total_players": 1,
+  "players": [
+    {
+      "user_id": 973744700,
+      "username": "CevGor",
+      "highscore": 0,
+      "bits": 0,
+      "last_daily": null,
+      "referrals": 0,
+      "games_played": 0,
+      "total_earned": 0,
+      "registered_at": "{}"
+    }
+  ]
 }
