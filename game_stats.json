@@ -1,10 +1,21 @@
 {
-  "export_date": "2025-12-09T14:21:45.279327",
-  "total_players": 1,
+  "export_date": "2025-12-10T08:44:34.576727",
+  "total_players": 2,
   "players": [
     {
       "user_id": 973744700,
       "username": "CevGor",
+      "highscore": 0,
+      "bits": 0,
+      "last_daily": null,
+      "referrals": 0,
+      "games_played": 0,
+      "total_earned": 0,
+      "registered_at": "{}"
+    },
+    {
+      "user_id": 6311976439,
+      "username": "zolupus",
       "highscore": 0,
       "bits": 0,
       "last_daily": null,
