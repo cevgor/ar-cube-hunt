@@ -2,799 +2,273 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ETHOS: MATRIX</title>
-    
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;700;800&family=Russo+One&display=swap" rel="stylesheet">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Полный тест по Истории: Отечественная и Мировая (40 вопросов)</title>
     <style>
-        :root { --bg: #050505; --primary: #00ff41; --secondary: #008f11; --danger: #ff003c; --gold: #ffd700; }
-        body { background-color: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent; margin: 0; }
-        [v-cloak] { display: none !important; }
-
-        /* MATRIX BG & CRT */
-        #matrix { position: fixed; top: 0; left: 0; z-index: 0; opacity: 0.3; }
-        .scanlines { position: fixed; inset: 0; z-index: 50; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%); background-size: 100% 4px; pointer-events: none; }
-        .crt-overlay { position: fixed; inset: 0; z-index: 51; background: radial-gradient(circle, transparent 50%, black 150%); pointer-events: none; }
-
-        /* ANIMATIONS */
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
-        
-        .slide-enter-active, .slide-leave-active { transition: all 0.3s ease; }
-        .slide-enter-from { transform: translateY(20px); opacity: 0; }
-        .slide-leave-to { transform: translateY(-20px); opacity: 0; }
-
-        /* GLITCH EFFECT */
-        .glitch { position: relative; color: white; }
-        .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; }
-        .glitch::before { color: var(--primary); z-index: -1; animation: glitch-anim-1 3s infinite linear alternate-reverse; }
-        .glitch::after { color: var(--danger); z-index: -2; animation: glitch-anim-2 2s infinite linear alternate-reverse; }
-        @keyframes glitch-anim-1 { 0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px,0); } 100% { clip-path: inset(10% 0 50% 0); transform: translate(2px,0); } }
-        @keyframes glitch-anim-2 { 0% { clip-path: inset(10% 0 60% 0); transform: translate(2px,0); } 100% { clip-path: inset(80% 0 5% 0); transform: translate(-2px,0); } }
-
-        /* UI ELEMENTS */
-        .cyber-btn {
-            background: rgba(0, 20, 0, 0.9); color: var(--primary); border: 1px solid var(--primary);
-            font-family: 'Russo One', sans-serif; text-transform: uppercase; letter-spacing: 2px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
-            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2); position: relative; overflow: hidden;
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --success-bg: #d4edda;
+            --error-color: #c0392b;
+            --error-bg: #f8d7da;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
         }
-        .cyber-btn::before {
-            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.4), transparent);
-            transition: 0.5s;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
         }
-        .cyber-btn:hover::before { left: 100%; }
-        .cyber-btn:active { background: var(--primary); color: black; box-shadow: 0 0 20px var(--primary); transform: scale(0.98); }
-
-        .game-card {
-            width: 88%; max-width: 340px; height: 52vh; max-height: 480px;
-            background: #0a0a0a; border: 1px solid #333; border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.9); overflow: hidden; position: relative; z-index: 10;
-            transform-style: preserve-3d; will-change: transform; transition: transform 0.1s;
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-
-        .choice-btn {
-            flex: 1; height: 70px; border-radius: 12px; border: 1px solid #333;
-            background: rgba(10, 10, 10, 0.9); backdrop-filter: blur(10px);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: all 0.1s;
+        h1 { margin: 0; font-size: 2rem; }
+        p.subtitle { margin-top: 10px; opacity: 0.9; }
+        .question-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
         }
-        .choice-btn:active { transform: scale(0.92); }
-        .choice-btn.left { border-bottom: 3px solid var(--danger); color: var(--danger); }
-        .choice-btn.right { border-bottom: 3px solid var(--primary); color: var(--primary); }
-
-        .stat-bar { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); background: var(--primary); box-shadow: 0 0 5px var(--primary); }
-        .class-card { border: 1px solid #333; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; transition: 0.2s; }
-        .class-card.selected { border-color: var(--primary); background: rgba(0, 255, 65, 0.1); box-shadow: 0 0 15px rgba(0, 255, 65, 0.2); }
-        
-        .cyber-input { background: black; border: 1px solid var(--primary); color: var(--primary); padding: 15px; width: 100%; text-align: center; outline: none; font-family: 'JetBrains Mono'; }
-        
-        /* PROGRESS BAR */
-        .project-bar-container { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #111; z-index: 100; }
-        .project-bar { height: 100%; background: #00d2ff; box-shadow: 0 0 10px #00d2ff; transition: width 0.5s; }
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .category-tag {
+            display: inline-block;
+            background: var(--accent-color);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; }
+        .options { display: flex; flex-direction: column; gap: 10px; }
+        .option-btn {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--accent-color);
+            background-color: #f0f8ff;
+        }
+        .option-btn:disabled { cursor: default; opacity: 0.7; }
+        .option-btn.correct {
+            background-color: var(--success-bg);
+            border-color: var(--success-color);
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        .option-btn.incorrect {
+            background-color: var(--error-bg);
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+        .feedback { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; }
+        .feedback.show { display: block; }
+        .feedback.correct-feedback {
+            background-color: var(--success-bg);
+            border-left: 5px solid var(--success-color);
+        }
+        .feedback.incorrect-feedback {
+            background-color: var(--error-bg);
+            border-left: 5px solid var(--error-color);
+        }
+        .feedback-title { font-weight: bold; margin-bottom: 5px; display: block; }
+        .results-section {
+            text-align: center;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-top: 40px;
+            display: none;
+        }
+        .score-display { font-size: 2.5rem; font-weight: bold; color: var(--accent-color); margin: 20px 0; }
+        .reset-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: inline-block;
+        }
+        .reset-btn:hover { background-color: #2980b9; }
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
-    <canvas id="matrix"></canvas>
-    <div class="scanlines"></div>
-    <div class="crt-overlay"></div>
-    
-    <div id="app" v-cloak class="h-screen flex flex-col relative z-10" :class="{'animate-shake': isShaking}">
-        
-        <!-- 1. REGISTRATION -->
-        <transition name="fade">
-            <div v-if="screen === 'reg'" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 p-6">
-                <h1 class="text-4xl font-bold text-white mb-4 glitch" data-text="ИДЕНТИФИКАЦИЯ">ИДЕНТИФИКАЦИЯ</h1>
-                <input v-model="cityName" maxlength="12" placeholder="ВВЕДИТЕ ИМЯ" class="cyber-input mb-6" />
-                <button @click="registerUser" :disabled="!cityName" class="cyber-btn w-full py-4 text-lg">ПОДТВЕРДИТЬ</button>
-            </div>
-        </transition>
-
-        <!-- 2. MENU -->
-        <transition name="fade">
-            <div v-if="screen === 'menu'" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/85 p-6 backdrop-blur-sm">
-                <h1 class="text-6xl font-black text-white mb-1 tracking-tighter glitch" data-text="ETHOS">ETHOS</h1>
-                <div class="text-xs text-green-500 tracking-[0.8em] mb-8 uppercase">MATRIX EDITION</div>
-                
-                <div class="w-full max-w-xs grid grid-cols-2 gap-3 mb-4">
-                    <div v-for="cls in classes" :key="cls.id" @click="selectedClass = cls" class="class-card flex flex-col items-center text-center" :class="{selected: selectedClass.id === cls.id}">
-                        <div class="text-2xl mb-1">{{ cls.icon }}</div>
-                        <div class="text-[10px] font-bold text-white uppercase">{{ cls.name }}</div>
-                    </div>
-                </div>
-
-                <div class="w-full max-w-xs space-y-3">
-                    <div class="w-full max-w-xs space-y-4">
-    <div class="bg-black/80 border border-green-900 p-4 rounded text-center">
-        <div class="text-xs text-gray-500">ПРАВИТЕЛЬ</div>
-        <div class="text-lg font-bold text-white">{{ cityName }}</div>
+<div class="container">
+    <header>
+        <h1>Полный исторический тест</h1>
+        <p class="subtitle">Отечественная и Мировая история — все 40 вопросов</p>
+    </header>
+    <div id="quiz-container"></div>
+    <div id="results" class="results-section">
+        <h2>Тест завершен!</h2>
+        <div class="score-display" id="score-text">0 / 0</div>
+        <p id="score-message"></p>
+        <button class="reset-btn" onclick="resetQuiz()">Вернуться к началу и пройти снова</button>
     </div>
-
-    <div class="grid grid-cols-2 gap-3 text-xs">
-        <div class="bg-black/60 border border-gray-800 p-3 rounded">
-            <div class="text-gray-500">Рекорд</div>
-            <div class="text-2xl font-bold text-green-400">{{ highScore }} дней</div>
-        </div>
-        <div class="bg-black/60 border border-gray-800 p-3 rounded">
-            <div class="text-gray-500">Биткоинов</div>
-            <div class="text-2xl font-bold text-yellow-400">{{ bits }} ฿</div>
-        </div>
-    </div>
-
-    <button @click="startGame" class="cyber-btn w-full py-5 text-xl">ВОЙТИ В СЕТЬ</button>
+    <footer><p>Тест создан на основе предоставленных материалов по истории.</p></footer>
 </div>
-                    
-                    <div class="grid grid-cols-3 gap-2">
-                        <button @click="screen='shop'" class="cyber-btn py-3 text-[10px]" style="border-color: #00d2ff; color: #00d2ff;">РЫНОК</button>
-                        <button @click="screen='achievements'" class="cyber-btn py-3 text-[10px]" style="border-color: #ffd700; color: #ffd700;">АЧИВКИ</button>
-                        <button @click="screen='codex'" class="cyber-btn py-3 text-[10px]" style="border-color: #ff003c; color: #ff003c;">КОДЕКС</button>
-                    </div>
-                </div>
-            </div>
-        </transition>
+<script>
+const questions = [
+    // ОТЕЧЕСТВЕННАЯ ИСТОРИЯ (20 вопросов)
+    {id:1, category:"Отечественная история", question:"Согласно норманнской теории, кто создал Древнерусское государство?", options:["Славянские племена самостоятельно","Варяги во главе с Рюриком","Византийские императоры","Хазарский каганат"], correctIndex:1, explanation:"Норманнская теория (Байер, Миллер, XVIII в.) утверждает, что Древнерусское государство было создано варягами. Согласно «Повести временных лет», в 862 году славянские и финно-угорские племена призвали варяжского конунга Рюрика с братьями Синеусом и Трувором."},
+    {id:2, category:"Отечественная история", question:"Сколько богов было включено в пантеон во время языческой реформы князя Владимира I в 980 году?", options:["4 бога","6 богов","8 богов","12 богов"], correctIndex:1, explanation:"В пантеон 980 года вошли 6 богов: Перун (бог грозы и войны), Хорс (бог солнца), Даждьбог (бог благосостояния), Стрибог (бог неба и ветра), Симаргл (бог почвы) и Макошь (богиня-покровительница женских работ)."},
+    {id:3, category:"Отечественная история", question:"Что стало основной причиной Крещения Руси при князе Владимире I?", options:["Желание расширить торговлю с Западной Европой","Необходимость идеологического единства государства","Требование Византии в обмен на военную помощь","Личное религиозное убеждение князя"], correctIndex:1, explanation:"Складывающееся территориальное, политическое и экономическое единство Древнерусского государства требовало идеологического единства. Язычество было религией родового общества, а для государства нужна была религия с единым богом, лишенным племенных признаков."},
+    {id:4, category:"Отечественная история", question:"Какая из перечисленных причин НЕ считается основной в возвышении Москвы?", options:["Выгодное географическое положение","Поддержка Орды и Церкви","Наличие крупных морских портов","Дальновидная политика московских князей"], correctIndex:2, explanation:"Москва не имела морских портов и флота. Основными факторами были выгодное географическое положение (защита от степняков), поддержка Золотой Орды и Русской православной церкви, а также политика князей."},
+    {id:5, category:"Отечественная история", question:"Что являлось главной экономической мерой политики «военного коммунизма» в деревне?", options:["Введение продналога","Введение продразверстки","Свободная торговля зерном","Создание фермерских хозяйств"], correctIndex:1, explanation:"Главной мерой была продразверстка – принудительное изъятие всех «излишков» хлеба у крестьян. Ленин считал ее важнейшим элементом политики военного коммунизма."},
+    {id:6, category:"Отечественная история", question:"Что было основной причиной поражения декабристов 14 декабря 1825 года?", options:["Отсутствие военной подготовки","Идейные разногласия, несогласованность, отсутствие поддержки народа","Превосходство правительственных войск в вооружении","Предательство лидеров"], correctIndex:1, explanation:"Причинами поражения стали: идейные разногласия, несогласованность действий, нерешительность (Трубецкой не пришел на площадь), пренебрежение конспирацией, утопизм идей, отсутствие поддержки народа."},
+    {id:7, category:"Отечественная история", question:"Какой принцип был заложен в основу судебной реформы 1864 года?", options:["Сословность судопроизводства","Бессословность, гласность, независимость судей","Подчинение судов администрации","Тайность заседаний"], correctIndex:1, explanation:"Основными принципами стали бессословность, гласность, независимость судей от администрации, вводился институт присяжных заседателей и присяжных поверенных. Это была наиболее последовательная из всех буржуазных реформ."},
+    {id:8, category:"Отечественная история", question:"Что было главной причиной отмены крепостного права в 1861 году?", options:["Личное желание Александра II","Поражение в Крымской войне, показавшее отсталость крепостнической системы","Требование западных держав","Массовые крестьянские восстания"], correctIndex:1, explanation:"Поражение России в Крымской войне 1853–1856 гг. продемонстрировало политическую, экономическую и военную слабость, явилось следствием кризиса всей общественно-политической системы и послужило мощным толчком к преобразованиям."},
+    {id:9, category:"Отечественная история", question:"Какой документ был принят II Всероссийским съездом Советов первым?", options:["Декрет о земле","Декрет о мире","Обращение «Рабочим, солдатам, крестьянам!»","Декларация прав трудящегося народа"], correctIndex:2, explanation:"Первым документом было обращение Ленина «Рабочим, солдатам, крестьянам!», объяснявшее смысл происходящего и заявлявшее о готовности новой власти решить острые проблемы: мир, землю крестьянам, рабочий контроль."},
+    {id:10, category:"Отечественная история", question:"Что являлось характерной чертой политики «сталинизма»?", options:["Развитие демократических институтов","Монополия на власть Коммунистической партии и культ личности","Свобода слова и печати","Децентрализация управления"], correctIndex:1, explanation:"Доминирующей чертой советского тоталитарного режима была монополия на власть Коммунистической партии. Сращивание партийного и государственного аппаратов привело к утверждению режима беззакония и политического террора. Основным стержнем тоталитаризма был культ вождя — Сталина."},
+    {id:11, category:"Отечественная история", question:"Какой курс был провозглашен на III пленуме ЦК КПК в 1978 году?", options:["Курс на «Большой скачок»","Курс на «реформы и открытость»","Курс на «культурную революцию»","Курс на изоляцию"], correctIndex:1, explanation:"В конце 1978 года на III пленуме ЦК КПК была провозглашена политика «реформ и открытости». Базисом стал курс «четырех модернизаций» (сельское хозяйство, промышленность, армия, наука и техника)."},
+    {id:12, category:"Отечественная история", question:"Какое событие произошло 17 августа 1998 года в России?", options:["Технический дефолт по ГКО и девальвация рубля","Введение золотого стандарта рубля","Подписание Беловежских соглашений","Начало перестройки"], correctIndex:0, explanation:"17 августа 1998 года правительство С.В. Кириенко объявило о техническом дефолте по ГКО, отказе от валютного коридора и 90-дневном моратории на выплаты по внешним долгам. Рубль рухнул с 6 до 25 рублей за доллар."},
+    {id:13, category:"Отечественная история", question:"Что стало поводом для начала Первой мировой войны?", options:["Вторжение Германии в Бельгию","Убийство эрцгерцога Франца-Фердинанда в Сараево","Нападение Японии на Перл-Харбор","Оккупация Рейнской области"], correctIndex:1, explanation:"28 июня 1914 года в Сараево сербским террористом был убит наследник Австро-Венгерского престола эрцгерцог Франц-Фердинанд. Это стало формальным поводом. Австро-Венгрия объявила войну Сербии 28 июля 1914 года."},
+    {id:14, category:"Отечественная история", question:"Какие меры относятся к политике «оттепели» Н.С. Хрущёва?", options:["Усиление цензуры и репрессий","Осуждение культа личности Сталина, реабилитация жертв репрессий","Возврат к сталинским методам управления","Полная демократизация политической системы"], correctIndex:1, explanation:"На XX съезде КПСС в 1956 году Хрущёв сделал доклад «О культе личности и его последствиях». Началась реабилитация жертв политических репрессий, освобождение политических заключённых, ликвидация ГУЛАГа, ослабление тоталитарной власти."},
+    {id:15, category:"Отечественная история", question:"Что характерно для периода «застоя» (середина 1960-х – первая половина 1980-х)?", options:["Быстрый экономический рост и демократизация","Нарастание кризисных явлений в экономике, геронтократия, рост теневой экономики","Радикальные рыночные реформы","Распад Советского Союза"], correctIndex:1, explanation:"Период характеризовался нарастанием кризисных явлений в экономике, геронтократией (властью стариков), ростом теневой экономики, коррупцией, отставанием от капиталистических стран по производительности труда."},
+    {id:16, category:"Отечественная история", question:"Что такое «шоковая терапия» в контексте реформ 1990-х годов?", options:["Постепенный переход к рыночной экономике","Комплекс мер по быстрому переходу от плановой к рыночной экономике","Возврат к командно-административной системе","Создание смешанной экономики"], correctIndex:1, explanation:"«Шоковая терапия» включала либерализацию цен, приватизацию, макроэкономическую стабилизацию и структурную перестройку. С 2 января 1992 года были отпущены цены на 90% продовольственных и 80% промышленных товаров."},
+    {id:17, category:"Отечественная история", question:"Какова была основная причина больших потерь Красной Армии в начальный период Великой Отечественной войны?", options:["Превосходство немецкой армии в численности","Отказ Сталина от своевременной мобилизации и приведения армии в боевую готовность","Предательство высшего командования","Отсутствие у советских солдат оружия"], correctIndex:1, explanation:"Советское руководство стремилось выиграть время, отвести войну от советских рубежей. Отсюда следовал отказ Сталина от передвижения войск на границе, от мобилизации и приведения армии в боевую готовность. Война застала армию в стадии реорганизации."},
+    {id:18, category:"Отечественная история", question:"Что было основным источником победы в Великой Отечественной войне?", options:["Только помощь союзников по ленд-лизу","Героизм советского народа, его стойкость и патриотизм","Превосходство в численности войск","Ошибки немецкого командования"], correctIndex:1, explanation:"Главным источником победы выступает героизм советского народа, его стойкость и патриотизм. Идеей, вдохновлявшей тружеников фронта и тыла, явилось осознание необходимости защиты Отечества."},
+    {id:19, category:"Отечественная история", question:"Что характеризует политику М.С. Горбачёва «перестройка»?", options:["Усиление централизации и цензуры","Попытка реформирования политической и экономической системы, гласность","Возврат к сталинским методам","Полный отказ от социалистических идей"], correctIndex:1, explanation:"Перестройка предполагала ускорение социально-экономического развития, гласность, демократизацию, реформирование политической системы. На XXVII съезде КПСС (1986) главной задачей была названа интенсификация народного хозяйства."},
+    {id:20, category:"Отечественная история", question:"Каков был главный итог приватизации в России в 1990-е годы?", options:["Создание широкого класса средних собственников","Концентрация собственности в руках узкой группы олигархов","Равномерное распределение акций среди всех граждан","Сохранение государственной собственности на все предприятия"], correctIndex:1, explanation:"Около 40% российской экономики оказалось в руках 6–8 олигархических групп. Крупные предприятия были проданы за бесценок в ходе залоговых аукционов. Социальным результатом стало обнищание большинства и фантастическое обогащение узкого слоя."},
+    // МИРОВАЯ ИСТОРИЯ (20 вопросов)
+    {id:21, category:"Мировая история", question:"Как в историографии чаще всего определяется античный полис?", options:["Как крупная империя","Как город-государство","Как племенной союз","Как религиозная община"], correctIndex:1, explanation:"В науке прочно закрепилось определение полиса как города-государства, хотя этот подход критикуется. Американский историк Ч. Старр считает некорректным употребление обоих слов, а М. Берент утверждает, что полис был «безгосударственным обществом»."},
+    {id:22, category:"Мировая история", question:"Что являлось экономической основой античного полиса?", options:["Крупная рабовладельческая латифундия","Двуединая форма собственности: общины и индивидуальная собственность гражданина","Феодальное землевладение","Капиталистическое производство"], correctIndex:1, explanation:"Экономической основой полиса была античная двуединая форма собственности: с одной стороны — собственность гражданской общины на всю территорию, с другой — индивидуальная собственность каждого гражданина. Только гражданин мог быть собственником земли."},
+    {id:23, category:"Мировая история", question:"Какой период в истории Рима называется эпохой принципата?", options:["Период Римской республики","Период ранней Римской империи, когда монархия была прикрыта республиканскими формами","Период поздней Римской империи","Период падения Рима"], correctIndex:1, explanation:"Принципат — система римского государственного устройства, сложившаяся при Августе, при которой фактическая монархия была прикрыта республиканскими формами и пережитками. Август предпочитал называть себя «первым лицом в государстве» (princeps)."},
+    {id:24, category:"Мировая история", question:"Что такое средневековый цех?", options:["Торговая гильдия купцов","Союз ремесленников определённой профессии в городе","Крестьянская община","Рыцарский орден"], correctIndex:1, explanation:"Ремесленники определённой профессии объединялись в пределах каждого города в особые союзы — цехи. Цех строго регламентировал производство, следил за качеством продукции, ограничивал число подмастерьев и учеников."},
+    {id:25, category:"Мировая история", question:"В каком году Мартин Лютер прикрепил 95 тезисов к двери собора в Виттенберге?", options:["1492 год","1517 год","1555 год","1648 год"], correctIndex:1, explanation:"В октябре 1517 года Мартин Лютер прикрепил к двери собора в Виттенберге 95 тезисов. Это событие считается началом Реформации. Лютер выступал против продажи индульгенций, за возвращение к истокам раннего христианства."},
+    {id:26, category:"Мировая история", question:"Кто был главным идеологом якобинцев в период Великой французской революции?", options:["Жорж Дантон","Жан-Поль Марат","Максимилиан Робеспьер","Наполеон Бонапарт"], correctIndex:2, explanation:"Максимилиан Робеспьер был ключевой фигурой якобинской диктатуры. Его воззрения включали охрану естественных прав гражданина, право на участие в законодательстве и верховенство власти народа."},
+    {id:27, category:"Мировая история", question:"Что являлось главным итогом Войны за независимость в Северной Америке?", options:["Сохранение колониального статуса","Признание Великобританией независимости США по Парижскому мирному договору 1783 года","Присоединение к Франции","Установление монархии"], correctIndex:1, explanation:"По Парижскому мирному договору 1783 года Великобритания признала тринадцать колоний в качестве суверенных и независимых государств (штатов) и отказалась от каких-либо претензий на управление ими."},
+    {id:28, category:"Мировая история", question:"Какой договор завершил Первую мировую войну для Германии?", options:["Версальский договор 1919 года","Сен-Жерменский договор","Трианонский договор","Локарнский договор"], correctIndex:0, explanation:"Версальский договор 1919 года был заключен с Германией. Германия потеряла 1/8 территории, все колонии, армия сокращалась до 100 тыс., запрещалось иметь подводный флот и военную авиацию, Германия должна была выплатить репарации."},
+    {id:29, category:"Мировая история", question:"Какая черта НЕ характерна для Версальской системы международных отношений?", options:["Дискриминация побеждённых государств","Полное лидерство США в Европе","Создание Лиги Наций","Перекройка карты Европы"], correctIndex:1, explanation:"США самоустранились от решения политических проблем в Европе, избрав экономическое воздействие (план Дауэса, план Юнга). США не вступили в Лигу Наций и не ратифицировали Версальский договор."},
+    {id:30, category:"Мировая история", question:"Какой принцип лежал в основе политической системы Третьего рейха?", options:["Принцип разделения властей","Принцип фюрерства","Принцип парламентской демократии","Принцип федерализма"], correctIndex:1, explanation:"Принцип фюрерства (Führerprinzip) был основой нацистской Германии. Гитлер обладал практически неограниченными полномочиями. Диктатура должна была противостоять демократии. Лозунг: «Один народ, одна держава, один вождь»."},
+    {id:31, category:"Мировая история", question:"Какой документ заложил основы Европейского экономического сообщества (ЕЭС)?", options:["Парижский договор 1951 года","Римский договор 1957 года","Маастрихтский договор 1992 года","Лиссабонский договор 2007 года"], correctIndex:1, explanation:"Римский договор 1957 года учредил ЕЭС и Европейское сообщество по атомной энергии. ЕЭС был создан как таможенный союз шести государств (Франция, ФРГ, Италия, Бельгия, Нидерланды, Люксембург)."},
+    {id:32, category:"Мировая история", question:"Что стало причиной «Белой революции» в Иране 1963 года?", options:["Желание восстановить монархию","Модернизация страны и ликвидация феодализма","Требование духовенства","Давление СССР"], correctIndex:1, explanation:"Шах Мохаммед Реза Пехлеви с 1963 года провел реформы («Белая революция») для модернизации Ирана. Ключевыми были земельная и образовательная реформы. Однако реформы не учитывали религиозную специфику, что привело к сопротивлению шиитского духовенства."},
+    {id:33, category:"Мировая история", question:"Что такое «постиндустриальное общество»?", options:["Общество, основанное на сельском хозяйстве","Общество, в котором информация и знания становятся главным производственным ресурсом","Общество с плановой экономикой","Общество без технологий"], correctIndex:1, explanation:"В постиндустриальном обществе информатика превращается в ведущее звено производственного процесса, а информация — в главный производственный ресурс, в форму богатства. Важнейшей формой собственности становится духовная или интеллектуальная."},
+    {id:34, category:"Мировая история", question:"Что являлось главной особенностью древневосточных цивилизаций (Египет, Месопотамия)?", options:["Демократическое устройство","Централизованная деспотическая монархия с неограниченной властью царя","Феодальная раздробленность","Капиталистические отношения"], correctIndex:1, explanation:"В Египте и Месопотамии складываются централизованные деспотические монархии с неограниченной властью царя, объявляемой божественной по происхождению, со сложным управленческим аппаратом. Фараон олицетворял мощь государства."},
+    {id:35, category:"Мировая история", question:"Что такое колониализм?", options:["Форма международного сотрудничества","Особый феномен мировой истории — межцивилизационное столкновение и форма внешней экспансии капитализма","Демократическое движение","Религиозная реформация"], correctIndex:1, explanation:"Колониализм — особый феномен мировой истории, отличительной особенностью которого является межцивилизационное столкновение. Это одна из форм внешней экспансии капитализма, проявление его развития вширь, захват новых рынков."},
+    {id:36, category:"Мировая история", question:"Какова была основная цель национально-освободительного движения в странах Востока?", options:["Сохранение колониального статуса","Ликвидация форм колониальной зависимости и создание национального государства","Присоединение к СССР","Возврат к феодализму"], correctIndex:1, explanation:"Национально-освободительные движения имели целью ликвидировать формы колониальной зависимости. Их лозунгом был невозврат к империи и создание национального государства."},
+    {id:37, category:"Мировая история", question:"Какова была основная идея большевистской внешней политики в отношении стран Востока после 1917 года?", options:["Колониальная экспансия","Поддержка национально-освободительного движения и «экспорт революции»","Изоляция от стран Востока","Создание торговых монополий"], correctIndex:1, explanation:"Большевики первыми подписали равноправные договоры со странами Востока, отказались от неравноправных договоров царизма, простили долги. Новая концепция мировой революции подразумевала объединение вокруг советской России народов Востока."},
+    {id:38, category:"Мировая история", question:"Какой курс был провозглашен на XIV съезде КПК в 1992 году?", options:["Курс на «Большой скачок»","Курс на «социалистическую рыночную экономику»","Курс на «культурную революцию»","Курс на изоляцию"], correctIndex:1, explanation:"Осенью 1992 года на XIV съезде КПК был провозглашен курс на строительство «социалистической рыночной экономики». Эта концепция характеризуется наличием значительной доли государства в экономике, но имеющей все признаки рыночной экономики."},
+    {id:39, category:"Мировая история", question:"Что стало причиной Иранской революции 1978-1979 годов?", options:["Желание восстановить монархию","Крах модернизации по западному образцу из-за игнорирования религиозной специфики","Давление СССР","Экономический подъём"], correctIndex:1, explanation:"Реформы шаха («Белая революция») были слишком быстрыми, недостаточно учитывали национально-религиозную специфику, натолкнулись на сопротивление шиитского духовенства. Это привело к культурно-цивилизационной реакции традиционного общества."},
+    {id:40, category:"Мировая история", question:"Что является ключевой составляющей ближневосточного кризиса?", options:["Территориальные споры между арабскими странами","Палестинская проблема — обострение взаимоотношений между еврейским и арабским населением","Религиозные конфликты внутри ислама","Борьба за нефтяные ресурсы"], correctIndex:1, explanation:"Палестинская проблема рассматривается как основной стержень арабо-израильского конфликта. Неразрешимость палестинской проблемы представляет собой один из главных источников сохраняющейся кризисной напряженности на Ближнем Востоке."}
+];
 
-        <!-- 3. GAMEPLAY -->
-        <div v-if="screen === 'game' || screen === 'minigame'" class="flex-1 flex flex-col relative overflow-hidden pb-8">
-            <div class="project-bar-container"><div class="project-bar" :style="{width: projectProgress + '%'}"></div></div>
-            <div class="absolute top-2 right-2 text-[10px] text-[#00d2ff] font-bold z-50 font-mono">UPLOAD: {{ projectProgress }}%</div>
+let score = 0;
+let answeredCount = 0;
+const totalQuestions = questions.length;
 
-            <div class="px-4 py-6 grid grid-cols-4 gap-4 z-30">
-                <div v-for="(val, key) in stats" :key="key" class="flex flex-col items-center">
-                    <div class="text-xl mb-1">{{ icons[key] }}</div>
-                    <div class="w-full h-1 bg-[#111] overflow-hidden"><div class="stat-bar" :class="getBarColor(val)" :style="{width: val + '%'}"></div></div>
-                </div>
-            </div>
+function renderQuiz() {
+    const container = document.getElementById('quiz-container');
+    container.innerHTML = '';
+    questions.forEach((q, index) => {
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        card.id = `question-${q.id}`;
+        const tag = document.createElement('span');
+        tag.className = 'category-tag';
+        tag.textContent = q.category;
+        const qText = document.createElement('div');
+        qText.className = 'question-text';
+        qText.textContent = `${index + 1}. ${q.question}`;
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = 'options';
+        q.options.forEach((opt, optIndex) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.onclick = () => handleAnswer(q.id, optIndex, btn);
+            optionsDiv.appendChild(btn);
+        });
+        const feedbackDiv = document.createElement('div');
+        feedbackDiv.className = 'feedback';
+        feedbackDiv.id = `feedback-${q.id}`;
+        card.appendChild(tag);
+        card.appendChild(qText);
+        card.appendChild(optionsDiv);
+        card.appendChild(feedbackDiv);
+        container.appendChild(card);
+    });
+}
 
-            <div class="flex-1 flex items-center justify-center px-4 relative perspective-1000">
-                
-                <transition name="slide">
-                    <!-- REGULAR CARD -->
-                    <div v-if="screen === 'game' && activeScenario && !activeEvent" class="game-card" :style="cardStyle" :class="{'border-[#00d2ff] shadow-[0_0_30px_#00d2ff]': activeScenario.type === 'project'}">
-                        <div class="h-3/5 bg-[#050505] flex items-center justify-center text-[7rem] relative border-b border-[#333]">
-                            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-                            <div class="transform scale-110 filter drop-shadow-[0_0_10px_rgba(0,255,65,0.5)]">{{ activeScenario.emoji }}</div>
-                            <div class="absolute top-3 right-3 bg-black/80 px-2 py-1 border border-green-900 text-[10px] font-mono text-green-500">DAY: {{ moves }}</div>
-                        </div>
-                        <div class="h-2/5 p-6 flex flex-col items-center text-center bg-[#080808] justify-center">
-                            <div v-if="activeScenario.type === 'project'" class="text-[10px] text-[#00d2ff] font-bold tracking-widest mb-1 animate-pulse">ПРОЕКТ: КОВЧЕГ</div>
-                            <h3 class="text-lg font-black text-white mb-2 uppercase leading-tight">{{ activeScenario.title }}</h3>
-                            <p class="text-xs text-gray-400 font-mono leading-relaxed">{{ activeScenario.desc }}</p>
-                        </div>
-                    </div>
-                </transition>
-
-                <!-- CRISIS -->
-                <div v-if="screen === 'game' && activeEvent" class="game-card border-red-500 shadow-[0_0_40px_red] z-50">
-                    <div class="h-full p-6 flex flex-col bg-black items-center text-center relative">
-                        <div class="text-6xl mb-4 animate-bounce">{{ activeEvent.emoji }}</div>
-                        <h3 class="text-2xl font-black text-red-500 mb-2 uppercase glitch" :data-text="'⚠ ' + activeEvent.title">⚠ {{ activeEvent.title }}</h3>
-                        <p class="text-xs text-white font-mono mb-auto leading-relaxed z-10">{{ activeEvent.desc }}</p>
-                        <div class="w-full space-y-3 z-10">
-                            <button v-if="activeEvent.minigame" @click="startMinigame(activeEvent.minigame)" class="w-full py-4 border border-blue-500 text-blue-500 font-bold text-sm uppercase animate-pulse">🎮 ВЗЛОМ</button>
-                            <button v-for="(choice, idx) in activeEvent.choices" :key="idx" @click="resolveEvent(choice)" class="w-full py-4 border border-gray-700 text-white font-bold text-sm uppercase hover:bg-gray-900">{{ choice.text }}</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MINIGAMES -->
-                <div v-if="screen === 'minigame' && minigameType === 'hack'" class="game-card border-blue-500 shadow-[0_0_50px_blue] z-50 bg-black">
-                    <div class="h-full p-6 flex flex-col items-center justify-center text-center"><h3 class="text-xl font-bold text-blue-500 mb-4 glitch" data-text="ВЗЛОМ">ВЗЛОМ</h3><div class="grid grid-cols-3 gap-2 mb-6"><div v-for="i in 9" :key="i" class="w-16 h-16 border border-blue-900 cursor-pointer transition-all" :class="{'bg-blue-500 shadow-[0_0_20px_blue]': hackActive === i-1, 'bg-red-500': hackWrong === i-1}" @click="handleHackClick(i-1)"></div></div><p class="text-xs text-gray-400 font-mono">{{ hackStatus }}</p></div>
-                </div>
-                <div v-if="screen === 'minigame' && minigameType === 'lock'" class="game-card border-yellow-500 shadow-[0_0_50px_yellow] z-50 bg-black">
-                    <div class="h-full p-6 flex flex-col items-center justify-center text-center"><h3 class="text-xl font-bold text-yellow-500 mb-8 glitch" data-text="ЗАМОК">ЗАМОК</h3><div class="w-full h-8 border border-yellow-900 relative overflow-hidden"><div class="absolute h-full bg-yellow-500/30 border-x-2 border-yellow-500" :style="{left: lockTarget + '%', width: lockSize + '%'}"></div><div class="absolute h-full w-1 bg-white shadow-[0_0_10px_white]" :style="{left: lockPos + '%'}"></div></div><button @click="checkLock" class="cyber-btn w-full py-6 text-xl mt-8" style="border-color: #ffd700; color: #ffd700;">СТОП</button></div>
-                </div>
-            </div>
-
-            <!-- CONTROLS -->
-            <div v-if="screen === 'game' && activeScenario && !activeEvent && !deathReason" class="pb-10 px-6 flex gap-4 z-40">
-                <button @click="makeChoice('left')" class="choice-btn left group"><span class="text-red-500 text-2xl mb-1">✕</span><span class="text-[9px] text-red-500 uppercase font-bold tracking-widest opacity-80">{{ activeScenario.left.text }}</span></button>
-                <button @click="makeChoice('right')" class="choice-btn right group"><span class="text-green-500 text-2xl mb-1">✓</span><span class="text-[9px] text-green-500 uppercase font-bold tracking-widest opacity-80">{{ activeScenario.right.text }}</span></button>
-            </div>
-            
-            <!-- NEWS -->
-            <div class="fixed bottom-0 left-0 w-full bg-black border-t border-green-900 py-1 overflow-hidden z-50">
-                <div class="whitespace-nowrap text-[10px] text-green-500 font-mono uppercase animate-[ticker_20s_linear_infinite]">{{ newsText }}</div>
-            </div>
-        </div>
-
-        <!-- WIN SCREEN -->
-        <div v-if="screen === 'win'" class="absolute inset-0 z-[100] bg-blue-900/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-xl">
-    <div class="text-8xl mb-4">Rocket</div>
-    <h2 class="text-4xl font-black mb-2 text-white">ПОБЕДА!</h2>
-    <p class="text-white/80 text-sm font-bold mb-8 uppercase">Ковчег запущен за {{ moves }} дней</p>
-    <div class="space-y-4 w-full max-w-xs">
-        <button @click="shareResult('win')" class="cyber-btn w-full py-5 text-xl">Поделиться победой</button>
-        <button @click="screen='menu'" class="cyber-btn w-full py-5 text-xl opacity-60">В меню</button>
-    </div>
-</div>
-
-        <!-- GAME OVER -->
-        <div v-if="screen === 'end'" class="absolute inset-0 z-[100] bg-red-950/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-xl">
-    <div class="text-7xl mb-4 animate-pulse">Skull</div>
-    <h2 class="text-4xl font-black mb-2 text-white">ПРОВАЛ</h2>
-    <p class="text-red-200 text-sm font-bold mb-4 uppercase">{{ deathReason }}</p>
-    <div class="text-4xl text-white mb-8">{{ moves }} дней</div>
-    <div class="space-y-4 w-full max-w-xs">
-        <button @click="shareResult('lose')" class="cyber-btn w-full py-5 text-xl" style="border-color:#ff3366;color:#ff3366">
-            Поделиться провалом
-        </button>
-        <button @click="screen='menu'" class="cyber-btn w-full py-5 text-xl opacity-60">Заново</button>
-    </div>
-</div>
-
-        <!-- SHOP / ACH / CODEX (MODALS) -->
-        <div v-if="['shop','achievements','codex'].includes(screen)" class="absolute inset-0 z-50 bg-black/95 p-4 backdrop-blur-md">
-            <div class="flex justify-between mb-4 border-b border-gray-800 pb-4 items-center">
-                <span class="text-xl font-bold text-white uppercase">{{ screen === 'shop' ? 'РЫНОК' : screen === 'codex' ? 'АРХИВ' : 'НАГРАДЫ' }}</span>
-                <button @click="screen='menu'" class="text-xs border border-gray-600 px-3 py-1 rounded text-white hover:bg-gray-800">X</button>
-            </div>
-            
-            <!-- Shop Content -->
-            <div v-if="screen === 'shop'" class="space-y-3 overflow-y-auto h-[80vh]">
-                <div v-for="i in shopItems" :key="i.id" class="border border-green-900 p-4 rounded bg-[#050505] flex justify-between items-center">
-                    <div><div class="font-bold text-green-400">{{i.icon}} {{i.name}}</div><div class="text-[9px] text-gray-500 uppercase">{{i.desc}}</div></div>
-                    <button v-if="!upgrades[i.id]" @click="buyItem(i)" :disabled="bits < i.price" class="bg-green-900 text-green-100 px-3 py-1 text-[10px] font-bold rounded disabled:opacity-30">{{i.price}} ฿</button>
-                    <span v-else class="text-green-500 text-[10px] border border-green-500 px-2 py-1 rounded">ЕСТЬ</span>
-                </div>
-            </div>
-
-            <!-- Achievements Content -->
-            <div v-if="screen === 'achievements'" class="space-y-3 overflow-y-auto h-[80vh]">
-                <div v-for="ach in achievementsList" :key="ach.id" class="border border-gray-800 p-3 rounded bg-[#050505] flex items-center gap-3" :class="{'border-gold': unlockedAchievements.includes(ach.id)}">
-                    <div class="text-2xl">{{ unlockedAchievements.includes(ach.id) ? '🏆' : '🔒' }}</div>
-                    <div class="flex-1"><div class="font-bold text-sm" :class="unlockedAchievements.includes(ach.id) ? 'text-yellow-400' : 'text-gray-600'">{{ ach.title }}</div><div class="text-[10px] text-gray-500">{{ ach.desc }}</div></div>
-                    <div v-if="unlockedAchievements.includes(ach.id)" class="text-[10px] text-yellow-500">+{{ ach.reward }}</div>
-                </div>
-            </div>
-
-            <!-- Codex Content -->
-            <div v-if="screen === 'codex'" class="grid grid-cols-3 gap-2">
-                <div v-for="d in deathTypes" :key="d.id" class="aspect-square border border-gray-800 bg-black flex flex-col items-center justify-center p-2 rounded" :class="{'border-red-500 bg-red-900/20': unlockedDeaths.includes(d.id)}">
-                    <div class="text-2xl">{{ unlockedDeaths.includes(d.id) ? d.icon : '❓' }}</div>
-                    <div class="text-[8px] text-gray-500 mt-1 text-center uppercase">{{ unlockedDeaths.includes(d.id) ? d.name : '???' }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const { createApp, ref, computed, onMounted } = Vue;
-        const tg = window.Telegram?.WebApp;
-
-        // CONFIG
-        const SCENARIOS = [
-            { type: 'project', emoji:'🚀', title:'ДВИГАТЕЛЬ', desc:'Тест гипер-двигателя. Рискнуть?', left:{text:'ОТМЕНА', s:{fin:5}}, right:{text:'ТЕСТ', s:{fin:-20, sec:-10}, project: 15}, news: "ГРОХОТ НА КОСМОДРОМЕ..." },
-            { type: 'project', emoji:'💾', title:'ИИ ЯДРО', desc:'Супер-компьютер для Ковчега.', left:{text:'НЕТ ДЕНЕГ', s:{pop:-5}}, right:{text:'КУПИТЬ', s:{fin:-25}, project: 15}, news: "СКАЧОК ЭНЕРГИИ..." },
-            { emoji:'🗳️', title:'ВЫБОРЫ', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10, mor:-10}}, right:{text:'ЧЕСТНО', s:{pop:15, sec:-15, fin:-5}}, news: "ПРОТЕСТЫ..." },
-            { emoji:'💰', title:'НАЛОГИ', left:{text:'НЕТ', s:{fin:-10}}, right:{text:'ПОДНЯТЬ', s:{fin:15, pop:-15}}, news: "НОВЫЕ НАЛОГИ..." },
-            { emoji:'👁️', title:'СЛЕЖКА', left:{text:'НЕТ', s:{sec:-10}}, right:{text:'ДА', s:{sec:20, pop:-15}}, news: "БОЛЬШОЙ БРАТ..." },
-            { emoji:'🤖', title:'ИИ СУДЬЯ', left:{text:'ЛЮДИ', s:{mor:5, fin:-5}}, right:{text:'ИИ', s:{fin:15, mor:-15}}, news: "СУД БУДУЩЕГО..." },
-            { emoji:'🌊', title:'ПОТОП', left:{text:'СПАСАТЬ', s:{fin:-20, pop:10}}, right:{text:'МОЛИТЬСЯ', s:{pop:-20, mor:10}}, news: "ВОДА В ГОРОДЕ..." },
-            { emoji:'👽', title:'НЛО', left:{text:'ВОЙНА', s:{sec:-20, fin:-10}}, right:{text:'ПРИВЕТ', s:{pop:10, mor:10}}, news: "КОНТАКТ..." },
-            { emoji:'🗳️', title:'ВЫБОРЫ', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10}}, right:{text:'ЧЕСТНО', s:{pop:10, sec:-10}} },
-            { emoji:'💰', title:'НАЛОГИ', left:{text:'НЕТ', s:{fin:-10}}, right:{text:'ДА', s:{fin:15, pop:-15}} },
-            { emoji:'👁️', title:'СЛЕЖКА', left:{text:'НЕТ', s:{sec:-10}}, right:{text:'ДА', s:{sec:20, pop:-15}} },
-            { emoji:'🤖', title:'ИИ СУДЬЯ', left:{text:'ЛЮДИ', s:{mor:5, fin:-5}}, right:{text:'ИИ', s:{fin:15, mor:-15}} },
-            { emoji:'🌊', title:'ПОТОП', left:{text:'СПАСАТЬ', s:{fin:-20, pop:10}}, right:{text:'МОЛИТЬСЯ', s:{pop:-20, mor:10}} },
-            { emoji:'🚁', title:'ДРОНЫ', left:{text:'ОТМЕНА', s:{sec:-10, pop:5}}, right:{text:'ЗАПУСК', s:{sec:15, pop:-10}} },
-            { emoji:'🧬', title:'ГМО', left:{text:'ЭТИКА', s:{mor:10, fin:-5}}, right:{text:'ПРОГРЕСС', s:{fin:15, mor:-20}} },
-            { emoji:'👽', title:'НЛО', left:{text:'СЪЕСТЬ МУХУ', s:{pop:-20, mor:-10}}, right:{text:'НЕТ', s:{pop:5}} },
-            { emoji:'🗳️', title:'ВЫБОРЫ', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10}}, right:{text:'ЧЕСТНО', s:{pop:10, sec:-10}} },
-            { emoji:'💰', title:'НАЛОГИ', left:{text:'НЕТ', s:{fin:-10}}, right:{text:'ПОДНЯТЬ', s:{fin:15, pop:-15}} },
-            { emoji:'🏭', title:'ЗАВОД', left:{text:'ЗАКРЫТЬ', s:{fin:-10, pop:-10}}, right:{text:'РАБОТАТЬ', s:{fin:15, pop:-5}} },
-            { emoji:'👮', title:'ПОЛИЦИЯ', left:{text:'МЕНЬШЕ', s:{sec:-15, fin:5}}, right:{text:'БОЛЬШЕ', s:{sec:15, fin:-10}} },
-            { emoji:'🏥', title:'БОЛЬНИЦЫ', left:{text:'ПЛАТНЫЕ', s:{fin:10, pop:-15}}, right:{text:'БЕСПЛАТНО', s:{fin:-15, pop:10}} },
-             { emoji:'🗳️', title:'ВЫБОРЫ', desc:'Оппозиция требует честности.', left:{text:'ПОДТАСОВАТЬ', s:{pop:-15, sec:10, mor:-10}}, right:{text:'ЧЕСТНО', s:{pop:10, sec:-10, fin:-5}} },
-            { emoji:'👑', title:'КУЛЬТ', desc:'Поставить вам памятник?', left:{text:'СКРОМНО', s:{pop:5, fin:5}}, right:{text:'ЗОЛОТОЙ', s:{pop:-10, fin:-20, sec:10}} },
-            { emoji:'🤐', title:'СМИ', desc:'Цензура в интернете?', left:{text:'СВОБОДА', s:{pop:10, sec:-10}}, right:{text:'БЛОК', s:{sec:15, pop:-15, mor:-5}} },
-            { emoji:'🤝', title:'ЛОББИ', desc:'Корпорации просят закон.', left:{text:'ОТКАЗ', s:{fin:-10, pop:5}}, right:{text:'ПРИНЯТЬ', s:{fin:20, pop:-10, mor:-10}} },
-            { emoji:'🛂', title:'ГРАНИЦА', desc:'Поток беженцев.', left:{text:'ЗАКРЫТЬ', s:{sec:10, mor:-15}}, right:{text:'ВПУСТИТЬ', s:{pop:-10, fin:-10, mor:15}} },
-            { emoji:'⚖️', title:'СУД', desc:'Судят вашего племянника.', left:{text:'ЗАКОН', s:{mor:15, sec:-5}}, right:{text:'ОТМАЗАТЬ', s:{mor:-25, sec:10}} },
-            { emoji:'🏰', title:'ДВОРЕЦ', desc:'Ремонт резиденции.', left:{text:'НЕТ', s:{fin:5, pop:5}}, right:{text:'ШИК', s:{fin:-15, pop:-15}} },
-            { emoji:'📢', title:'МИТИНГ', desc:'Требуют отставки министра.', left:{text:'ОМОН', s:{sec:15, pop:-20}}, right:{text:'УВОЛИТЬ', s:{pop:10, sec:-10}} },
-            { emoji:'🗺️', title:'РЕГИОНЫ', desc:'Губернаторы хотят власти.', left:{text:'ДАТЬ', s:{pop:10, sec:-20}}, right:{text:'ЗАПРЕТ', s:{sec:15, pop:-10}} },
-            { emoji:'📜', title:'ЗАКОН', desc:'Переписать конституцию?', left:{text:'НЕТ', s:{mor:10}}, right:{text:'ДА', s:{sec:20, mor:-20, pop:-10}} },
-            
-            // === ЭКОНОМИКА ===
-            { emoji:'💰', title:'НАЛОГИ', desc:'Казна пустеет.', left:{text:'ТЕРПЕТЬ', s:{pop:5, fin:-10}}, right:{text:'ПОДНЯТЬ', s:{fin:20, pop:-20}} },
-            { emoji:'📉', title:'ИНФЛЯЦИЯ', desc:'Печатать деньги?', left:{text:'ДА', s:{fin:15, pop:-15}}, right:{text:'НЕТ', s:{fin:-10, pop:-5}} },
-            { emoji:'🏦', title:'БАНКИ', desc:'Банк банкротится.', left:{text:'СПАСТИ', s:{fin:-20, sec:5}}, right:{text:'КРАХ', s:{fin:5, pop:-15}} },
-            { emoji:'🏗️', title:'МОСТ', desc:'Мега-проект стройки.', left:{text:'СТРОИТЬ', s:{fin:-25, sec:10}}, right:{text:'ОТМЕНА', s:{fin:10, pop:-5}} },
-            { emoji:'🤝', title:'ПОРТ', desc:'Продать порт Китаю?', left:{text:'ПРОДАТЬ', s:{fin:30, sec:-10}}, right:{text:'НАШЕ', s:{fin:-5, sec:5}} },
-            { emoji:'💳', title:'КРИПТА', desc:'Легализовать биткоин?', left:{text:'НЕТ', s:{sec:10, fin:-5}}, right:{text:'ДА', s:{fin:15, sec:-15}} },
-            { emoji:'🏭', title:'ЗАВОД', desc:'Рабочие бастуют.', left:{text:'УСТУПИТЬ', s:{fin:-10, pop:10}}, right:{text:'РАЗОГНАТЬ', s:{sec:10, pop:-20}} },
-            { emoji:'🌾', title:'УРОЖАЙ', desc:'Засуха на полях.', left:{text:'ЗАКУПИТЬ', s:{fin:-20, pop:5}}, right:{text:'ГОЛОД', s:{pop:-25, fin:5}} },
-            { emoji:'🛍️', title:'ИМПОРТ', desc:'Запретить сыры?', left:{text:'ДА', s:{sec:5, pop:-10}}, right:{text:'НЕТ', s:{pop:5, fin:-5}} },
-            { emoji:'💎', title:'НЕФТЬ', desc:'Олигархи просят вышки.', left:{text:'ОТКАЗ', s:{fin:10, sec:-20}}, right:{text:'ПРОДАТЬ', s:{fin:40, pop:-20, mor:-10}} },
-
-            // === КИБЕРПАНК ===
-            { emoji:'👁️', title:'СЛЕЖКА', desc:'Камеры в квартирах?', left:{text:'НЕТ', s:{pop:10, sec:-15}}, right:{text:'ДА', s:{sec:25, pop:-20, mor:-10}} },
-            { emoji:'🤖', title:'ИИ СУДЬЯ', desc:'Нейросеть судит людей.', left:{text:'ЛЮДИ', s:{mor:5, fin:-5}}, right:{text:'ИИ', s:{fin:15, mor:-15}} },
-            { emoji:'🧬', title:'ГМО', desc:'Дизайн ДНК детей?', left:{text:'ЭТИКА', s:{mor:10, fin:-5}}, right:{text:'ПРОГРЕСС', s:{fin:15, mor:-20}} },
-            { emoji:'🧠', title:'ЧИПЫ', desc:'Обязательное чипирование.', left:{text:'СВОБОДА', s:{pop:5, sec:-5}}, right:{text:'КОНТРОЛЬ', s:{sec:20, pop:-25, mor:-15}} },
-            { emoji:'☁️', title:'ДАННЫЕ', desc:'Продать данные граждан?', left:{text:'НЕТ', s:{pop:10, fin:-10}}, right:{text:'ПРОДАТЬ', s:{fin:30, sec:-10, pop:-15}} },
-            { emoji:'🚁', title:'ДРОНЫ', desc:'Дроны-полицейские.', left:{text:'ОТМЕНА', s:{sec:-10, pop:5}}, right:{text:'ЗАПУСК', s:{sec:15, pop:-10}} },
-            { emoji:'🦾', title:'КИБОРГИ', desc:'Льготы киборгам?', left:{text:'НЕТ', s:{pop:5}}, right:{text:'ДА', s:{pop:-10, fin:-5, sec:10}} },
-            { emoji:'🌐', title:'СЕТЬ', desc:'Отключить внешний инет?', left:{text:'НЕТ', s:{pop:10, sec:-5}}, right:{text:'ДА', s:{sec:20, pop:-20, fin:-10}} },
-            { emoji:'🧪', title:'ВЕЧНОСТЬ', desc:'Сыворотка бессмертия.', left:{text:'ЭЛИТЕ', s:{fin:50, pop:-30}}, right:{text:'УНИЧТОЖИТЬ', s:{mor:20, fin:-10}} },
-            { emoji:'🚀', title:'МАРС', desc:'Колония бунтует.', left:{text:'УДАР', s:{sec:30, mor:-50}}, right:{text:'СВОБОДА', s:{sec:-10, pop:5}} },
-
-            // === КРИЗИСЫ ===
-            { emoji:'🌊', title:'ПОТОП', desc:'Дамбу прорвало.', left:{text:'СПАСАТЬ', s:{fin:-20, pop:10}}, right:{text:'МОЛИТЬСЯ', s:{pop:-20, mor:10}} },
-            { emoji:'🔥', title:'ПОЖАРЫ', desc:'Горят леса.', left:{text:'ТУШИТЬ', s:{fin:-15, pop:5}}, right:{text:'САМО ПРОЙДЕТ', s:{pop:-15, mor:-5}} },
-            { emoji:'🧟', title:'ВИРУС', desc:'Зомби-вирус.', left:{text:'ИЗОЛЯЦИЯ', s:{sec:10, pop:-10}}, right:{text:'НАПАЛМ', s:{sec:20, pop:-40}} },
-            { emoji:'☄️', title:'МЕТЕОРИТ', desc:'Летит на город.', left:{text:'БУНКЕР', s:{pop:-50, sec:50}}, right:{text:'ГЕРОЙ', s:{fin:-50, pop:20}} },
-            { emoji:'🌋', title:'ВУЛКАН', desc:'Лава близко.', left:{text:'ЖЕРТВА', s:{pop:-10, mor:20}}, right:{text:'БЕЖАТЬ', s:{fin:-20, pop:-10}} },
-            { emoji:'❄️', title:'МОРОЗ', desc:'Лопнули трубы.', left:{text:'РЕМОНТ', s:{fin:-15, pop:5}}, right:{text:'ТЕРПИТЕ', s:{pop:-20}} },
-            { emoji:'⚡', title:'СВЕТ', desc:'Блэкаут.', left:{text:'МАРОДЕРЫ', s:{sec:-20, fin:-10}}, right:{text:'ЧИНИТЬ', s:{fin:-25, pop:10}} },
-            { emoji:'☣️', title:'ХИМИЯ', desc:'Облако хлора.', left:{text:'МОЛЧАТЬ', s:{pop:-30, mor:-20}}, right:{text:'СИРЕНА', s:{fin:-10, pop:-5}} },
-            
-            // === АБСУРД ===
-            { emoji:'🐱', title:'КОТЫ', desc:'Коты требуют прав.', left:{text:'БРЫСЬ', s:{pop:-5}}, right:{text:'МЯУ!', s:{pop:10, mor:5, sec:-5}} },
-            { emoji:'🚽', title:'УНИТАЗ', desc:'Золотой унитаз?', left:{text:'КЕРАМИКА', s:{fin:5}}, right:{text:'ЗОЛОТО', s:{fin:-10, mor:-10, pop:-5}} },
-            { emoji:'👽', title:'НЛО', desc:'Вы рептилоид?', left:{text:'СЪЕСТЬ МУХУ', s:{pop:-20, mor:-10}}, right:{text:'НЕТ', s:{pop:5}} },
-            { emoji:'👻', title:'ПРИЗРАК', desc:'В метро привидения.', left:{text:'ОХОТНИКИ', s:{fin:-5, pop:5}}, right:{text:'ЭКЗОРЦИСТ', s:{mor:10, fin:-5}} },
-            { emoji:'🤡', title:'ЦИРК', desc:'Клоуны в банке.', left:{text:'СМЕХ', s:{fin:-10, sec:-10}}, right:{text:'ГРУСТЬ', s:{sec:10, mor:-5}} },
-            { emoji:'🥔', title:'ОВОЩИ', desc:'Соседи просят картошку.', left:{text:'ДАТЬ', s:{fin:-5, sec:5}}, right:{text:'ЖАДИНА', s:{sec:-5}} },
-            { emoji:'🎅', title:'САНТА', desc:'Застрял в трубе.', left:{text:'СПАСТИ', s:{mor:10, fin:-5}}, right:{text:'РАБОТАТЬ', s:{fin:5, mor:-15}} },
-            { emoji:'🦖', title:'ДИНОЗАВР', desc:'Клонировали T-Rex.', left:{text:'КРУТО', s:{pop:10, sec:-10}}, right:{text:'СЪЕСТ ВСЕХ', s:{sec:5, pop:-20}} },
-            { emoji:'🍆', title:'ОВОЩИ', desc:'Запретить баклажаны?', left:{text:'НЕТ', s:{pop:5}}, right:{text:'ЦЕНЗУРА', s:{pop:-5, mor:5}} },
-            { emoji:'🍺', title:'ПИВО', desc:'Бесплатное пиво?', left:{text:'АЛКОГОЛИЗМ', s:{mor:-10, pop:-5}}, right:{text:'УРА!', s:{pop:20, fin:-20, sec:-10}} },
-
-
-{ emoji:'🗳️', title:'ФАЛЬСИФИКАЦИЯ', desc:'Оппозиция лидирует. Переписать цифры?', left:{text:'РИСОВАТЬ %', s:{pop:-20, sec:15, mor:-10}}, right:{text:'ЧЕСТНО', s:{pop:15, sec:-15, fin:-5}}, news: "МАССОВЫЕ ПРОТЕСТЫ..." },
-            { emoji:'👑', title:'КУЛЬТ ЛИЧНОСТИ', desc:'Поставить вам золотую статую?', left:{text:'СКРОМНОСТЬ', s:{pop:5, fin:5}}, right:{text:'Я БОГ!', s:{pop:-15, fin:-25, sec:10}}, news: "СТРОИТЕЛЬСТВО ГИГАНТА..." },
-            { emoji:'🤐', title:'ЦИФРОВОЙ ГУЛАГ', desc:'Следить за переписками граждан?', left:{text:'ПРИВАТНОСТЬ', s:{pop:10, sec:-15}}, right:{text:'СЛЕЖКА', s:{sec:25, pop:-20, mor:-15}}, news: "СЛИВ ДАННЫХ..." },
-            { emoji:'🤝', title:'ТЕНЕВАЯ СДЕЛКА', desc:'Взятка за снос парка.', left:{text:'АРЕСТОВАТЬ', s:{fin:-10, pop:10, sec:5}}, right:{text:'ВЗЯТЬ', s:{fin:40, pop:-20, mor:-20}}, news: "ПАРК СНОСЯТ..." },
-            { emoji:'🗺️', title:'СЕПАРАТИЗМ', desc:'Мутанты требуют автономии.', left:{text:'ДАТЬ СВОБОДУ', s:{pop:10, sec:-25, fin:-10}}, right:{text:'ТАНКИ', s:{sec:20, pop:-20, mor:-10}}, news: "БАРРИКАДЫ..." },
-            { emoji:'📜', title:'ОБНУЛЕНИЕ', desc:'Ваш срок истек. Переписать законы?', left:{text:'УЙТИ', s:{mor:20, sec:-30}}, right:{text:'ПРАВИТЬ', s:{sec:20, mor:-30, pop:-20}}, news: "РЕФЕРЕНДУМ..." },
-            { emoji:'📉', title:'ГИПЕРИНФЛЯЦИЯ', desc:'Хлеб стоит миллион. Печатать деньги?', left:{text:'ПЕЧАТАТЬ', s:{fin:20, pop:-25}}, right:{text:'РЕФОРМА', s:{fin:-15, pop:-10, mor:5}}, news: "ЦЕНЫ РАСТУТ..." },
-            { emoji:'🏭', title:'ЗАБАСТОВКА', desc:'Рабочие кибер-завода бастуют.', left:{text:'РАБСТВО', s:{fin:10, pop:-20, mor:-10}}, right:{text:'УСТУПИТЬ', s:{fin:-15, pop:15}}, news: "ЗАВОД СТОИТ..." },
-            { emoji:'🏗️', title:'МЕГА-ПРОЕКТ', desc:'Строим лифт в космос?', left:{text:'СТРОИТЬ', s:{fin:-40, mor:20, sec:10}}, right:{text:'БРЕД', s:{fin:10, pop:-5}}, news: "БЮДЖЕТ ПУСТ..." },
-            { emoji:'💳', title:'КРИПТО-КРАХ', desc:'Крипта рухнула. Компенсировать?', left:{text:'ЭТО РЫНОК', s:{fin:10, pop:-25}}, right:{text:'ВЕРНУТЬ', s:{fin:-25, pop:15}}, news: "МИТИНГИ..." },
-            { emoji:'💊', title:'ФАРМАКОЛОГИЯ', desc:'Легализовать наркотик "Счастье"?', left:{text:'ЗАПРЕТ', s:{pop:-10, mor:10}}, right:{text:'ЛЕГАЛАЙЗ', s:{fin:25, pop:10, mor:-30}}, news: "ЭЙФОРИЯ..." },
-            { emoji:'💎', title:'РЕСУРСЫ', desc:'Газ под приютом. Бурить?', left:{text:'ДЕТИ', s:{mor:20, fin:-10}}, right:{text:'БУРИТЬ', s:{fin:35, mor:-30, pop:-10}}, news: "СНОС ПРИЮТА..." },
-            { emoji:'👁️', title:'НЕЙРО-РЕКЛАМА', desc:'Реклама в снах граждан?', left:{text:'ЛИЧНОЕ', s:{pop:10, fin:-10}}, right:{text:'ПРОДАТЬ', s:{fin:30, pop:-20, mor:-15}}, news: "РЕКЛАМА ВО СНЕ..." },
-            { emoji:'🤖', title:'ПРАВА РОБОТОВ', desc:'Роботы хотят голосовать.', left:{text:'ТОСТЕРЫ', s:{pop:5, mor:-10}}, right:{text:'РАВЕНСТВО', s:{pop:-20, mor:20, sec:-10}}, news: "РОБОТ-МЭР..." },
-            { emoji:'🧬', title:'ЕВГЕНИКА', desc:'Удалять "ген бедности"?', left:{text:'ЗАПРЕТ', s:{mor:10, fin:-5}}, right:{text:'ЭЛИТА', s:{fin:20, pop:-30, mor:-20}}, news: "ИДЕАЛЬНЫЕ ДЕТИ..." },
-            { emoji:'🧠', title:'ЦИФРОВОЕ БЕССМЕРТИЕ', desc:'Богачи уходят в облако.', left:{text:'ОТКЛЮЧИТЬ', s:{fin:-10, pop:5}}, right:{text:'РАЗРЕШИТЬ', s:{fin:30, pop:-15}}, news: "ВЕЕРНЫЕ ОТКЛЮЧЕНИЯ..." },
-            { emoji:'🛰️', title:'ИИ-СУДЬЯ', desc:'Суд без людей.', left:{text:'ПРИСЯЖНЫЕ', s:{mor:5, fin:-10}}, right:{text:'АЛГОРИТМ', s:{fin:20, mor:-20, pop:-5}}, news: "СКОРОСТНОЙ СУД..." },
-            { emoji:'☁️', title:'АТМОСФЕРА', desc:'Воздух платный?', left:{text:'БЕСПЛАТНО', s:{fin:-25, pop:20}}, right:{text:'БИЗНЕС', s:{fin:40, pop:-30, mor:-25}}, news: "ЛЮДИ ЗАДЫХАЮТСЯ..." },
-            { emoji:'🎨', title:'ЦЕНЗУРА', desc:'Запретить современное искусство?', left:{text:'СВОБОДА', s:{pop:5, sec:-5}}, right:{text:'В ТЮРЬМУ', s:{sec:10, pop:-15, mor:-5}}, news: "ВЫСТАВКИ ЗАКРЫТЫ..." },
-            { emoji:'⛪', title:'НОВАЯ ВЕРА', desc:'Секта Видеокарты.', left:{text:'ИГНОР', s:{pop:5, mor:-10}}, right:{text:'РАЗОГНАТЬ', s:{sec:15, pop:-20}}, news: "ФАНАТИКИ..." },
-            { emoji:'🍽️', title:'СИНТЕТИКА', desc:'Бургеры из насекомых?', left:{text:'ГАДОСТЬ', s:{fin:-15, pop:5}}, right:{text:'ПРОТЕИН', s:{fin:15, pop:-10, mor:-5}}, news: "КОТЛЕТЫ ИЗ ЖУКОВ..." },
-            { emoji:'🏳️‍🌈', title:'БРАКИ', desc:'Свадьбы с киборгами?', left:{text:'ЗАПРЕТ', s:{mor:10, pop:-10}}, right:{text:'ЛЮБОВЬ', s:{mor:-20, pop:5}}, news: "СВАДЬБА С ТОСТЕРОМ..." },
-            { emoji:'🎓', title:'ОБРАЗОВАНИЕ', desc:'Учителя или планшеты?', left:{text:'УЧИТЕЛЯ', s:{fin:-15, pop:10}}, right:{text:'ПЛАНШЕТЫ', s:{fin:20, pop:-10, mor:-10}}, news: "ШКОЛА ОНЛАЙН..." },
-            { emoji:'🪖', title:'ВОЙНА', desc:'Удар по соседям?', left:{text:'ЖДАТЬ', s:{sec:-20, fin:5}}, right:{text:'ЯДЕРНЫЙ ЗАЛП', s:{sec:40, fin:-30, pop:-20, mor:-50}}, news: "РАДИАЦИЯ..." },
-            { emoji:'🦠', title:'ПАНДЕМИЯ', desc:'Вирус убивает.', left:{text:'СВОБОДА', s:{pop:-40, fin:10}}, right:{text:'ИЗОЛЯЦИЯ', s:{pop:5, fin:-30, sec:10}}, news: "УЛИЦЫ ПУСТЫ..." },
-            { emoji:'🕵️', title:'ШПИОНАЖ', desc:'Генерал - предатель.', left:{text:'ТИХО', s:{sec:-5, fin:-5}}, right:{text:'КАЗНЬ', s:{sec:15, mor:-20, pop:-10}}, news: "ТРАНСЛЯЦИЯ КАЗНИ..." },
-            { emoji:'🌊', title:'ЦУНАМИ', desc:'Волна идет.', left:{text:'ЛЮДЕЙ', s:{fin:-30, pop:20}}, right:{text:'ЗАВОДЫ', s:{fin:20, pop:-40, mor:-20}}, news: "ТРУЩОБЫ СМЫЛО..." },
-            { emoji:'👽', title:'РЕПТИЛОИДЫ', desc:'Вы ящерица?', left:{text:'Я ЧЕЛОВЕК', s:{pop:5}}, right:{text:'СЪЕСТЬ МУХУ', s:{pop:-20, mor:-30}}, news: "МЭР СЪЕЛ МУХУ..." },
-            { emoji:'🐱', title:'КОТОКРАТИЯ', desc:'Кот - депутат?', left:{text:'БРЕД', s:{pop:-10}}, right:{text:'ВИЦЕ-КОТ', s:{pop:25, mor:10, sec:-5}}, news: "КОТ ОБЕЩАЕТ РЫБУ..." },
-            { emoji:'🚽', title:'ЗОЛОТОЙ ТРОН', desc:'Золотой унитаз в мэрию?', left:{text:'НЕТ', s:{fin:5}}, right:{text:'ХОЧУ', s:{fin:-15, mor:-20, pop:-15}}, news: "САНТЕХНИКА..." },
-            { emoji:'🥔', title:'КАРТОШКА', desc:'Кредит картошкой?', left:{text:'ДЕНЬГИ', s:{fin:5, sec:-5}}, right:{text:'БЕРЕМ', s:{fin:-5, pop:10}}, news: "ДРАНИКИ..." },
-            { emoji:'👻', title:'ОХОТНИКИ', desc:'Призраки в метро.', left:{text:'ГАЗ', s:{fin:5, pop:-5}}, right:{text:'ИЗГНАТЬ', s:{fin:-10, mor:15}}, news: "ГОЛОСА В ТОННЕЛЯХ..." },
-            { emoji:'🍆', title:'ЦЕНЗУРА', desc:'Запретить баклажан?', left:{text:'ОСТАВИТЬ', s:{pop:10, mor:-5}}, right:{text:'ЗАПРЕТИТЬ', s:{pop:-10, mor:15}}, news: "ОВОЩНОЙ БУНТ..." },
-
-        ];
-
-        const CLASSES = [
-            { id: 'corp', name: 'КОРПОРАТ', icon: '👔', desc: 'Старт: 70💰', bonus: {fin: 20, pop: -20} },
-            { id: 'general', name: 'ГЕНЕРАЛ', icon: '🎖️', desc: 'Старт: 70🛡️', bonus: {sec: 20, mor: -20} },
-            { id: 'hacker', name: 'ХАКЕР', icon: '💻', desc: 'Старт: 60💰', bonus: {fin: 10, sec: -10} }
-        ];
-
-        const CRISES = [
-            { id: 'bank_hack', emoji: '🏦', title: 'ВЗЛОМ', desc: 'Хакеры атакуют банк!', minigame: 'hack', successMsg: 'Отбито!', failMsg: 'Кража!', failImpact: {fin: -50}, winImpact: {fin: 30} },
-            { id: 'bomb', emoji: '💣', title: 'БОМБА', desc: 'Обезвредьте бомбу!', minigame: 'lock', successMsg: 'Успех!', failMsg: 'Взрыв!', failImpact: {pop: -50, sec: -30}, winImpact: {sec: 20, mor: 20} }
-        ];
-
-        const SHOP_ITEMS = [
-            { id: 'lens', name: 'ЛИНЗА', icon: '👁️', price: 500, desc: 'Видеть влияние' },
-            { id: 'shield', name: 'НАНО-ЩИТ', icon: '🛡️', price: 750, desc: '1 спасбросок' },
-            { id: 'miner', name: 'МАЙНЕР', icon: '⛏️', price: 1000, desc: 'Доход x1.5' }
-        ];
-
-        const ACHIEVEMENTS = [
-            { id: 'win', title: 'УТОПИЯ', desc: 'Завершить Проект Ковчег', reward: 5000, check: () => false },
-            { id: 'survivor_50', title: 'ВЕТЕРАН', desc: 'Проживите 50 дней', reward: 300, check: (m, b, s) => m >= 50 },
-            { id: 'rich', title: 'ОЛИГАРХ', desc: 'Накопите 1000 ฿', reward: 200, check: (m, b, s) => b >= 1000 },
-        ];
-
-        const DEATH_TYPES = [
-            { id: 'pop_low', name: 'БУНТ', icon: '🔥' }, { id: 'pop_high', name: 'ХАОС', icon: '🤪' },
-            { id: 'fin_low', name: 'КРАХ', icon: '📉' }, { id: 'fin_high', name: 'ОЛИГАРХИЯ', icon: '💰' },
-            { id: 'sec_low', name: 'ВТОРЖЕНИЕ', icon: '🏳️' }, { id: 'sec_high', name: 'ХУНТА', icon: '🪖' },
-            { id: 'mor_low', name: 'РАЗЛОЖЕНИЕ', icon: '🔞' }, { id: 'mor_high', name: 'ФАНАТИЗМ', icon: '⛪' }
-        ];
-
-        createApp({
-            setup() {
-                const screen = ref('reg');
-                const cityName = ref(localStorage.getItem('ec_city') || '');
-                const bits = ref(parseInt(localStorage.getItem('ec_bits') || 0));
-                const upgrades = ref(JSON.parse(localStorage.getItem('ec_upgrades') || '{}'));
-                const highScore = ref(parseInt(localStorage.getItem('ec_highscore') || 0));
-                const unlockedAchievements = ref(JSON.parse(localStorage.getItem('ec_achievements') || '[]'));
-                const unlockedDeaths = ref(JSON.parse(localStorage.getItem('ec_deaths') || '[]'));
-                const soundEnabled = ref(true);
-                const gamesPlayed = ref(parseInt(localStorage.getItem('ethos_games') || '0'));
-                const totalEarned = ref(parseInt(localStorage.getItem('ethos_total') || '0'));
-                
-                const stats = ref({ pop: 50, fin: 50, sec: 50, mor: 50 });
-                const icons = { pop:'👥', fin:'💰', sec:'🛡️', mor:'⚖️' };
-                const moves = ref(0);
-                const projectProgress = ref(0);
-                
-                const activeScenario = ref(null);
-                const activeEvent = ref(null);
-                const eventResult = ref(null);
-                const deathReason = ref(null);
-                const flyDir = ref(null);
-                
-                const classes = CLASSES;
-                const selectedClass = ref(CLASSES[0]);
-                const achievementsList = ACHIEVEMENTS;
-                const shopItems = SHOP_ITEMS;
-                const deathTypes = DEATH_TYPES;
-                const newsText = ref("СИСТЕМА ЗАГРУЖЕНА...");
-                const isShaking = ref(false);
-
-                // Minigames
-                const minigameType = ref(null);
-                const hackSequence = ref([]); const hackInput = ref([]); const hackActive = ref(-1); const hackWrong = ref(-1); const hackStatus = ref(''); const hackPlaying = ref(false);
-                const lockPos = ref(0); const lockDir = ref(1); const lockTarget = ref(0); const lockSize = ref(20); let lockInterval = null;
-
-                onMounted(() => {
-    if(tg) { 
-        tg.ready(); 
-        tg.expand(); 
-        tg.setHeaderColor('#050505'); 
-        
-        // Синхронизируем текущие данные с ботом при загрузке
-        const syncData = {
-            highscore: highScore.value,
-            bits: bits.value
-        };
-        tg.sendData(JSON.stringify(syncData));
+function handleAnswer(questionId, selectedIndex, selectedBtn) {
+    const question = questions.find(q => q.id === questionId);
+    const feedbackDiv = document.getElementById(`feedback-${questionId}`);
+    const allButtons = selectedBtn.parentElement.querySelectorAll('.option-btn');
+    allButtons.forEach(btn => btn.disabled = true);
+    const isCorrect = selectedIndex === question.correctIndex;
+    if (isCorrect) {
+        score++;
+        selectedBtn.classList.add('correct');
+        feedbackDiv.className = 'feedback show correct-feedback';
+        feedbackDiv.innerHTML = `<span class="feedback-title">✅ Правильно!</span>${question.explanation}`;
+    } else {
+        selectedBtn.classList.add('incorrect');
+        allButtons[question.correctIndex].classList.add('correct');
+        feedbackDiv.className = 'feedback show incorrect-feedback';
+        feedbackDiv.innerHTML = `<span class="feedback-title">❌ Неправильно.</span><br><strong>Правильный ответ:</strong> ${question.options[question.correctIndex]}<br><br>${question.explanation}`;
     }
-    initMatrix();
-    if(cityName.value) screen.value = 'menu';
-});
+    answeredCount++;
+    if (answeredCount === totalQuestions) { showResults(); }
+}
 
-                // --- GAME LOGIC ---
-                let audioCtx;
-                const playSound = (type) => {
-                    if(!soundEnabled.value) return;
-                    try {
-                        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        if(audioCtx.state === 'suspended') audioCtx.resume();
-                        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                        o.connect(g); g.connect(audioCtx.destination);
-                        const t = audioCtx.currentTime;
-                        if(type==='click'){ o.type='triangle'; o.frequency.setValueAtTime(800,t); g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.1); o.start(t); o.stop(t+0.1); }
-                        if(type==='death'){ o.type='sawtooth'; o.frequency.setValueAtTime(100,t); g.gain.setValueAtTime(0.2,t); g.gain.linearRampToValueAtTime(0,t+0.8); o.start(t); o.stop(t+0.8); }
-                        if(type==='win'){ o.type='sine'; o.frequency.setValueAtTime(400,t); g.gain.setValueAtTime(0.1,t); g.gain.linearRampToValueAtTime(0,t+0.3); o.start(t); o.stop(t+0.3); }
-                    } catch(e){}
-                };
-                const toggleSound = () => { soundEnabled.value = !soundEnabled.value; };
+function showResults() {
+    const resultsSection = document.getElementById('results');
+    const scoreText = document.getElementById('score-text');
+    const scoreMessage = document.getElementById('score-message');
+    scoreText.textContent = `${score} из ${totalQuestions}`;
+    const percentage = (score / totalQuestions) * 100;
+    if (percentage === 100) scoreMessage.textContent = "Великолепно! Вы превосходно знаете историю!";
+    else if (percentage >= 70) scoreMessage.textContent = "Хороший результат! Есть небольшие пробелы, но в целом отлично.";
+    else if (percentage >= 40) scoreMessage.textContent = "Удовлетворительно. Рекомендуется повторить материал.";
+    else scoreMessage.textContent = "Стоит внимательно перечитать конспекты и попробовать снова.";
+    resultsSection.style.display = 'block';
+    resultsSection.scrollIntoView({ behavior: 'smooth' });
+}
 
-                const startGame = () => {
-                    playSound('click');
-                    stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
-                    moves.value = 0; deathReason.value = null; projectProgress.value = 0;
-                    const b = selectedClass.value.bonus;
-                    for(let k in b) stats.value[k] += b[k];
-                    pickCard();
-                    screen.value = 'game';
-                    newsText.value = `ПРАВИТЕЛЬ ${cityName.value} ВСТУПИЛ В ДОЛЖНОСТЬ...`;
-                };
+function resetQuiz() {
+    score = 0;
+    answeredCount = 0;
+    document.getElementById('results').style.display = 'none';
+    renderQuiz();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-                const pickCard = () => {
-                    flyDir.value = null;
-                    if (moves.value > 5 && Math.random() < 0.2 && projectProgress.value < 100) {
-                        const projects = SCENARIOS.filter(s => s.type === 'project');
-                        activeScenario.value = projects[Math.floor(Math.random() * projects.length)];
-                    } else {
-                        const normals = SCENARIOS.filter(s => !s.type);
-                        activeScenario.value = normals[Math.floor(Math.random() * normals.length)];
-                    }
-                    if(activeScenario.value.news) newsText.value = activeScenario.value.news;
-                };
-
-                                // ИСПРАВЛЕННАЯ ФУНКЦИЯ makeChoice
-                const makeChoice = (dir) => {
-                    if(flyDir.value || activeEvent.value) return;
-                    if(tg) tg.HapticFeedback.impactOccurred('medium');
-                    playSound('click');
-                    flyDir.value = dir;
-                    const impact = activeScenario.value[dir].s;
-                    
-                    // Добавляем прогресс проекта если это проект
-                    if (activeScenario.value.type === 'project' && activeScenario.value[dir].project) {
-                        projectProgress.value = Math.min(100, projectProgress.value + activeScenario.value[dir].project);
-                    }
-                    
-                    if(projectProgress.value >= 100) { 
-                        if (window.Telegram?.WebApp) {
-                            const winData = {
-                                highscore: moves.value,
-                                bits: bits.value + 5000
-                            };
-                            window.Telegram.WebApp.sendData(JSON.stringify(winData));
-                        }
-                        setTimeout(() => { screen.value = 'win'; unlockAchievement('win'); }, 500); 
-                        return; 
-                    }
-
-                    let hasDamage = false;
-                    for(let k in impact) {
-                        stats.value[k] = Math.min(100, Math.max(0, stats.value[k] + impact[k]));
-                        if(impact[k] < 0) hasDamage = true;
-                    }
-                    if(hasDamage) { 
-                        isShaking.value = true; 
-                        setTimeout(() => isShaking.value = false, 400); 
-                    }
-                    moves.value++;
-                    checkAchievements();
-
-                    setTimeout(() => {
-                        flyDir.value = null;
-                        activeScenario.value = null;
-                        if(checkDeath()) return;
-                        if(Math.random() < 0.15 && moves.value > 3) triggerEvent();
-                        else pickCard();
-                    }, 300);
-                };
-
-                const checkDeath = () => {
-                    const s = stats.value;
-                    let type = null;
-                    if(s.pop<=0) type = 'pop_low'; else if(s.pop>=100) type = 'pop_high';
-                    else if(s.fin<=0) type = 'fin_low'; else if(s.fin>=100) type = 'fin_high';
-                    else if(s.sec<=0) type = 'sec_low'; else if(s.sec>=100) type = 'sec_high';
-                    else if(s.mor<=0) type = 'mor_low'; else if(s.mor>=100) type = 'mor_high';
-                    
-                    if(type) {
-                        if(upgrades.value['shield']) {
-                            upgrades.value['shield'] = false;
-                            localStorage.setItem('ec_upgrades', JSON.stringify(upgrades.value));
-                            stats.value = { pop: 50, fin: 50, sec: 50, mor: 50 };
-                            if(tg) tg.showPopup({message: "🛡️ ЩИТ СПАС ВАС!"});
-                            pickCard();
-                            return false;
-                        }
-                        deathReason.value = DEATH_TYPES.find(d => d.id === type)?.name || "СМЕРТЬ";
-                        if(!unlockedDeaths.value.includes(type)) { unlockedDeaths.value.push(type); localStorage.setItem('ec_deaths', JSON.stringify(unlockedDeaths.value)); }
-                        let earned = moves.value;
-                        if(selectedClass.value.id === 'corp') earned = Math.floor(earned * 1.5);
-                        if(upgrades.value['miner']) earned = Math.floor(earned * 1.5);
-                        bits.value += earned;
-                        localStorage.setItem('ec_bits', bits.value);
-                        
-                        if(moves.value > highScore.value) { 
-                            highScore.value = moves.value; 
-                            localStorage.setItem('ec_highscore', highScore.value); 
-                        }
-
-                        gamesPlayed.value++;
-                        localStorage.setItem('ethos_games', gamesPlayed.value);
-
-                        if (window.Telegram?.WebApp) {
-                            const gameData = {
-                                highscore: moves.value,
-                                bits: bits.value
-                            };
-                            window.Telegram.WebApp.sendData(JSON.stringify(gameData));
-                        }
-
-                        playSound('death');
-                        if(tg) tg.HapticFeedback.notificationOccurred('error');
-                        setTimeout(() => screen.value = 'end', 500);
-                        return true;
-                    }
-                    return false;
-                };
-
-                const unlockAchievement = (id) => {
-                    if(!unlockedAchievements.value.includes(id)) {
-                        unlockedAchievements.value.push(id);
-                        const ach = ACHIEVEMENTS.find(a => a.id === id);
-                        bits.value += ach.reward;
-                        localStorage.setItem('ec_achievements', JSON.stringify(unlockedAchievements.value));
-                        localStorage.setItem('ec_bits', bits.value);
-                        if(tg) tg.showPopup({message: `🏆 ОТКРЫТО: ${ach.title}\n+${ach.reward} ฿`});
-                    }
-                };
-
-                const checkAchievements = () => {
-                    ACHIEVEMENTS.forEach(ach => {
-                        if(!unlockedAchievements.value.includes(ach.id) && ach.id !== 'win') {
-                            if(ach.check(moves.value, bits.value, stats.value)) unlockAchievement(ach.id);
-                        }
-                    });
-                };
-
-                const triggerEvent = () => { 
-                    activeScenario.value = null;
-                    const rand = Math.floor(Math.random() * CRISES.length); 
-                    activeEvent.value = CRISES[rand]; 
-                    newsText.value = "⚠ ВНИМАНИЕ! УГРОЗА! ⚠"; 
-                    if(tg) tg.HapticFeedback.notificationOccurred('warning'); 
-                };
-
-                const resolveEvent = (choice) => { 
-                    playSound('click'); 
-                    const success = Math.random() <= choice.chance; 
-                    if(success) finishEvent(true, choice.successMsg); 
-                    else { 
-                        if(choice.fail === 'death') { 
-                            deathReason.value = choice.failMsg; 
-                            playSound('death'); 
-                            setTimeout(()=>screen.value='end', 500); 
-                        } else finishEvent(false, choice.failMsg); 
-                    } 
-                };
-
-                const startMinigame = (type) => { 
-                    minigameType.value = type; 
-                    screen.value = 'minigame'; 
-                    if(type === 'hack') initHackGame(); 
-                    if(type === 'lock') initLockGame(); 
-                };
-                
-                const initHackGame = () => { 
-                    hackSequence.value=[]; 
-                    hackInput.value=[]; 
-                    hackStatus.value='ЗАПОМИНАЙ...'; 
-                    hackPlaying.value=false; 
-                    for(let i=0;i<4;i++)hackSequence.value.push(Math.floor(Math.random()*9)); 
-                    setTimeout(async()=>{ 
-                        for(let id of hackSequence.value){ 
-                            hackActive.value=id; 
-                            playSound('click'); 
-                            await new Promise(r=>setTimeout(r,400)); 
-                            hackActive.value=-1; 
-                            await new Promise(r=>setTimeout(r,200)); 
-                        } 
-                        hackStatus.value='ПОВТОРИ!'; 
-                        hackPlaying.value=true; 
-                    },1000); 
-                };
-
-                const handleHackClick = (id) => { 
-                    if(!hackPlaying.value)return; 
-                    playSound('click'); 
-                    hackActive.value=id; 
-                    setTimeout(()=>hackActive.value=-1,200); 
-                    if(id===hackSequence.value[hackInput.value.length]){ 
-                        hackInput.value.push(id); 
-                        if(hackInput.value.length===hackSequence.value.length) finishMinigame(true); 
-                    } else { 
-                        hackWrong.value=id; 
-                        setTimeout(()=>hackWrong.value=-1,300); 
-                        finishMinigame(false); 
-                    }
-                };
-
-                const initLockGame = () => { 
-                    lockPos.value=0; 
-                    lockDir.value=1; 
-                    lockTarget.value=20+Math.random()*40; 
-                    lockSize.value=selectedClass.value.id==='hacker'?35:20; 
-                    const spd=selectedClass.value.id==='hacker'?1.5:2.5; 
-                    if(lockInterval)clearInterval(lockInterval); 
-                    lockInterval=setInterval(()=>{ 
-                        lockPos.value+=spd*lockDir.value; 
-                        if(lockPos.value>100||lockPos.value<0)lockDir.value*=-1; 
-                    },16); 
-                };
-
-                const checkLock = () => { 
-                    clearInterval(lockInterval); 
-                    finishMinigame(lockPos.value>=lockTarget.value && lockPos.value<=(lockTarget.value+lockSize.value)); 
-                };
-                
-                const finishMinigame = (win) => { 
-                    screen.value = 'game'; 
-                    const evt = activeEvent.value; 
-                    if(win) { 
-                        if(evt.winImpact) for(let k in evt.winImpact) stats.value[k]+=evt.winImpact[k]; 
-                        finishEvent(true, evt.successMsg); 
-                    } else { 
-                        if(evt.failImpact) for(let k in evt.failImpact) stats.value[k]+=evt.failImpact[k]; 
-                        finishEvent(false, evt.failMsg); 
-                    } 
-                };
-
-                const finishEvent = (success, msg) => { 
-                    activeEvent.value = null; 
-                    eventResult.value = { success, msg }; 
-                    if(success) playSound('win'); 
-                    else playSound('death'); 
-
-                    setTimeout(() => {
-                        eventResult.value = null;
-                        if(checkDeath()) return;
-                        if(Math.random() < 0.15 && moves.value > 3) triggerEvent();
-                        else pickCard();
-                    }, 800);
-                };
-
-                const closeEventResult = () => { eventResult.value = null; if(checkDeath()) return; pickCard(); };
-                const registerUser = () => { localStorage.setItem('ec_city', cityName.value); playSound('click'); screen.value = 'menu'; };
-                const buyItem = (i) => { if(bits.value>=i.price){bits.value-=i.price;upgrades.value[i.id]=true; localStorage.setItem('ec_bits',bits.value); localStorage.setItem('ec_upgrades',JSON.stringify(upgrades.value)); playSound('win'); }};
-                const cardStyle = computed(() => { if(!flyDir.value)return{}; const rot = flyDir.value==='right'?15:-15; return { transform: `translate(${flyDir.value==='right'?400:-400}px, 50px) rotate(${rot}deg)`, opacity: 0 }; });
-                const getBarColor = (v) => (v<20||v>80)?'bg-red-500':'bg-[#00ff41]';
-
-                // ФУНКЦИЯ ПОДЕЛИТЬСЯ
-                const shareResult = (type) => {
-                    if (!window.Telegram?.WebApp) return;
-                    const tg = window.Telegram.WebApp;
-                    
-                    const gameData = {
-                        highscore: moves.value,
-                        bits: bits.value
-                    };
-                    tg.sendData(JSON.stringify(gameData));
-                    
-                    const botLink = "https://t.me/EthosCoreBot/game";
-                    const text = type === 'win'
-                        ? `Я СПАС ЧЕЛОВЕЧЕСТВО за ${moves.value} дней в ETHOS: MATRIX!\n\nКовчег запущен 🚀\nИграй тоже: ${botLink}`
-                        : `Моё государство пало на ${moves.value}-й день…\nПричина: ${deathReason.value}\n\nА ты сколько продержишься?\nИграй: ${botLink}`;
-                    
-                    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(text)}`;
-                    tg.openTelegramLink(shareUrl);
-                };
-
-                // ИСПРАВЛЕННЫЙ RETURN STATEMENT
-                return { 
-                    screen, cityName, bits, stats, icons, moves, upgrades, classes, selectedClass, 
-                    highScore, soundEnabled, gamesPlayed, totalEarned,
-                    activeScenario, activeEvent, eventResult, deathReason, shopItems, 
-                    cardStyle, newsText, isShaking, achievementsList, unlockedAchievements, 
-                    unlockedDeaths, deathTypes, projectProgress, minigameType, 
-                    hackActive, hackWrong, hackStatus, handleHackClick, 
-                    lockPos, lockTarget, lockSize, checkLock, startMinigame,
-                    registerUser, startGame, makeChoice, resolveEvent, 
-                    closeEventResult, buyItem, getBarColor, toggleSound,
-                    shareResult
-                };
-            }
-        }).mount('#app');
-
-        // MATRIX RAIN
-        function initMatrix(){
-            const c=document.getElementById('matrix');
-            const ctx=c.getContext('2d');
-            c.width=window.innerWidth;
-            c.height=window.innerHeight;
-            const chars="AZ0192837465";
-            const font_size=14;
-            const columns=c.width/font_size;
-            const drops=[];
-            for(let x=0;x<columns;x++)drops[x]=1;
-            function draw(){
-                ctx.fillStyle="rgba(0, 0, 0, 0.05)";
-                ctx.fillRect(0,0,c.width,c.height);
-                ctx.fillStyle="#0F0";
-                ctx.font=font_size+"px monospace";
-                for(let i=0;i<drops.length;i++){
-                    const text=chars[Math.floor(Math.random()*chars.length)];
-                    ctx.fillText(text,i*font_size,drops[i]*font_size);
-                    if(drops[i]*font_size>c.height&&Math.random()>0.975)drops[i]=0;
-                    drops[i]++;
-                }
-                requestAnimationFrame(draw);
-            }
-            draw();
-        }
-    </script>
+window.onload = renderQuiz;
+</script>
 </body>
 </html>
